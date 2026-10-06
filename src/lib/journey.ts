@@ -1,13 +1,13 @@
 // The traveler uses distance along the route, so halfway through time is halfway along the path.
-export const JOURNEY_PATH = 'M 90 252 C 190 252 165 172 300 196 S 435 292 535 227 S 650 178 712 222';
+export const JOURNEY_PATH = 'M 200 450 C 320 470 220 330 350 330 C 530 330 380 180 540 200 C 630 210 540 170 600 170';
 
 function cubic(t: number, a: number, b: number, c: number, d: number) {
   return (1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * b + 3 * (1 - t) * t ** 2 * c + t ** 3 * d;
 }
 const segments = [
-  [90, 252, 190, 252, 165, 172, 300, 196],
-  [300, 196, 435, 220, 435, 292, 535, 227],
-  [535, 227, 635, 162, 650, 178, 712, 222],
+  [200, 450, 320, 470, 220, 330, 350, 330],
+  [350, 330, 530, 330, 380, 180, 540, 200],
+  [540, 200, 630, 210, 540, 170, 600, 170],
 ];
 const points: { x: number; y: number; distance: number }[] = [];
 let distance = 0;

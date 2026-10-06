@@ -5,7 +5,7 @@ export function TimeSelector({ minutes, onChange, customMode, onCustomMode }: {
   minutes: number; onChange: (value: number) => void; customMode: boolean; onCustomMode: (value: boolean) => void;
 }) {
   return <fieldset className="selector-section">
-    <legend><span className="step-number">2</span> 얼마나 기다릴까요?<span className="step-english">시간 선택</span></legend>
+    <legend className="sr-only">시간 선택</legend>
     <div className="time-grid">
       {durations.map((duration) => <button type="button" key={duration}
         className={`choice time-choice ${!customMode && minutes === duration ? 'selected' : ''}`}

@@ -41,9 +41,9 @@ export function advanceSession(session: TimerSession, now: number): TimerSession
 
 export function timerMessage(progress: number): string {
   if (progress >= 0.95) return '거의 다 왔어요!';
-  if (progress >= 0.8) return '이제 슬슬 준비해요!';
-  if (progress >= 0.5) return '조금씩 결승점에 가까워지고 있어요.';
-  return '아직 신나게 놀 수 있어요!';
+  if (progress >= 0.8) return '준비해요!';
+  if (progress >= 0.5) return '잘 가고 있어요!';
+  return '신나게 놀아요!';
 }
 
 export function formatRemaining(ms: number): string {

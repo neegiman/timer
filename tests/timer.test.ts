@@ -14,8 +14,8 @@ test('position represents timestamp progress at 0/25/50/75/100%', () => {
   for (const progress of [0, .25, .5, .75, 1]) assert.equal(timerProgress(session, start + progress * 600_000).progress, progress);
   assert.equal(timerProgress(session, start + 900_000).remaining, 0);
   assert.equal(timerProgress(session, start - 1000).progress, 0);
-  assert.deepEqual(journeyPoint(0), { x: 90, y: 252 });
-  assert.deepEqual(journeyPoint(1), { x: 712, y: 222 });
+  assert.deepEqual(journeyPoint(0), { x: 200, y: 450 });
+  assert.deepEqual(journeyPoint(1), { x: 600, y: 170 });
 });
 test('pause freezes remaining time and resume excludes paused duration', () => {
   const paused = pauseSession(session, start + 120_000);
@@ -38,9 +38,9 @@ test('background expiry arrives once and completes only after celebration', () =
   assert.equal(pauseSession(session, session.targetTimestamp).status, 'arriving');
 });
 test('stages are calm and countdown rounds up', () => {
-  assert.equal(timerMessage(0), '아직 신나게 놀 수 있어요!');
-  assert.match(timerMessage(.5), /결승점/);
-  assert.equal(timerMessage(.8), '이제 슬슬 준비해요!');
+  assert.equal(timerMessage(0), '신나게 놀아요!');
+  assert.equal(timerMessage(.5), '잘 가고 있어요!');
+  assert.equal(timerMessage(.8), '준비해요!');
   assert.equal(timerMessage(.95), '거의 다 왔어요!');
   assert.equal(formatRemaining(1), '00:01');
   assert.equal(formatRemaining(600_000), '10:00');
