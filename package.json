@@ -1,0 +1,33 @@
+{
+  "name": "promise-journey-timer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && node scripts/verify-export.mjs",
+    "preview": "node scripts/serve-static.mjs",
+    "verify:live": "node scripts/verify-live.mjs",
+    "lint": "eslint .",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "tsx --test tests/timer.test.ts",
+    "test:e2e": "playwright test",
+    "sounds": "node scripts/generate-sounds.mjs"
+  },
+  "dependencies": {
+    "next": "^16.3.8",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "lucide-react": "^0.468.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^16.3.8",
+    "lamejs": "^1.2.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}

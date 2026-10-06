@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import { readFile, readdir, stat } from 'node:fs/promises';
+import path from 'node:path';
+
+const root = path.resolve('out');
+async function filesIn(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const lists = await Promise.all(entries.map((entry) => entry.isDirectory() ? filesIn(path.join(directory, entry.name)) : [path.join(directory, entry.name)]));
+  return lists.flat();
+}
+assert.ok((await stat(root)).isDirectory(), 'Missing out/');
+const html = await readFile(path.join(root, 'index.html'), 'utf8');
+assert.ok(html.includes('/timer/_next/'), 'Next assets must include /timer/');
+assert.ok(html.includes('https://neegiman.github.io/timer/'), 'Canonical production URL mismatch');
+const files = await filesIn(root);
+let inspected = 0;
+for (const file of files) {
+  if (!/\.(html|css|js|json|txt)$/.test(file)) continue;
+  const content = await readFile(file, 'utf8');
+  // Inspect actual src/href/poster/url references rather than harmless Next internals.
+  const refs = [...content.matchAll(/(?:src|href|poster)=["'](\/[^"']+)["']|url\(["']?(\/[^)'"\s]+)/g)];
+  for (const match of refs) {
+    const ref = match[1] ?? match[2];
+    assert.ok(ref.startsWith('/timer/'), `Incorrect root reference ${ref} in ${path.relative(root, file)}`);
+    const relative = decodeURIComponent(ref.slice('/timer/'.length).split(/[?#]/)[0]);
+    if (relative && !relative.endsWith('/')) assert.ok((await stat(path.join(root, relative))).isFile(), `Missing referenced asset ${ref}`);
+  }
+  inspected++;
+}
+for (const file of ['sounds/start.mp3', 'sounds/almost.mp3', 'sounds/finish.mp3', 'sounds/success.mp3', 'images/meadow.svg', 'images/icon.svg', 'images/apple-touch-icon.png', '.nojekyll']) {
+  const info = await stat(path.join(root, file));
+  assert.ok(info.isFile(), `Missing ${file}`);
+  if (file.endsWith('.mp3')) assert.ok(info.size > 1000, `Empty audio: ${file}`);
+}
+console.log(`Static export verified: ${inspected} content files, /timer/_next assets, images and four MP3 files.`);
+console.log('Target: https://neegiman.github.io/timer/ — no Next.js runtime required.');

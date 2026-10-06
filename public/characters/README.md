@@ -1,0 +1,1 @@
+Characters default to emoji. To use an image, add an SVG/PNG/WebP here and set `type: 'image'` and `src: '/characters/your-character.svg'` in `src/lib/characters.ts`. `CharacterIcon` always resolves the source through `assetPath`, including the fixed `/timer` prefix.
