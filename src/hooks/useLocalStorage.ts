@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useSyncExternalStore } from 'react';
+import { characters } from '@/lib/characters';
 
 const EVENT = 'promise-journey-storage';
 const cache = new Map<string, { raw: string | null; value: unknown }>();
@@ -56,4 +57,4 @@ export function useLocalStorage<T>(key: string, fallback: T, validate: (value: u
 
 export const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
 export const isDuration = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 120;
-export const isCharacterId = (value: unknown): value is string => typeof value === 'string' && ['rabbit', 'bear', 'car', 'train', 'rocket', 'chick'].includes(value);
+export const isCharacterId = (value: unknown): value is string => typeof value === 'string' && characters.some((character) => character.id === value);

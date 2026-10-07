@@ -90,7 +90,7 @@ assetPath('/characters/rabbit.webp'); // /timer/characters/rabbit.webp
 - `src/hooks/useAnimationController.ts`: 타이머의 밀리초 입력을 애니메이션 상태로 전달합니다.
 - `src/hooks/useJourneyRenderer.ts`: `requestAnimationFrame`에서 DOM의 `translate3d` 및 Web Animation의 `currentTime`만 갱신합니다. 매 프레임 React state를 갱신하지 않습니다.
 - 이동 wrapper와 몸동작 sprite를 분리했습니다. 토끼 SVG의 발·귀·눈·머리·팔은 별도로 움직입니다.
-- `src/lib/motionProfiles.ts`: 기존 여섯 캐릭터의 보행 주기·바운스·기울기와 향후 개/고양이 프로필. 선택 화면에는 기존 여섯 캐릭터를 유지합니다.
+- `src/lib/motionProfiles.ts`: 캐릭터별 보행 주기·바운스·기울기. 기존 여섯 캐릭터에 강아지·고양이를 추가해 여덟 친구를 지원합니다.
 - 시작 연출은 INTRO 1.8초 + START 1초입니다. 휴식은 최대 1.2초, 반응은 최대 1초, 절반 점프는 1.8초로 제한합니다. 긴 타이머에서도 짧은 동작이 수 분으로 늘어나지 않습니다.
 - 일반 문장은 최소 3초 표시합니다. 준비·출발·실제 초 카운트다운·결승 연출은 예외입니다. 숫자 표시를 끄면 마지막 10초 숫자와 숫자 문장도 숨깁니다.
 - 마지막 10초와 3초는 비율 구간보다 우선하며 1~120분에서 항상 실제 남은 초를 따릅니다.
@@ -124,7 +124,7 @@ npm run test:e2e
 
 - TypeScript 검사 및 ESLint: 오류와 경고 없이 통과.
 - 타임스탬프·일시정지·복원·도착·별·자산 경로 및 애니메이션 Phase·위치 연속성·1/10/120분·결승 순서 단위 검사: 13개.
-- 정적 출력의 Chromium 및 모바일 WebKit 브라우저 검사: 20개. Windows WebKit 오디오 API 제한은 위에 명시했습니다.
+- 정적 출력의 Chromium 및 모바일 WebKit 브라우저 검사: 22개. Windows WebKit 오디오 API 제한은 위에 명시했습니다.
 - `npm run build`: 성공, `out/` 생성, `/timer/_next/` 참조, SVG/PNG 및 11개 MP3 존재 확인.
 - 320px부터 휴대폰·태블릿·데스크톱·가로 화면: 페이지 가로 넘침 없음. 데스크톱과 휴대폰 스크린샷으로 레이아웃 확인.
 - 저장소: `https://github.com/neegiman/timer`, 기본 브랜치 `main`. GitHub Actions를 통해 위의 고정 URL로 배포합니다.
