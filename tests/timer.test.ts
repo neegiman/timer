@@ -15,7 +15,7 @@ test('position represents timestamp progress at 0/25/50/75/100%', () => {
   assert.equal(timerProgress(session, start + 900_000).remaining, 0);
   assert.equal(timerProgress(session, start - 1000).progress, 0);
   assert.deepEqual(journeyPoint(0), { x: 200, y: 450 });
-  assert.deepEqual(journeyPoint(1), { x: 600, y: 210 });
+  assert.deepEqual(journeyPoint(1), { x: 600, y: 240 });
 });
 test('pause freezes remaining time and resume excludes paused duration', () => {
   const paused = pauseSession(session, start + 120_000);

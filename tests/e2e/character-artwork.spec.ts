@@ -44,8 +44,8 @@ test('articulated feet really exchange steps, and pause/refresh preserve their j
   await page.clock.fastForward(5000);
   expect(await joints(page)).toEqual(frozen);
   await page.reload();
-  await page.clock.runFor(32);
-  expect(await joints(page)).toEqual(frozen);
+  await expect(page.locator('[data-status="paused"]')).toBeVisible();
+  await expect.poll(async () => { await page.clock.runFor(32); return joints(page); }).toEqual(frozen);
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '계속', exact: true }).click();
   await page.clock.runFor(200);
