@@ -9,7 +9,7 @@
     "verify:live": "node scripts/verify-live.mjs",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "tsx --test tests/timer.test.ts",
+    "test": "tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
     "sounds": "node scripts/generate-sounds.mjs"
   },

@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { assetPath } from '@/lib/assetPath';
+import type { AnimationSound } from '@/types/animation';
 
-type Sound = 'start' | 'almost' | 'finish' | 'success';
+type Sound = AnimationSound;
 type SafariWindow = Window & { webkitAudioContext?: typeof AudioContext };
 const SOUND_CLAIMS_KEY = 'promise-journey:v1:soundClaims';
 function savedClaims(): string[] {
@@ -85,7 +86,7 @@ export function useAudio(enabled: boolean) {
       setNeedsGesture(false);
       if (pending.current) { const { sound, key } = pending.current; pending.current = null; void play(sound, key); }
     }).catch(() => setNeedsGesture(true));
-    for (const sound of ['start', 'almost', 'finish', 'success'] as Sound[]) void load(sound, ctx).catch(() => {});
+    for (const sound of ['start', 'almost', 'finish', 'success', 'midpoint', 'sparkle', 'tick', 'strong-tick', 'whoosh', 'pop', 'land'] as Sound[]) void load(sound, ctx).catch(() => {});
   }, [load, play]);
 
   const playOnce = useCallback((sound: Sound, key: string) => {

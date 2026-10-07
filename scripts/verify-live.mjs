@@ -9,7 +9,8 @@ try {
   assert.ok(html.includes('약속 여행'), 'The deployed app is not this promise-journey timer');
   const assets = new Set([...html.matchAll(/(?:src|href)="(\/timer\/[^"?#]+\.(?:js|css))"/g)].map((match) => match[1]));
   assert.ok(assets.size > 0, 'Missing exported Next.js assets');
-  for (const path of ['/timer/sounds/start.mp3', '/timer/sounds/almost.mp3', '/timer/sounds/finish.mp3', '/timer/sounds/success.mp3', '/timer/images/meadow.svg', '/timer/images/icon.svg', ...assets]) {
+  const sounds = ['start', 'almost', 'finish', 'success', 'midpoint', 'sparkle', 'tick', 'strong-tick', 'whoosh', 'pop', 'land'];
+  for (const path of [...sounds.map((sound) => `/timer/sounds/${sound}.mp3`), '/timer/images/meadow.svg', '/timer/images/icon.svg', ...assets]) {
     const result = await fetch(`${origin}${path}`, { signal: AbortSignal.timeout(15_000) });
     assert.equal(result.status, 200, `${path}: HTTP ${result.status}`);
     assert.ok((await result.arrayBuffer()).byteLength > 0, `Empty asset ${path}`);

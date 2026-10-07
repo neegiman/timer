@@ -9,6 +9,7 @@ import { VisualTimer } from './timer/VisualTimer';
 import { StarReward } from './reward/StarReward';
 import { Modal } from './Modal';
 import { useVisualTimer } from '@/hooks/useVisualTimer';
+import { useAnimationController } from '@/hooks/useAnimationController';
 import { useAudio } from '@/hooks/useAudio';
 import { isBoolean, isCharacterId, isDuration, useLocalStorage } from '@/hooks/useLocalStorage';
 import { getCharacter } from '@/lib/characters';
@@ -39,16 +40,14 @@ export function TimerApp() {
   const [modal, setModal] = useState<ModalName>(null);
   const ready = promise.activity.trim().length > 0;
   const timer = useVisualTimer(ready);
+  const animation = useAnimationController(timer);
   const { unlock, playOnce, stop, needsGesture } = useAudio(soundEnabled);
   const sessionId = timer.session?.id;
-  const arrivalTimestamp = timer.session?.arrivalTimestamp;
 
   useEffect(() => {
-    if (timer.status === 'running' && timer.progress >= 0.95 && sessionId) playOnce('almost', `${sessionId}:almost`);
-    if ((timer.status === 'arriving' || timer.status === 'completed') && sessionId && arrivalTimestamp !== null && arrivalTimestamp !== undefined && timer.now >= arrivalTimestamp + 650) {
-      playOnce('finish', `${sessionId}:finish`);
-    }
-  }, [timer.status, timer.progress, timer.now, sessionId, arrivalTimestamp, playOnce]);
+    if (timer.status === 'paused') { stop(); return; }
+    if (sessionId && animation.state.sound && animation.state.soundKey) playOnce(animation.state.sound, `${sessionId}:${animation.state.soundKey}`);
+  }, [timer.status, sessionId, animation.state.sound, animation.state.soundKey, playOnce, stop]);
 
   const date = timer.now ? localDate(new Date(timer.now)) : '';
   const todayCount = stars.date === date ? stars.count : 0;
@@ -65,8 +64,7 @@ export function TimerApp() {
     if (!ready) return;
     stop();
     if (soundEnabled) unlock();
-    const id = timer.start(minutes, selectedCharacter, { ...promise, name: promise.name.trim(), activity: promise.activity.trim() });
-    playOnce('start', `${id}:start`);
+    timer.start(minutes, selectedCharacter, { ...promise, name: promise.name.trim(), activity: promise.activity.trim() });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const toggleSound = () => {
@@ -83,8 +81,7 @@ export function TimerApp() {
   const restart = () => {
     stop();
     if (soundEnabled) unlock();
-    const id = timer.restart();
-    if (id) playOnce('start', `${id}:start`);
+    timer.restart();
     setModal(null);
   };
 
@@ -104,7 +101,7 @@ export function TimerApp() {
       {active ? <div className="timer-layout">
           <VisualTimer character={character} promise={timer.session?.promise ?? promise} progress={timer.progress}
             remaining={timer.remaining} minutes={timer.session ? timer.session.durationMs / 60_000 : minutes}
-            status={timer.status} showNumericTime={showNumericTime} />
+            status={timer.status} showNumericTime={showNumericTime} animation={animation.state} input={animation.input} sampledAt={animation.sampledAt} />
           {completed ? <StarReward awarded={awarded} count={todayCount} onAward={claimStar} onNewJourney={exit} /> : null}
         </div> : <section className="setup-card" aria-label="여행 준비">
           <nav className="setup-steps" aria-label="준비 단계">

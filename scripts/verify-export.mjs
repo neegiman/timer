@@ -27,10 +27,12 @@ for (const file of files) {
   }
   inspected++;
 }
-for (const file of ['sounds/start.mp3', 'sounds/almost.mp3', 'sounds/finish.mp3', 'sounds/success.mp3', 'images/meadow.svg', 'images/icon.svg', 'images/apple-touch-icon.png', '.nojekyll']) {
+const soundFiles = (await readdir(path.join(root, 'sounds'))).filter((name) => name.endsWith('.mp3'));
+assert.equal(soundFiles.length, 11, 'Missing animation sound assets');
+for (const file of [...soundFiles.map((name) => `sounds/${name}`), 'images/meadow.svg', 'images/icon.svg', 'images/apple-touch-icon.png', '.nojekyll']) {
   const info = await stat(path.join(root, file));
   assert.ok(info.isFile(), `Missing ${file}`);
   if (file.endsWith('.mp3')) assert.ok(info.size > 1000, `Empty audio: ${file}`);
 }
-console.log(`Static export verified: ${inspected} content files, /timer/_next assets, images and four MP3 files.`);
+console.log(`Static export verified: ${inspected} content files, /timer/_next assets, images and ${soundFiles.length} MP3 files.`);
 console.log('Target: https://neegiman.github.io/timer/ — no Next.js runtime required.');

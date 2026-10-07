@@ -1,5 +1,5 @@
-// The traveler uses distance along the route, so halfway through time is halfway along the path.
-export const JOURNEY_PATH = 'M 200 450 C 320 470 220 330 350 330 C 530 330 380 180 540 200 C 630 210 540 170 600 170';
+// Animation positions measure route distance; only the controller decides their relationship to time.
+export const JOURNEY_PATH = 'M 200 450 C 320 470 220 330 350 330 C 530 330 380 180 540 200 C 630 210 540 210 600 210';
 
 function cubic(t: number, a: number, b: number, c: number, d: number) {
   return (1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * b + 3 * (1 - t) * t ** 2 * c + t ** 3 * d;
@@ -7,7 +7,7 @@ function cubic(t: number, a: number, b: number, c: number, d: number) {
 const segments = [
   [200, 450, 320, 470, 220, 330, 350, 330],
   [350, 330, 530, 330, 380, 180, 540, 200],
-  [540, 200, 630, 210, 540, 170, 600, 170],
+  [540, 200, 630, 210, 540, 210, 600, 210],
 ];
 const points: { x: number; y: number; distance: number }[] = [];
 let distance = 0;
@@ -22,8 +22,10 @@ for (const segment of segments) {
   }
 }
 
-export function journeyPoint(progress: number) {
-  const target = Math.min(1, Math.max(0, progress)) * distance;
+export function journeyPoint(position: number) {
+  // Continue along the finish tangent. The sequence controller intentionally travels past 1.
+  if (position > 1) return { x: 600 + (Math.min(1.08, position) - 1) * distance, y: 210 };
+  const target = Math.min(1, Math.max(0, position)) * distance;
   const nextIndex = points.findIndex((point) => point.distance >= target);
   const next = points[nextIndex < 0 ? points.length - 1 : nextIndex];
   const previous = points[Math.max(0, nextIndex - 1)];

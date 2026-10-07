@@ -1,44 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-declare global { interface Window { playedSounds: string[]; audioDiagnostics: string[] } }
-
-async function instrumentAudio(page: Page) {
-  await page.addInitScript(() => {
-    window.playedSounds = [];
-    window.audioDiagnostics = [];
-    if (typeof AudioContext === 'undefined') return;
-    const bufferNames = new WeakMap<ArrayBuffer, string>();
-    const audioNames = new WeakMap<AudioBuffer, string>();
-    const originalFetch = window.fetch;
-    window.fetch = async (...args) => {
-      const response = await originalFetch(...args);
-      const url = String(args[0]);
-      if (url.includes('/sounds/')) {
-        const arrayBuffer = response.arrayBuffer.bind(response);
-        response.arrayBuffer = async () => { const bytes = await arrayBuffer(); bufferNames.set(bytes, url); return bytes; };
-      }
-      return response;
-    };
-    const decode = AudioContext.prototype.decodeAudioData;
-    AudioContext.prototype.decodeAudioData = async function (bytes) {
-      try {
-        const buffer = await decode.call(this, bytes);
-        audioNames.set(buffer, bufferNames.get(bytes) ?? 'unknown');
-        return buffer;
-      } catch (error) { window.audioDiagnostics.push(String(error)); throw error; }
-    };
-    const create = AudioContext.prototype.createBufferSource;
-    AudioContext.prototype.createBufferSource = function () {
-      const source = create.call(this);
-      const start = source.start.bind(source);
-      source.start = (...args) => {
-        if (source.buffer && audioNames.has(source.buffer)) window.playedSounds.push(audioNames.get(source.buffer)!);
-        start(...args);
-      };
-      return source;
-    };
-  });
-}
+import { instrumentAudio } from './audio';
 
 async function start(page: Page) {
   await page.getByRole('button', { name: '씻기', exact: true }).click();
@@ -63,12 +25,14 @@ test('10-minute bath journey, arrival sound once, reward persists across refresh
   const supportsAudio = await page.evaluate(() => typeof AudioContext !== 'undefined');
   if (!supportsAudio) testInfo.annotations.push({ type: 'audio-environment-limitation', description: 'This Windows WebKit build has no Web Audio API. Audio source/decode assertions run in Chromium; real iPhone Safari remains a manual device check.' });
   await start(page);
+  await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'INTRO');
+  await page.clock.fastForward(2000);
   if (supportsAudio) {
     await expect.poll(() => page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/start.mp3')).length)).toBe(1);
   }
   const initialProgress = Number(await page.getByTestId('traveler').getAttribute('data-progress'));
   expect(initialProgress).toBeLessThan(.02);
-  await page.clock.fastForward(150_000);
+  await page.clock.fastForward(148_000);
   await expect.poll(async () => Number(await page.getByTestId('traveler').getAttribute('data-progress'))).toBeGreaterThanOrEqual(.25);
   await page.clock.fastForward(427_000);
   await expect(page.getByRole('status')).toHaveText('거의 다 왔어요!');
@@ -76,9 +40,10 @@ test('10-minute bath journey, arrival sound once, reward persists across refresh
   await expect(page.locator('[data-status="arriving"]')).toBeVisible();
   await expect(page.getByTestId('traveler')).toHaveAttribute('data-progress', '1');
   await page.clock.fastForward(800);
-  if (supportsAudio) await expect.poll(() => page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/finish.mp3')).length)).toBe(1);
-  await page.clock.fastForward(3000);
+  if (supportsAudio) expect(await page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/finish.mp3')).length)).toBe(0);
+  await page.clock.fastForward(5000);
   await expect(page.locator('[data-status="completed"]')).toBeVisible();
+  if (supportsAudio) await expect.poll(() => page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/finish.mp3')).length)).toBe(1);
   await expect(page.getByText('목욕하러 가요!', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: '⭐ 약속 지켰어요' }).click();
   await expect(page.getByTestId('star-count')).toHaveText('1');
@@ -129,7 +94,7 @@ test('pause/resume, confirmation cancellation, refresh and background expiry', a
   await page.clock.setSystemTime(new Date(Date.now() + 3_600_000));
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await expect(page.locator('[data-status="arriving"]')).toBeVisible();
-  await page.clock.fastForward(3000);
+  await page.clock.fastForward(6000);
   await expect(page.locator('[data-status="completed"]')).toBeVisible();
 });
 
@@ -198,6 +163,7 @@ test('320px, phone, tablet and landscape have no horizontal overflow', async ({ 
   await start(page);
   for (const [width, height] of [[320, 740], [390, 844], [768, 1024], [844, 390]]) {
     await page.setViewportSize({ width, height });
+    await page.clock.runFor(32);
     const sizes = await page.evaluate(() => ({ viewport: innerWidth, scroll: document.documentElement.scrollWidth }));
     expect(sizes.scroll, `Timer overflow at ${width}px`).toBeLessThanOrEqual(sizes.viewport);
     const scene = await page.locator('.journey-scene').boundingBox();
@@ -207,14 +173,15 @@ test('320px, phone, tablet and landscape have no horizontal overflow', async ({ 
     if (testInfo.project.name === 'chromium' && width === 390) await page.screenshot({ path: 'artifacts/timer-mobile.png', fullPage: true });
   }
   await page.clock.fastForward(603_000);
-  await page.clock.fastForward(3000);
+  await page.clock.fastForward(6000);
   for (const [width, height] of [[320, 740], [390, 844], [844, 390]]) {
     await page.setViewportSize({ width, height });
+    await page.clock.runFor(32);
     const scene = await page.locator('.journey-scene').boundingBox();
     const traveler = await page.getByTestId('traveler').boundingBox();
     expect(traveler!.y).toBeGreaterThanOrEqual(scene!.y);
     expect(traveler!.x + traveler!.width).toBeLessThanOrEqual(scene!.x + scene!.width);
-    expect(Math.abs(traveler!.x + traveler!.width / 2 - (scene!.x + scene!.width * .75))).toBeLessThan(1);
+    expect(traveler!.x + traveler!.width / 2).toBeGreaterThan(scene!.x + scene!.width * .75);
     if (testInfo.project.name === 'chromium' && width === 390) await page.screenshot({ path: 'artifacts/arrival-mobile.png', fullPage: true });
   }
 });

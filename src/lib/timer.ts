@@ -1,7 +1,8 @@
 import type { TimerSession, TodayStars } from '@/types/timer';
 import { isPromise } from './promises';
+import { FINISH_DURATION_MS } from './animation';
 
-export const ARRIVAL_DURATION_MS = 2600;
+export const ARRIVAL_DURATION_MS = FINISH_DURATION_MS;
 
 export function timerProgress(session: TimerSession, now: number) {
   const remaining = session.status === 'paused'
@@ -37,13 +38,6 @@ export function advanceSession(session: TimerSession, now: number): TimerSession
     return { ...session, status: 'completed' };
   }
   return session;
-}
-
-export function timerMessage(progress: number): string {
-  if (progress >= 0.95) return '거의 다 왔어요!';
-  if (progress >= 0.8) return '준비해요!';
-  if (progress >= 0.5) return '잘 가고 있어요!';
-  return '신나게 놀아요!';
 }
 
 export function formatRemaining(ms: number): string {
