@@ -39,8 +39,14 @@ export function JourneyPath({ progress, character, promise, animation, input, sa
     </svg>
     <div className="parallax-layer grass-layer" data-layer="grass" aria-hidden="true"><svg viewBox="0 0 800 600" preserveAspectRatio="none"><g stroke="#9abc7c" strokeWidth="4" strokeLinecap="round" fill="none"><path d="m85 530 4-14 5 14m605-30 5-14 5 14m-296 44 5-14 5 14" /></g><g fill="#fff7d4"><circle cx="143" cy="362" r="7" /><circle cx="631" cy="463" r="7" /><circle cx="405" cy="530" r="6" /></g></svg></div>
     <span className="route-finish-line" aria-hidden="true" />
+    <svg className="finish-flag" viewBox="0 0 36 48" aria-hidden="true">
+      <path d="M2 47V3" fill="none" stroke="#876f4d" strokeWidth="3" strokeLinecap="round" />
+      <g className={`flag-cloth ${finishVisible ? 'flag-wave' : ''}`}>
+        <path d="M3 6C12 1 23 11 33 7L31 24C20 28 12 16 3 22Z" fill="#e87957" stroke="#bc6548" strokeWidth="1" strokeLinejoin="round" />
+      </g>
+    </svg>
     <div className="start-point"><span className="house" aria-hidden="true">🏡</span><span className="endpoint-label">출발</span></div>
-    <div className={`finish-point ${finishVisible ? 'finish-recognized' : ''}`}><span className={`finish-flag ${finishVisible ? 'flag-wave' : ''}`} aria-hidden="true">🚩</span><span className="destination-icon" aria-hidden="true">{promise.icon}</span><span className="endpoint-label">도착</span></div>
+    <div className={`finish-point ${finishVisible ? 'finish-recognized' : ''}`}><span className="destination-icon" aria-hidden="true">{promise.icon}</span><span className="endpoint-label">도착</span></div>
     <div ref={wrapper} className="character-wrapper" style={variables} data-position={animation.position} data-profile={profile.kind}>
       <div className="character-anchor" data-testid="traveler" data-progress={progress}>
         <div ref={body} key={`${animation.phaseKey}:${animation.characterAction}`} className="traveler-body sprite-motion" data-action={animation.characterAction} data-phase-key={animation.phaseKey}>

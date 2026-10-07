@@ -103,7 +103,8 @@ h1:focus { outline: none; }
 .journey-scene[data-route-layout="compact"] .house { font-size: 30px; }
 .destination-icon { font-size: 64px; line-height: 1.12; }
 .endpoint-label { padding: 3px 10px; border-radius: 12px; font-size: 19px; font-weight: 800; background: #fffdf0e6; white-space: nowrap; }
-.finish-flag { position: absolute; left: -22px; top: 7px; font-size: 32px; line-height: 1; transform-origin: bottom left; }
+.finish-flag { position: absolute; z-index: 3; left: calc(var(--finish-x) - 2px); top: calc(var(--finish-y) - 47px); width: 36px; height: 48px; overflow: visible; pointer-events: none; }
+.flag-cloth { transform-box: view-box; transform-origin: 2px 6px; }
 .character-wrapper { position: absolute; left: 0; top: 0; z-index: 4; width: min(clamp(104px, 27vw, 124px), var(--actor-limit, 124px)); --jump-height: 24px; }
 .character-anchor { position: relative; width: 100%; transform: translate(-50%, -94%); }
 .traveler-body { position: relative; z-index: 1; width: 100%; aspect-ratio: 160 / 210; transform-origin: 50% 95%; }
