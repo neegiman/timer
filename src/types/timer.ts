@@ -4,7 +4,7 @@ export interface Character {
   id: string;
   name: string;
   icon: string;
-  type: 'emoji' | 'image';
+  type: 'emoji' | 'image' | 'illustration';
   src?: string;
 }
 

@@ -169,14 +169,15 @@ test('dog and cat motion profiles remain selected after a running refresh', asyn
   await page.clock.install();
   await page.goto('./');
   const cycles: string[] = [];
-  for (const [name, icon] of [['강아지', '🐶'], ['고양이', '🐱']]) {
+  for (const [name, id] of [['강아지', 'dog'], ['고양이', 'cat']]) {
     await page.getByRole('button', { name: '다음', exact: true }).click();
     await page.getByRole('button', { name: '다음', exact: true }).click();
     await page.getByRole('button', { name, exact: true }).click();
     await page.getByRole('button', { name: '출발!' }).click();
     await seek(page, 40_000);
     await page.reload();
-    await expect(page.locator('.traveler-body .character-emoji')).toHaveText(icon);
+    await expect(page.locator('.traveler-body .character-artwork')).toHaveAttribute('data-character', id);
+    await expect(page.locator('.traveler-body [data-body]')).toHaveCount(1);
     await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'WALK');
     cycles.push(await page.locator('.character-wrapper').evaluate((element) => getComputedStyle(element).getPropertyValue('--cycle')));
     await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();

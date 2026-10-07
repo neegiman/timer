@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { getAnimationState } from '@/lib/animation';
 import { journeyPoint } from '@/lib/journey';
+import { getCharacterPose, type JointName } from '@/lib/characterPose';
 import type { AnimationInput, AnimationState } from '@/types/animation';
 
 /** Frame-level pose/position updates live in DOM refs, never in React state. */
@@ -10,11 +11,16 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
   const body = useRef<HTMLDivElement>(null);
   const snapshot = useRef({ input, sampledAt });
   const animations = useRef<Animation[]>([]);
+  const joints = useRef<{ element: SVGGElement; name: JointName }[]>([]);
+  const cycleMs = useRef(780);
 
   useEffect(() => { snapshot.current = { input, sampledAt }; }, [input, sampledAt]);
   useEffect(() => {
     animations.current = body.current?.getAnimations({ subtree: true }) ?? [];
     for (const animation of animations.current) animation.pause();
+    joints.current = Array.from(body.current?.querySelectorAll<SVGGElement>('[data-joint]') ?? [])
+      .map((element) => ({ element, name: element.dataset.joint as JointName }));
+    cycleMs.current = Number.parseFloat(body.current ? getComputedStyle(body.current).getPropertyValue('--cycle') : '780') || 780;
   }, [state.phaseKey, state.characterAction]);
 
   useEffect(() => {
@@ -29,6 +35,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     const layers = Array.from(element.querySelectorAll<HTMLElement>('[data-layer]'));
     const traveled = element.querySelector<SVGPathElement>('[data-traveled]');
     const shadow = element.querySelector<HTMLElement>('.character-shadow');
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const resize = new ResizeObserver(() => {
       width = element.clientWidth; height = element.clientHeight;
       actorWidth = actor.offsetWidth; actorHeight = actor.offsetHeight;
@@ -65,6 +72,8 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         layer.dataset.parallaxRate = String(focused ? 0 : rate);
       });
       for (const animation of animations.current) animation.currentTime = pose.actionElapsedMs;
+      const jointPose = getCharacterPose(pose.characterAction, pose.actionElapsedMs, cycleMs.current, motionPreference.matches);
+      for (const joint of joints.current) joint.element.setAttribute('transform', `rotate(${jointPose[joint.name].toFixed(3)})`);
       if (shadow) {
         const airborne = pose.characterAction === 'jump' || pose.characterAction === 'hop';
         const duration = pose.characterAction === 'jump' ? 600 : 800;
@@ -81,7 +90,8 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     };
     visibility();
     document.addEventListener('visibilitychange', visibility);
-    return () => { cancelAnimationFrame(frame); resize.disconnect(); document.removeEventListener('visibilitychange', visibility); };
+    motionPreference.addEventListener('change', draw);
+    return () => { cancelAnimationFrame(frame); resize.disconnect(); document.removeEventListener('visibilitychange', visibility); motionPreference.removeEventListener('change', draw); };
   }, [input.isPaused]);
   return { scene, wrapper, body };
 }

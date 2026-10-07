@@ -44,6 +44,9 @@ h1:focus { outline: none; }
 .character-choice { min-height: 148px; }
 .character-emoji { display: block; font-size: inherit; line-height: 1.12; }
 .character-choice > span:first-child { font-size: 72px; }
+.character-icon { display: inline-block; flex-shrink: 0; vertical-align: middle; }
+.character-icon .character-artwork { display: block; width: 100%; height: 100%; overflow: visible; }
+.character-choice .character-icon { width: 76px !important; height: 100px !important; }
 .character-choice[data-phase="READY"] > span:first-child { animation: idleBody 3s ease-in-out infinite; }
 .character-choice img { display: block; width: 72px; height: 72px; object-fit: contain; }
 .time-choice { flex-direction: row; align-items: baseline; gap: 3px; min-height: 126px; }
@@ -84,11 +87,11 @@ h1:focus { outline: none; }
 .destination-icon { font-size: 64px; line-height: 1.12; }
 .endpoint-label { padding: 3px 10px; border-radius: 12px; font-size: 19px; font-weight: 800; background: #fffdf0e6; white-space: nowrap; }
 .finish-flag { position: absolute; left: -22px; top: 7px; font-size: 32px; line-height: 1; transform-origin: bottom left; }
-.character-wrapper { position: absolute; left: 0; top: 0; z-index: 4; width: clamp(90px, 24vw, 120px); --jump-height: 24px; }
+.character-wrapper { position: absolute; left: 0; top: 0; z-index: 4; width: clamp(104px, 27vw, 124px); --jump-height: 24px; }
 .character-anchor { position: relative; width: 100%; transform: translate(-50%, -94%); }
-.traveler-body { position: relative; z-index: 1; width: 100%; aspect-ratio: 120 / 140; transform-origin: 50% 95%; }
+.traveler-body { position: relative; z-index: 1; width: 100%; aspect-ratio: 160 / 210; transform-origin: 50% 95%; }
 .traveler-body .character-emoji { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: clamp(64px, 17vw, 86px); line-height: 1; }
-.traveler-body img, .rabbit-sprite { display: block; width: 100%; height: 100%; object-fit: contain; }
+.traveler-body img, .traveler-body .character-artwork { display: block; width: 100%; height: 100%; object-fit: contain; overflow: visible; }
 .character-shadow { position: absolute; left: 17%; bottom: 2px; width: 66%; height: 11px; border-radius: 50%; background: #64865333; }
 .sprite-motion, .sprite-motion * { animation-play-state: paused !important; }
 .sprite-motion[data-action="idle"] { animation: idleBody 3s ease-in-out infinite; }
@@ -105,15 +108,8 @@ h1:focus { outline: none; }
 .sprite-motion[data-action="jump"] { animation: jumpBody .6s linear both; }
 .sprite-motion[data-action="land"] { animation: landBody .4s ease-out both; }
 .sprite-motion[data-action="celebrate"] { animation: happyBody 2.6s ease-in-out infinite; }
-.rabbit-foot, .rabbit-arm, .rabbit-ear, .rabbit-head, .rabbit-eyes { transform-box: fill-box; transform-origin: center; }
-.rabbit-ear { transform-origin: 50% 95%; }
-.rabbit-eyes { animation: eyeBlink 4.2s linear infinite; }
-.sprite-motion:is([data-action="walk"],[data-action="fastWalk"],[data-action="run"],[data-action="sprint"]) .rabbit-foot { animation: footStep var(--cycle) ease-in-out infinite; }
-.sprite-motion:is([data-action="walk"],[data-action="fastWalk"],[data-action="run"],[data-action="sprint"]) .back-foot { animation-name: backFootStep; }
-.sprite-motion:is([data-action="walk"],[data-action="fastWalk"],[data-action="run"],[data-action="sprint"]) .rabbit-ear { animation: earSway var(--cycle) ease-in-out infinite; }
-.sprite-motion[data-action="look"] .rabbit-head { animation: headLook .7s ease-in-out both; }
-.sprite-motion[data-action="turn"] .rabbit-head { animation: headTurn .5s ease-in-out both; }
-.sprite-motion[data-action="celebrate"] .front-arm { animation: armWave 1.3s ease-in-out infinite; transform-origin: 80% 15%; }
+.character-eyes { transform-box: fill-box; transform-origin: center; animation: eyeBlink 4.2s linear infinite; }
+.sprite-motion .rocket-flame { transform-box: fill-box; transform-origin: 50% 0; animation: flamePulse .4s ease-in-out infinite; }
 [data-profile="vehicle"] { --bounce: 1.5px !important; --lean: 2deg !important; }
 [data-profile="flying"] .sprite-motion:is([data-action="walk"],[data-action="fastWalk"]) { animation-name: flyingBody; }
 .parallax-layer { position: absolute; inset: 0; pointer-events: none; }
@@ -180,13 +176,8 @@ h1:focus { outline: none; }
 @keyframes landBody { 0%, 100% { transform: scaleY(1); } 25% { transform: scaleY(.85) scaleX(1.07); } 65% { transform: scaleY(1.08) scaleX(.97); } }
 @keyframes happyBody { 0%, 100% { transform: rotate(-1deg); } 50% { transform: translateY(-2px) rotate(1deg); } }
 @keyframes flyingBody { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-5px) rotate(2deg); } }
-@keyframes footStep { 0%, 100% { transform: translateX(-3px) rotate(-10deg); } 50% { transform: translateX(3px) translateY(-3px) rotate(10deg); } }
-@keyframes backFootStep { 0%, 100% { transform: translateX(3px) rotate(10deg); } 50% { transform: translateX(-3px) translateY(-3px) rotate(-10deg); } }
-@keyframes earSway { 0%, 100% { transform: rotate(-3deg); } 55% { transform: rotate(5deg); } }
+@keyframes flamePulse { 0%, 100% { transform: scaleY(.85); } 50% { transform: scaleY(1.08); } }
 @keyframes eyeBlink { 0%, 44%, 48%, 100% { transform: scaleY(1); } 46% { transform: scaleY(.1); } }
-@keyframes headLook { 0% { transform: translateX(0) rotate(0); } 100% { transform: translateX(3px) rotate(5deg); } }
-@keyframes headTurn { 0% { transform: translateX(3px) rotate(5deg); } 100% { transform: translateX(-2px) rotate(-4deg); } }
-@keyframes armWave { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-35deg); } }
 @keyframes cloudDrift { from { transform: translateX(-8px); } to { transform: translateX(18px); } }
 @keyframes celebrateStar { 0% { opacity: 0; transform: scale(.5) translateY(6px); } 30% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: translateY(-15px) scale(.8); } }
 @keyframes flag-wave { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(12deg); } }
@@ -207,6 +198,7 @@ h1:focus { outline: none; }
   .character-choice { min-height: 132px; }
   .character-choice > span:first-child { font-size: 64px; }
   .character-choice img { width: 64px; height: 64px; }
+  .character-choice .character-icon { width: 62px !important; height: 82px !important; }
   .time-choice strong { font-size: 36px; }
   .time-choice > span { font-size: 20px; }
   .choice-emoji { font-size: 64px; }
@@ -218,6 +210,9 @@ h1:focus { outline: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (max-width: 360px) {
+  .character-choice > span:last-child { font-size: 20px; letter-spacing: -.03em; white-space: nowrap; }
 }
 .journey-card { position: relative; }
 .countdown-overlay { position: absolute; z-index: 6; top: 32%; left: 7%; display: grid; place-items: center; width: 90px; height: 100px; color: #8f642b; pointer-events: none; }
