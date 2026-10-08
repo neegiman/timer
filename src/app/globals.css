@@ -320,3 +320,39 @@ h1:focus { outline: none; }
   .message-past, .arrival-sparkles i { display: none; }
   .message-entering { opacity: 1; }
 }
+
+/* Adult-facing character design and gait preview, sharing the timer's picture-book palette. */
+.animal-preview { max-width: 1120px; margin: 0 auto; padding: max(24px, env(safe-area-inset-top)) 20px max(40px, env(safe-area-inset-bottom)); }
+.animal-back-link { display: inline-flex; align-items: center; min-height: 48px; color: var(--green); text-decoration: none; font-weight: 750; }
+.animal-preview header { margin: 24px 0; text-align: center; }
+.animal-preview-eyebrow { color: var(--green); font-size: 17px; font-weight: 750; }
+.animal-preview h1 { margin: 12px 0; font-size: clamp(30px, 6vw, 48px); letter-spacing: -.04em; }
+.animal-preview header > p:last-child { color: var(--muted); font-size: 20px; line-height: 1.7; }
+.animal-preview h2 { margin: 0 0 20px; font-size: clamp(25px, 4vw, 32px); }
+.animal-concept-board { margin: 0 0 36px; border-radius: 24px; border: 1px solid var(--border); overflow: hidden; background: #fffaf0; }
+.animal-concept-board img { display: block; width: 100%; height: auto; }
+.animal-concept-board figcaption { padding: 16px 20px; font-size: 16px; line-height: 1.7; color: var(--muted); }
+.animal-playback { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+.animal-playback button { flex: 1; min-width: 135px; min-height: 52px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 16px; background: #fffdf5; font-size: 18px; font-weight: 750; }
+.animal-playback button[aria-pressed="true"] { border-color: #91ad77; background: #edf3e5; }
+.animal-motion-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.animal-study-card { min-width: 0; padding: 18px; border: 1px solid var(--border); border-radius: 24px; background: #fffdf7; }
+.animal-study-card h3 { margin: 0 0 12px; font-size: 25px; }
+.animal-study-card > p { margin-top: 14px; color: var(--muted); font-size: 17px; line-height: 1.7; word-break: keep-all; }
+.animal-study-scene { position: relative; height: 240px; overflow: hidden; border-radius: 18px; background: linear-gradient(#e8f2f5 0%, #e7efd9 75%, #f0dfbb 75%); isolation: isolate; }
+.animal-study-actor { position: absolute; z-index: 2; left: 48%; top: 75%; width: 148px; transform: translate(-50%, -97.619%); }
+.natural-animal-artwork { display: block; width: 100%; height: auto; overflow: visible; }
+.animal-study-cloud { position: absolute; left: 20px; top: 6px; font-size: 42px; color: #fffaf0; }
+.animal-study-ground { position: absolute; z-index: 1; left: 0; top: 75%; height: 60px; width: calc(100% + 48px); will-change: transform; background: radial-gradient(ellipse 4px 1.5px at 15px 20px, #ccbd9b 90%, transparent), radial-gradient(ellipse 3px 1.5px at 37px 42px, #d4c39f 90%, transparent); background-size: 48px 60px; border-top: 3px solid #adbf8e; }
+.animal-study-shadow { position: absolute; left: 48%; top: calc(75% - 3px); transform: translateX(-50%); width: 110px; height: 6px; border-radius: 50%; background: #587c3f22; }
+.animal-study-note { margin: 24px 0 36px; color: var(--muted); font-size: 16px; line-height: 1.8; }
+.animal-study-references { border-top: 1px solid var(--border); padding-top: 24px; }
+.animal-study-references p { margin: 12px 0; font-size: 16px; line-height: 1.8; }
+.animal-study-references a { color: var(--green); text-underline-offset: 3px; }
+@media (max-width: 850px) { .animal-motion-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) {
+  .animal-preview { padding-left: 16px; padding-right: 16px; }
+  .animal-motion-grid { grid-template-columns: minmax(0, 1fr); }
+  .animal-study-card { padding: 16px; }
+  .animal-playback button { min-width: 120px; }
+}

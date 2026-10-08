@@ -12,6 +12,9 @@ assert.ok((await stat(root)).isDirectory(), 'Missing out/');
 const html = await readFile(path.join(root, 'index.html'), 'utf8');
 assert.ok(html.includes('/timer/_next/'), 'Next assets must include /timer/');
 assert.ok(html.includes('https://neegiman.github.io/timer/'), 'Canonical production URL mismatch');
+const preview = await readFile(path.join(root, 'animal-preview', 'index.html'), 'utf8');
+assert.ok(preview.includes('/timer/images/animal-design/natural-concepts-v2.png'), 'Missing /timer-aware animal concept asset');
+assert.ok(preview.includes('https://neegiman.github.io/timer/animal-preview/'), 'Animal preview canonical mismatch');
 const files = await filesIn(root);
 let inspected = 0;
 for (const file of files) {
@@ -29,7 +32,7 @@ for (const file of files) {
 }
 const soundFiles = (await readdir(path.join(root, 'sounds'))).filter((name) => name.endsWith('.mp3'));
 assert.equal(soundFiles.length, 11, 'Missing animation sound assets');
-for (const file of [...soundFiles.map((name) => `sounds/${name}`), 'images/meadow.svg', 'images/meadow-night.svg', 'images/icon.svg', 'images/apple-touch-icon.png', '.nojekyll']) {
+for (const file of [...soundFiles.map((name) => `sounds/${name}`), 'images/meadow.svg', 'images/meadow-night.svg', 'images/icon.svg', 'images/apple-touch-icon.png', 'images/animal-design/natural-concepts-v2.png', '.nojekyll']) {
   const info = await stat(path.join(root, file));
   assert.ok(info.isFile(), `Missing ${file}`);
   if (file.endsWith('.mp3')) assert.ok(info.size > 1000, `Empty audio: ${file}`);
