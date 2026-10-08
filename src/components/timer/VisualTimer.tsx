@@ -6,10 +6,11 @@ import { formatRemaining } from '@/lib/timer';
 import { completionMessage } from '@/lib/promises';
 import type { Character, PromiseActivity, TimerStatus } from '@/types/timer';
 import type { AnimationInput, AnimationState } from '@/types/animation';
+import type { SceneTheme } from '@/lib/dayNight';
 
-export function VisualTimer({ character, promise, progress, remaining, minutes, status, showNumericTime, animation, input, sampledAt }: {
+export function VisualTimer({ character, promise, progress, remaining, minutes, status, showNumericTime, animation, input, sampledAt, theme }: {
   character: Character; promise: PromiseActivity; progress: number; remaining: number;
-  minutes: number; status: TimerStatus; showNumericTime: boolean; animation: AnimationState; input: AnimationInput; sampledAt: number;
+  minutes: number; status: TimerStatus; showNumericTime: boolean; animation: AnimationState; input: AnimationInput; sampledAt: number; theme: SceneTheme;
 }) {
   const arrived = animation.messageStage === 'arrived';
   const { scene, wrapper, body, goal, track, fill, marker } = useJourneyRenderer(input, animation, sampledAt, character.id);
@@ -19,7 +20,7 @@ export function VisualTimer({ character, promise, progress, remaining, minutes, 
       {showNumericTime ? <p className="numeric-time" aria-label={`남은 시간 ${formatRemaining(remaining)}`} data-testid="countdown">{formatRemaining(remaining)}<span>남은 시간</span></p> : null}
       <JourneyProgress character={character} progress={progress} trackRef={track} fillRef={fill} markerRef={marker} />
     </div>
-    <JourneyPath character={character} promise={promise} animation={animation} input={input} sceneRef={scene} wrapperRef={wrapper} bodyRef={body} goalRef={goal} />
+    <JourneyPath character={character} promise={promise} animation={animation} input={input} theme={theme} sceneRef={scene} wrapperRef={wrapper} bodyRef={body} goalRef={goal} />
     <div className="journey-message">
       {arrived ? <p className="completion-promise"><span aria-hidden="true">{promise.icon}</span> {completionMessage(promise)}</p>
         : <p className="promise-reminder"><span aria-hidden="true">{promise.icon}</span> 도착하면 {promise.name}</p>}

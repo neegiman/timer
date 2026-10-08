@@ -10,7 +10,7 @@ try {
   const assets = new Set([...html.matchAll(/(?:src|href)="(\/timer\/[^"?#]+\.(?:js|css))"/g)].map((match) => match[1]));
   assert.ok(assets.size > 0, 'Missing exported Next.js assets');
   const sounds = ['start', 'almost', 'finish', 'success', 'midpoint', 'sparkle', 'tick', 'strong-tick', 'whoosh', 'pop', 'land'];
-  for (const path of [...sounds.map((sound) => `/timer/sounds/${sound}.mp3`), '/timer/images/meadow.svg', '/timer/images/icon.svg', ...assets]) {
+  for (const path of [...sounds.map((sound) => `/timer/sounds/${sound}.mp3`), '/timer/images/meadow.svg', '/timer/images/meadow-night.svg', '/timer/images/icon.svg', ...assets]) {
     const result = await fetch(`${origin}${path}`, { signal: AbortSignal.timeout(15_000) });
     assert.equal(result.status, 200, `${path}: HTTP ${result.status}`);
     assert.ok((await result.arrayBuffer()).byteLength > 0, `Empty asset ${path}`);

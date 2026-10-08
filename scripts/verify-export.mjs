@@ -29,7 +29,7 @@ for (const file of files) {
 }
 const soundFiles = (await readdir(path.join(root, 'sounds'))).filter((name) => name.endsWith('.mp3'));
 assert.equal(soundFiles.length, 11, 'Missing animation sound assets');
-for (const file of [...soundFiles.map((name) => `sounds/${name}`), 'images/meadow.svg', 'images/icon.svg', 'images/apple-touch-icon.png', '.nojekyll']) {
+for (const file of [...soundFiles.map((name) => `sounds/${name}`), 'images/meadow.svg', 'images/meadow-night.svg', 'images/icon.svg', 'images/apple-touch-icon.png', '.nojekyll']) {
   const info = await stat(path.join(root, file));
   assert.ok(info.isFile(), `Missing ${file}`);
   if (file.endsWith('.mp3')) assert.ok(info.size > 1000, `Empty audio: ${file}`);

@@ -7,6 +7,9 @@ async function begin(page: Page) {
   await page.getByRole('button', { name: '다음', exact: true }).click();
   await page.getByRole('button', { name: '출발!' }).click();
   await expect(page.locator('[data-status="running"]')).toBeVisible();
+  // Freeze wall-clock advancement between automation calls. The last 100ms
+  // must stay testable even when a mobile browser takes longer to read the DOM.
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
 }
 async function seek(page: Page, elapsed: number) {
   const start = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).startTimestamp);
@@ -162,7 +165,12 @@ test('1 and 120 minute journeys stay calm in their last ten seconds and stop at 
     for (const remaining of [9900, 2900, 100]) {
       await seek(page, duration - remaining);
       await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'WALK');
-      expect(Number(await page.getByTestId('journey-goal').getAttribute('data-distance'))).toBeGreaterThan(0);
+      if (remaining <= duration * .1) {
+        expect(Number(await page.getByTestId('journey-goal').getAttribute('data-distance'))).toBeGreaterThan(0);
+      } else {
+        // In a one-minute journey, ten seconds remaining is still before 90%.
+        await expect(page.getByTestId('journey-goal')).toHaveCount(0);
+      }
     }
     await seek(page, duration);
     await expect(page.getByTestId('journey-goal')).toHaveAttribute('data-distance', '0.000000');

@@ -83,6 +83,40 @@ h1:focus { outline: none; }
 .journey-scene { position: relative; isolation: isolate; width: 100%; height: clamp(300px, 45svh, 460px); border-radius: 32px; overflow: hidden; }
 .scene-backdrop { position: absolute; inset: 0; width: 100%; height: 100%; }
 .scene-backdrop { object-fit: fill; }
+.scene-backdrop { transition: opacity 1.2s ease-in-out; }
+.scene-night { opacity: 0; }
+.journey-scene[data-theme="night"] .scene-day { opacity: 0; }
+.journey-scene[data-theme="night"] .scene-night { opacity: 1; }
+.journey-scene[data-theme="night"] {
+  --scene-cloud: #8396ac;
+  --scene-hill-far: #536b84;
+  --scene-hill-middle: #48677b;
+  --scene-hill-near: #3f6570;
+  --scene-trunk: #526b75;
+  --scene-leaf: #5f7e81;
+  --scene-leaf-light: #789594;
+  --scene-ground: #b5ada1;
+  --scene-verge: #79998d;
+  --scene-grass: #7e9b91;
+  --scene-flower: #ead5a6;
+  --scene-flower-center: #b89b6b;
+  --scene-stone: #919b98;
+  --scene-ground-mark: #929b96;
+}
+.parallax-layer :is(path, rect, g, circle, ellipse) { transition: fill 1.2s ease-in-out, stroke 1.2s ease-in-out; }
+.scene-settings { min-width: 0; margin: 20px 0 0; padding: 18px 0; border: 0; border-bottom: 1px solid var(--border); }
+.scene-settings legend { padding: 0; font-size: 20px; font-weight: 800; }
+.background-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.background-choices button { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; min-height: 78px; padding: 8px; border: 2px solid var(--border); border-radius: 16px; background: #fffdf6; font-size: 18px; font-weight: 750; }
+.background-choices button span { font-size: 28px; }
+.background-choices button[aria-pressed="true"] { border-color: var(--green); background: #eef3e3; }
+.scene-setting-status { display: grid; gap: 6px; margin: 16px 0 12px; font-size: 16px; line-height: 1.6; }
+.scene-setting-status strong { color: var(--green); font-size: 18px; }
+.scene-setting-status span, .location-controls p { color: var(--muted); }
+.location-button { width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid #c8d6b7; border-radius: 14px; background: #f3f6ec; color: var(--green); font-size: 17px; font-weight: 750; }
+.location-button:disabled { opacity: .65; cursor: wait; }
+.location-controls .text-button { display: flex; width: 100%; font-size: 16px; }
+.location-controls p { margin: 10px 0 0; font-size: 14px; line-height: 1.65; }
 .finish-point { position: absolute; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 2px; transform: translateX(-50%); padding-top: 12px; }
 .destination-icon { font-size: 64px; line-height: 1.12; }
 .endpoint-label { padding: 3px 10px; border-radius: 12px; font-size: 19px; font-weight: 800; background: #fffdf0e6; white-space: nowrap; }

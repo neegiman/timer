@@ -8,10 +8,12 @@ import { TimeSelector } from './TimeSelector';
 import { VisualTimer } from './timer/VisualTimer';
 import { StarReward } from './reward/StarReward';
 import { Modal } from './Modal';
+import { SceneSettings } from './SceneSettings';
 import { useVisualTimer } from '@/hooks/useVisualTimer';
 import { useAnimationController } from '@/hooks/useAnimationController';
 import { useAudio } from '@/hooks/useAudio';
 import { useFullscreen } from '@/hooks/useFullscreen';
+import { useDayNight } from '@/hooks/useDayNight';
 import { isBoolean, isCharacterId, isDuration, useLocalStorage } from '@/hooks/useLocalStorage';
 import { getCharacter } from '@/lib/characters';
 import { defaultPromise, isPromise } from '@/lib/promises';
@@ -43,6 +45,7 @@ export function TimerApp() {
   const [modal, setModal] = useState<ModalName>(null);
   const ready = promise.activity.trim().length > 0;
   const timer = useVisualTimer(ready);
+  const appearance = useDayNight(timer.now);
   const animation = useAnimationController(timer);
   const { unlock, playOnce, stop, needsGesture } = useAudio(soundEnabled);
   const sessionId = timer.session?.id;
@@ -95,7 +98,7 @@ export function TimerApp() {
 
   const changeStep = (step: number) => { setSetupStep(step); scrollTop('smooth'); };
 
-  return <div ref={appShell} className="app-shell" data-status={timer.status} data-display={display.mode}>
+  return <div ref={appShell} className="app-shell" data-status={timer.status} data-display={display.mode} data-theme={appearance.theme}>
     <header className="site-header">
       <div className="brand"><span aria-hidden="true">🌱</span><span>약속 여행</span></div>
       <div className="header-actions"><span className="stars-pill" aria-label={`오늘의 별 ${todayCount}개`}><Star size={24} fill="currentColor" /><strong data-testid="star-count">{todayCount}</strong></span>
@@ -110,7 +113,7 @@ export function TimerApp() {
       {active ? <div className="timer-layout">
           <VisualTimer character={character} promise={timer.session?.promise ?? promise} progress={timer.progress}
             remaining={timer.remaining} minutes={timer.session ? timer.session.durationMs / 60_000 : minutes}
-            status={timer.status} showNumericTime={showNumericTime} animation={animation.state} input={animation.input} sampledAt={animation.sampledAt} />
+            status={timer.status} showNumericTime={showNumericTime} animation={animation.state} input={animation.input} sampledAt={animation.sampledAt} theme={appearance.theme} />
           {completed ? <StarReward awarded={awarded} count={todayCount} onAward={claimStar} onNewJourney={exit} /> : null}
         </div> : <section className="setup-card" aria-label="여행 준비">
           <nav className="setup-steps" aria-label="준비 단계">
@@ -150,6 +153,7 @@ export function TimerApp() {
         {display.mode === 'window' ? <Maximize size={24} /> : <Minimize size={24} />}{display.label}
       </button>
       <p className="display-mode-hint">{display.mode === 'expanded' || !display.nativeSupported ? '페이지 안에서 여행 화면을 크게 보여요.' : '여행 화면을 크게 보여요. 끝낼 때는 부모 메뉴나 Esc를 눌러요.'}</p>
+      <SceneSettings appearance={appearance} />
       <div className="setting-row"><div><strong>소리 ON / OFF</strong><p>출발과 도착을 다정한 소리로 알려요.</p></div><button className={`toggle ${soundEnabled ? 'on' : ''}`} role="switch" aria-checked={soundEnabled} aria-label="소리 ON/OFF" onClick={toggleSound}><span /></button></div>
       <div className="setting-row"><div><strong>숫자로 남은 시간 표시</strong><p>꺼도 위쪽 여행 길로 시간을 알 수 있어요.</p></div><button className={`toggle ${showNumericTime ? 'on' : ''}`} role="switch" aria-checked={showNumericTime} aria-label="숫자로 남은 시간 표시" onClick={() => setShowNumericTime(!showNumericTime)}><span /></button></div>
       <button className="text-button" onClick={() => setModal('help')}><CircleHelp size={20} /> 사용 안내</button>
