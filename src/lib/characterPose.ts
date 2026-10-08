@@ -1,4 +1,5 @@
 import type { CharacterAction } from '@/types/animation';
+import { SUPPORT_FRACTION } from './journey';
 
 export type JointName = 'front-thigh' | 'front-shin' | 'front-foot' | 'back-thigh' | 'back-shin' | 'back-foot' |
   'front-arm' | 'front-elbow' | 'back-arm' | 'back-elbow' | 'head' | 'ear-front' | 'ear-back' | 'tail' | 'wheel-front' | 'wheel-back' | 'wheel-middle';
@@ -19,25 +20,26 @@ export function solveLeg(x: number, y: number, toeAngle = 0) {
 /** Contact -> planted support -> toe-off -> lifted swing -> next contact. */
 export function footTarget(cycle: number, stride: number, lift: number, ground = 37) {
   const phase = ((cycle % 1) + 1) % 1;
-  if (phase < .58) {
-    const support = phase / .58;
+  if (phase < SUPPORT_FRACTION) {
+    const support = phase / SUPPORT_FRACTION;
     const toeOff = Math.max(0, (support - .8) / .2);
     return { x: stride * (1 - 2 * support), y: ground - 2 * toeOff, toe: -12 * toeOff, planted: toeOff === 0 };
   }
-  const swing = (phase - .58) / .42;
+  const swing = (phase - SUPPORT_FRACTION) / (1 - SUPPORT_FRACTION);
   const smooth = swing * swing * (3 - 2 * swing);
   return { x: stride * (2 * smooth - 1), y: ground - lift * Math.sin(Math.PI * swing), toe: -10 * Math.sin(Math.PI * swing), planted: false };
 }
 
 /** Pure pose clock. Pause/restore use the SAME actionElapsedMs; there is no independent gait timer. */
-export function getCharacterPose(action: CharacterAction, elapsedMs: number, cycleMs: number, reducedMotion = false): CharacterPose {
+export function getCharacterPose(action: CharacterAction, elapsedMs: number, cycleMs: number, reducedMotion = false, bodyOffset = 0): CharacterPose {
   const time = Math.max(0, elapsedMs);
   const cycle = time / Math.max(100, cycleMs);
   const walking = ['walk', 'fastWalk', 'run', 'sprint'].includes(action) && !reducedMotion;
   const running = action === 'run' || action === 'sprint';
   const stride = action === 'sprint' ? 20 : running ? 18 : action === 'fastWalk' ? 15 : 12;
   const lift = running ? 17 : 8;
-  const ground = running ? 33 : 37;
+  // Counter the tiny body bob so a support foot remains on the exact ground baseline.
+  const ground = (running ? 33 : 37) - bodyOffset;
   let front = walking ? footTarget(cycle, stride, lift, ground) : { x: 3, y: 37, toe: 0 };
   let back = walking ? footTarget(cycle + .5, stride, lift, ground) : { x: -4, y: 37, toe: 0 };
   const swing = Math.cos(cycle * Math.PI * 2);

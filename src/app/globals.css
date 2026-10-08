@@ -80,30 +80,13 @@ h1:focus { outline: none; }
 .back-button { width: 64px; }
 .timer-layout { max-width: 840px; margin: 0 auto; }
 .stage-message { text-align: center; font-size: clamp(28px, 6vw, 38px); line-height: 1.35; letter-spacing: -.035em; margin: 4px 0 20px; font-weight: 800; }
-.arrived-message { color: var(--green); }
-.journey-scene { --route-width: 44px; position: relative; isolation: isolate; width: 100%; height: clamp(400px, 54svh, 620px); border-radius: 32px; overflow: hidden; }
-.scene-backdrop, .route-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.journey-scene { position: relative; isolation: isolate; width: 100%; height: clamp(300px, 45svh, 460px); border-radius: 32px; overflow: hidden; }
+.scene-backdrop { position: absolute; inset: 0; width: 100%; height: 100%; }
 .scene-backdrop { object-fit: fill; }
-.route-svg { z-index: 1; }
-.route-svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.route-shadow { stroke: #8a7949; stroke-width: calc(var(--route-width) + 16px); opacity: .14; }
-.route-verge { stroke: #b6c996; stroke-width: calc(var(--route-width) + 14px); }
-.route-edge { stroke: #ccb58b; stroke-width: calc(var(--route-width) + 5px); }
-.route-surface { stroke: #fff5df; stroke-width: var(--route-width); }
-.route-traveled { stroke: #d0dfb3; stroke-width: calc(var(--route-width) - 4px); }
-.route-stone { fill: #dcc69d; stroke: #fff4da; stroke-width: 1px; }
-.route-stone[data-walked="true"] { fill: #7c9b6d; stroke: #dbe7c2; }
-.route-finish-line { position: absolute; z-index: 2; left: var(--finish-x); top: var(--finish-y); width: 12px; height: var(--route-width); transform: translate(-50%, -50%); border: 2px solid #fff9e9; border-radius: 3px; background: conic-gradient(#719064 25%, #fff9e9 0 50%, #719064 0 75%, #fff9e9 0); background-size: 10px 10px; }
-.journey-scene[data-route-layout="compact"] { --route-width: 36px; }
-.start-point, .finish-point { position: absolute; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 2px; transform: translateX(-50%); padding-top: 12px; }
-.start-point { left: var(--start-x); top: var(--start-y); }
-.finish-point { left: var(--finish-x); top: var(--finish-y); }
-.house { font-size: 42px; line-height: 1.1; }
-.journey-scene[data-route-layout="compact"] .start-point { flex-direction: row; gap: 6px; padding-top: 8px; }
-.journey-scene[data-route-layout="compact"] .house { font-size: 30px; }
+.finish-point { position: absolute; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 2px; transform: translateX(-50%); padding-top: 12px; }
 .destination-icon { font-size: 64px; line-height: 1.12; }
 .endpoint-label { padding: 3px 10px; border-radius: 12px; font-size: 19px; font-weight: 800; background: #fffdf0e6; white-space: nowrap; }
-.finish-flag { position: absolute; z-index: 3; left: calc(var(--finish-x) - 2px); top: calc(var(--finish-y) - 47px); width: 36px; height: 48px; overflow: visible; pointer-events: none; }
+.finish-flag { position: absolute; z-index: 3; left: -2px; top: -47px; width: 36px; height: 48px; overflow: visible; pointer-events: none; }
 .flag-cloth { transform-box: view-box; transform-origin: 2px 6px; }
 .character-wrapper { position: absolute; left: 0; top: 0; z-index: 4; width: min(clamp(104px, 27vw, 124px), var(--actor-limit, 124px)); --jump-height: 24px; }
 .character-anchor { position: relative; width: 100%; transform: translate(-50%, -94%); }
@@ -112,32 +95,17 @@ h1:focus { outline: none; }
 .traveler-body img, .traveler-body .character-artwork { display: block; width: 100%; height: 100%; object-fit: contain; overflow: visible; }
 .character-shadow { position: absolute; left: 17%; bottom: 2px; width: 66%; height: 11px; border-radius: 50%; background: #64865333; }
 .sprite-motion, .sprite-motion * { animation-play-state: paused !important; }
-.sprite-motion[data-action="idle"] { animation: idleBody 3s ease-in-out infinite; }
-.sprite-motion[data-action="appear"] { animation: appearBody 1.8s ease-out both; }
-.sprite-motion[data-action="start"] { animation: startBody 1s cubic-bezier(.22,.61,.36,1) both; }
-.sprite-motion[data-action="walk"] { animation: walkBody var(--cycle) linear infinite; }
-.sprite-motion[data-action="fastWalk"] { animation: fastWalkBody var(--cycle) linear infinite; }
-.sprite-motion[data-action="run"] { animation: runBody var(--cycle) linear infinite; }
-.sprite-motion[data-action="sprint"] { animation: sprintBody var(--cycle) linear infinite; }
-.sprite-motion[data-action="look"] { animation: lookBody .7s ease-in-out both; }
-.sprite-motion[data-action="hop"] { animation: hopBody .8s ease-in-out both; }
-.sprite-motion[data-action="brake"] { animation: brakeBody .45s ease-out both; }
-.sprite-motion[data-action="turn"] { animation: turnBody .5s ease-in-out both; }
+.sprite-motion[data-action="idle"] { animation: none; }
+.sprite-motion[data-action="walk"] { animation: none; }
 .sprite-motion[data-action="jump"] { animation: jumpBody .6s linear both; }
 .sprite-motion[data-action="land"] { animation: landBody .4s ease-out both; }
 .sprite-motion[data-action="celebrate"] { animation: happyBody 2.6s ease-in-out infinite; }
 .character-eyes { transform-box: fill-box; transform-origin: center; animation: eyeBlink 4.2s linear infinite; }
 .sprite-motion .rocket-flame { transform-box: fill-box; transform-origin: 50% 0; animation: flamePulse .4s ease-in-out infinite; }
-[data-profile="vehicle"] { --bounce: 1.5px !important; --lean: 2deg !important; }
-[data-profile="flying"] .sprite-motion:is([data-action="walk"],[data-action="fastWalk"]) { animation-name: flyingBody; }
 .parallax-layer { position: absolute; inset: 0; pointer-events: none; }
 .parallax-layer svg { display: block; width: 100%; height: 100%; }
 .tree-layer { z-index: 1; }
-.grass-layer { z-index: 2; }
-.cloud-drift { animation: cloudDrift 100s linear infinite alternate; }
 .is-paused *, [data-suspended="true"] * { animation-play-state: paused !important; }
-.journey-scene:is([data-phase="COUNTDOWN"],[data-phase="SPRINT"]) .cloud-drift { animation-play-state: paused; }
-.finish-recognized .endpoint-label { background: #fff6c9; box-shadow: 0 0 0 3px #e4bd6840; }
 .flag-wave { animation: flag-wave .7s ease-in-out infinite; }
 .arrival-sparkles { position: absolute; inset: 0; z-index: 5; pointer-events: none; color: #ce922d; }
 .arrival-sparkles span { position: absolute; font-size: 32px; animation: celebrateStar .8s ease-out 2 both; }
@@ -183,26 +151,13 @@ h1:focus { outline: none; }
 .confirmation-actions button { flex: 1; white-space: nowrap; font-size: 19px; padding: 16px; }
 .secondary-button { background: #eeeee3; }
 @keyframes idleBody { 0%, 100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(-1px) scaleY(.99); } }
-@keyframes appearBody { 0% { opacity: 0; transform: scale(.8) translateY(10px); } 25% { opacity: 1; transform: scale(1.04) translateY(-5px); } 45% { transform: scale(.98) translateY(0); } 70%, 100% { opacity: 1; transform: scale(1); } }
-@keyframes startBody { 0% { transform: translateX(0); } 35% { transform: translateX(-4px) scaleY(.9) rotate(-4deg); } 70% { transform: translateX(3px) translateY(-5px) scaleY(1.04) rotate(4deg); } 100% { transform: translateX(0) scaleY(1); } }
-@keyframes walkBody { 0%, 100% { transform: translateY(0) rotate(-2deg) scaleY(1); } 25%, 75% { transform: translateY(calc(var(--bounce) * -1)) rotate(0) scaleY(.97); } 50% { transform: translateY(0) rotate(2deg) scaleY(1); } }
-@keyframes fastWalkBody { 0%, 100% { transform: rotate(var(--lean)); } 50% { transform: translateY(calc(var(--bounce) * -1.3)) rotate(calc(var(--lean) + 2deg)) scaleY(.97); } }
-@keyframes runBody { 0%, 100% { transform: rotate(var(--lean)) scaleY(.97); } 50% { transform: translateY(calc(var(--bounce) * -2)) rotate(calc(var(--lean) + 2deg)) scaleY(1.02); } }
-@keyframes sprintBody { 0%, 100% { transform: rotate(calc(var(--lean) + 3deg)) scaleY(.95); } 50% { transform: translateY(calc(var(--bounce) * -2.5)) rotate(calc(var(--lean) + 5deg)) scaleY(1.04); } }
-@keyframes lookBody { 0%, 100% { transform: rotate(0); } 40% { transform: rotate(3deg) scaleY(1.02); } }
-@keyframes hopBody { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: scaleY(.91); } 45% { transform: translateY(-12px) scaleY(1.04); } 80% { transform: translateY(0) scaleY(.94); } }
-@keyframes brakeBody { 0% { transform: rotate(8deg); } 45% { transform: translateX(3px) rotate(-7deg) scaleY(.92); } 100% { transform: translateX(0) rotate(0) scaleY(1); } }
-@keyframes turnBody { 0% { transform: rotate(0) scaleX(1); } 50% { transform: rotate(-4deg) scaleX(.88); } 100% { transform: rotate(0) scaleX(1); } }
 @keyframes jumpBody { 0% { transform: scaleY(1); } 15% { transform: scaleY(.86) scaleX(1.06); } 42%, 55% { transform: translateY(calc(var(--jump-height) * -1)) scaleY(1.06); } 100% { transform: translateY(0) scaleY(1); } }
 @keyframes landBody { 0%, 100% { transform: scaleY(1); } 25% { transform: scaleY(.85) scaleX(1.07); } 65% { transform: scaleY(1.08) scaleX(.97); } }
 @keyframes happyBody { 0%, 100% { transform: rotate(-1deg); } 50% { transform: translateY(-2px) rotate(1deg); } }
-@keyframes flyingBody { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-5px) rotate(2deg); } }
 @keyframes flamePulse { 0%, 100% { transform: scaleY(.85); } 50% { transform: scaleY(1.08); } }
 @keyframes eyeBlink { 0%, 44%, 48%, 100% { transform: scaleY(1); } 46% { transform: scaleY(.1); } }
-@keyframes cloudDrift { from { transform: translateX(-8px); } to { transform: translateX(18px); } }
 @keyframes celebrateStar { 0% { opacity: 0; transform: scale(.5) translateY(6px); } 30% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: translateY(-15px) scale(.8); } }
 @keyframes flag-wave { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(12deg); } }
-@keyframes sparkle { 0%, 100% { transform: scale(.7); opacity: .25; } 50% { transform: scale(1.15); opacity: 1; } }
 @media (max-width: 440px) {
   .site-header { margin-bottom: 18px; }
   .brand { font-size: 19px; gap: 4px; }
@@ -236,15 +191,7 @@ h1:focus { outline: none; }
   .character-choice > span:last-child { font-size: 20px; letter-spacing: -.03em; white-space: nowrap; }
 }
 .journey-card { position: relative; }
-.countdown-overlay { position: absolute; z-index: 6; top: 32%; left: 7%; display: grid; place-items: center; width: 90px; height: 100px; color: #8f642b; pointer-events: none; }
-.countdown-overlay span { display: block; font-size: 76px; font-weight: 900; line-height: 1; animation: countdownPop .65s ease-out both; text-shadow: 0 3px 0 #fff9ed; }
 .midpoint-sparkle { position: absolute; z-index: 5; font-size: 44px; color: #c49440; animation: celebrateStar 1.3s ease-out both; }
-.brake-dust { position: absolute; left: calc(var(--finish-x) + 2%); top: var(--finish-y); z-index: 3; display: flex; gap: 4px; }
-.brake-dust i { width: 7px; height: 7px; border-radius: 50%; background: #ceb98588; animation: dustFade .45s ease-out both; }
-.brake-dust i:nth-child(2) { animation-delay: .05s; }
-.brake-dust i:nth-child(3) { animation-delay: .1s; }
-@keyframes countdownPop { 0% { transform: scale(.8); opacity: .3; } 35% { transform: scale(1.25); opacity: 1; } 75% { transform: scale(1); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
-@keyframes dustFade { from { opacity: .6; transform: translate(0,0) scale(.5); } to { opacity: 0; transform: translate(-8px,-6px) scale(1.2); } }
 @media (max-height: 500px) and (orientation: landscape) {
   .character-wrapper { width: min(90px, var(--actor-limit, 90px)); }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .site-header { margin-bottom: 12px; }
@@ -253,14 +200,89 @@ h1:focus { outline: none; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { grid-column: 1; grid-row: 2; height: max(180px, calc(100dvh - 135px)); }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-message { grid-column: 2; grid-row: 2; padding: 0 6px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) { flex-direction: column; gap: 6px; font-size: 22px; }
-  .app-shell:is([data-display="native"], [data-display="expanded"]) .countdown-overlay { top: 38%; left: 5%; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .destination-icon { font-size: 44px; }
-  .app-shell:is([data-display="native"], [data-display="expanded"]) .house { font-size: 32px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .endpoint-label { font-size: 17px; padding: 2px 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .parallax-layer, .cloud-drift { transform: none !important; }
-  .brake-dust, .midpoint-sparkle { display: none; }
+  .parallax-layer { transform: none !important; }
+  .midpoint-sparkle { display: none; }
   .arrival-sparkles span { animation: none; opacity: .5; }
   .arrival-sparkles span:nth-child(n+3) { display: none; }
+}
+
+/* Fixed character, scrolling meadow and an independent elapsed-time journey indicator. */
+.journey-overview { text-align: center; margin-bottom: 18px; }
+.app-shell { --recovery-height: 0px; }
+.app-shell:has(.audio-recovery) { --recovery-height: 68px; }
+.stage-message { display: grid; align-items: center; min-height: 2.7em; max-width: 760px; margin: 0 auto; font-size: clamp(24px, 5.5vw, 34px); line-height: 1.35; word-break: keep-all; }
+.stage-message > span { grid-area: 1 / 1; }
+.message-reserve { visibility: hidden; pointer-events: none; user-select: none; }
+.stage-halfway, .stage-near, .stage-arrived { color: var(--green); }
+.message-past { animation: messageOut .22s ease-in both; }
+.message-entering { animation: messageIn .28s .18s ease-out both; }
+.numeric-time { margin-top: 8px; font-size: 23px; }
+.journey-progress { max-width: 650px; margin: 14px auto 0; padding: 0 20px; }
+.progress-endpoints { display: flex; justify-content: space-between; gap: 12px; font-size: 18px; font-weight: 800; margin-bottom: 24px; }
+.progress-track { position: relative; height: 12px; margin: 0 14px 14px; border-radius: 20px; background: #e7dfcb; }
+.progress-fill { position: absolute; inset: 0; border-radius: inherit; transform-origin: left; background: #a9c980; }
+.progress-marker { position: absolute; left: 0; top: 50%; width: 0; height: 0; will-change: transform; }
+.progress-marker > span { display: block; position: absolute; left: -22px; top: -40px; width: 44px; height: 48px; border-radius: 18px; background: #fffaf0; box-shadow: 0 2px 0 #b7cba4; }
+.progress-marker .character-icon { width: 36px !important; height: 47px !important; }
+.parallax-layer { width: calc(100% + 480px); overflow: hidden; will-change: transform; pointer-events: none; }
+.parallax-layer svg { width: 1920px; }
+.cloud-layer { z-index: 0; }
+.hill-layer, .tree-layer { z-index: 1; }
+.ground-layer { z-index: 2; }
+.character-wrapper { width: min(clamp(124px, 32vw, 168px), var(--actor-limit, 168px)); }
+.character-anchor { transform: translate(-50%, calc(-1 * var(--foot-origin))); }
+.traveler-body { transform-origin: 50% var(--foot-origin); }
+.sprite-motion:is([data-action="walk"], [data-action="idle"]) { animation: none; }
+.character-shadow { top: calc(var(--foot-origin) - 3px); bottom: auto; height: 7px; }
+.journey-goal { position: absolute; z-index: 3; left: 0; top: 0; opacity: 0; pointer-events: none; will-change: transform; }
+.goal-line { position: absolute; left: -6px; top: -10px; width: 12px; height: 24px; border: 2px solid #fff9e9; border-radius: 3px; background: conic-gradient(#719064 25%, #fff9e9 0 50%, #719064 0 75%, #fff9e9 0); background-size: 10px 10px; }
+.journey-goal .finish-point { left: 0; top: 0; padding-top: 7px; flex-direction: row; gap: 4px; }
+.journey-goal .destination-icon { font-size: 28px; }
+.journey-goal .endpoint-label { font-size: 17px; padding: 2px 8px; }
+.goal-arrived .endpoint-label { background: #fff4c7; }
+.paused-sign { position: absolute; z-index: 6; top: 18px; left: 50%; transform: translateX(-50%); padding: 10px 18px; border-radius: 18px; background: #fffaf0ed; color: var(--green); font-size: 24px; font-weight: 800; white-space: nowrap; }
+.midpoint-sparkle { left: 50%; top: 35%; font-size: 36px; animation: celebrateStar 1.6s ease-out both; }
+.arrival-sparkles span { animation: celebrateStar 1.6s ease-out both; }
+.arrival-sparkles span:nth-child(1) { left: 24%; top: 20%; }
+.arrival-sparkles span:nth-child(2) { left: 55%; top: 13%; }
+.arrival-sparkles span:nth-child(3) { left: 70%; top: 33%; }
+.arrival-sparkles span:nth-child(4) { left: 19%; top: 48%; }
+.arrival-sparkles span:nth-child(5) { left: 38%; top: 8%; }
+.arrival-sparkles span:nth-child(6) { left: 62%; top: 54%; }
+.arrival-sparkles i { position: absolute; left: 26%; top: 25%; width: 6px; height: 10px; border-radius: 2px; background: #df956d; animation: confettiFall 1.7s ease-out both; }
+.arrival-sparkles i:nth-of-type(2) { left: 38%; top: 12%; background: #a6bb83; animation-delay: .12s; }
+.arrival-sparkles i:nth-of-type(3) { left: 51%; top: 23%; background: #d8b55f; animation-delay: .24s; }
+.arrival-sparkles i:nth-of-type(4) { left: 63%; top: 15%; background: #a1bec0; animation-delay: .18s; }
+.arrival-sparkles i:nth-of-type(5) { left: 72%; top: 30%; background: #dba995; animation-delay: .3s; }
+.arrival-sparkles i:nth-of-type(6) { left: 17%; top: 38%; background: #a7bd88; animation-delay: .2s; }
+@keyframes messageOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes messageIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes confettiFall { 0% { opacity: 0; transform: translateY(-10px) rotate(0); } 20% { opacity: .8; } 100% { opacity: 0; transform: translateY(80px) rotate(120deg); } }
+.app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { height: clamp(260px, calc(100dvh - 360px - var(--recovery-height)), 650px); }
+.app-shell:is([data-display="native"], [data-display="expanded"])[data-status="completed"] .journey-scene { height: clamp(260px, calc(100dvh - 500px - var(--recovery-height)), 500px); }
+@media (max-height: 500px) and (orientation: landscape) {
+  .character-wrapper { width: min(100px, var(--actor-limit, 100px)); }
+  .app-shell:has(.audio-recovery) { --recovery-height: 52px; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .audio-recovery { min-height: 44px; padding: 8px 14px; margin-bottom: 8px; font-size: 18px; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-card { grid-template-columns: minmax(0, 1fr) minmax(220px, 30%); gap: 8px 12px; align-items: center; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-overview { grid-column: 2; grid-row: 1; align-self: center; margin-bottom: 0; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .stage-message { min-height: 2.7em; font-size: 20px; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene,
+  .app-shell:is([data-display="native"], [data-display="expanded"])[data-status="completed"] .journey-scene { grid-column: 1; grid-row: 1 / span 2; height: max(190px, calc(100dvh - 110px - var(--recovery-height))); }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-message { grid-column: 2; grid-row: 2; padding: 0; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) { flex-direction: row; gap: 6px; font-size: 18px; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) span { font-size: 28px; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .numeric-time { font-size: 20px; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .progress-endpoints { font-size: 16px; margin-bottom: 20px; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .progress-track { margin-bottom: 0; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-progress { padding: 0 2px; margin-top: 10px; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-goal .destination-icon { font-size: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .message-past, .arrival-sparkles i { display: none; }
+  .message-entering { opacity: 1; }
 }

@@ -17,7 +17,15 @@ async function assertInsideTrack(page: Page) {
   expect(body!.y).toBeGreaterThanOrEqual(scene!.y);
   expect(body!.x + body!.width).toBeLessThanOrEqual(scene!.x + scene!.width);
   expect(body!.y + body!.height).toBeLessThanOrEqual(scene!.y + scene!.height);
-  for (const selector of ['.start-point', '.finish-point']) {
+  const display = await page.locator('.app-shell').getAttribute('data-display');
+  const viewport = page.viewportSize()!;
+  if (display !== 'window' && viewport.width > viewport.height && viewport.height <= 500) {
+    expect(scene!.y + scene!.height).toBeLessThanOrEqual(viewport.height);
+    const promise = await page.locator('.journey-message').boundingBox();
+    expect(promise!.y + promise!.height).toBeLessThanOrEqual(viewport.height);
+  }
+  for (const selector of ['.finish-point']) {
+    if (await page.locator(selector).count() === 0) continue;
     const endpoint = await page.locator(selector).boundingBox();
     expect(endpoint!.x).toBeGreaterThanOrEqual(scene!.x);
     expect(endpoint!.x + endpoint!.width).toBeLessThanOrEqual(scene!.x + scene!.width);
@@ -82,7 +90,6 @@ test('unsupported fullscreen uses a large page view, including landscape finish 
     await assertInsideTrack(page);
     if (testInfo.project.name === 'chromium') await page.screenshot({ path: `artifacts/road-expanded-${width}.png`, fullPage: true });
   }
-  await expect(page.locator('.journey-scene')).toHaveAttribute('data-route-layout', 'compact');
   const scene = await page.locator('.journey-scene').boundingBox();
   expect(scene!.y + scene!.height).toBeLessThanOrEqual(390);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).targetTimestamp)).toBe(deadline);
@@ -97,8 +104,8 @@ test('unsupported fullscreen uses a large page view, including landscape finish 
   await page.getByRole('button', { name: '큰 화면 보기', exact: true }).click();
   await page.clock.setSystemTime(new Date(deadline + 1));
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
-  await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'CROSS_FINISH');
-  await page.clock.runFor(1900);
+  await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'SETTLE');
+  await page.clock.runFor(650);
   await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'JUMP');
   await assertInsideTrack(page);
   await page.clock.fastForward(6000);
@@ -131,7 +138,7 @@ test('a rejected browser fullscreen request falls back without an unhandled erro
   expect(errors).toEqual([]);
 });
 
-test('the road, remaining stepping stones and feet share geometry after resizing', async ({ page }, testInfo) => {
+test('fixed character, separate progress and destination stay aligned after resizing', async ({ page }, testInfo) => {
   await page.clock.install();
   await page.goto('./');
   await start(page);
@@ -142,23 +149,24 @@ test('the road, remaining stepping stones and feet share geometry after resizing
       await page.setViewportSize({ width, height });
       await page.clock.runFor(64);
       const readGeometry = () => page.evaluate(() => {
-        const path = document.querySelector<SVGPathElement>('[data-route-path]')!;
+        const scene = document.querySelector<HTMLElement>('.journey-scene')!;
         const actor = document.querySelector<HTMLElement>('.character-wrapper')!;
-        const position = Number(actor.dataset.position);
-        const point = path.getPointAtLength(position * path.getTotalLength()).matrixTransform(path.getScreenCTM()!);
         const box = actor.getBoundingClientRect();
-        const traveled = document.querySelector('[data-traveled]')!;
-        const stones = [...document.querySelectorAll<SVGElement>('[data-stone-position]')];
-        return { error: Math.hypot(point.x - box.x, point.y - box.y), position, dash: Number(traveled.getAttribute('stroke-dasharray')!.split(' ')[0]),
-          remaining: stones.filter((stone) => stone.dataset.walked !== 'true').length,
-          expectedRemaining: stones.filter((stone) => Number(stone.dataset.stonePosition) > position).length,
-          surface: getComputedStyle(path).stroke };
+        const scenery = scene.getBoundingClientRect();
+        const progress = Number(document.querySelector<HTMLElement>('.progress-marker')!.dataset.progress);
+        const track = document.querySelector('.progress-track')!.getBoundingClientRect();
+        const marker = document.querySelector('.progress-marker')!.getBoundingClientRect();
+        const goal = document.querySelector<HTMLElement>('.journey-goal');
+        return { error: Math.hypot(box.x - scenery.x - scenery.width * .42, box.y - scenery.y - scenery.height * .78),
+          progress, markerError: Math.abs(marker.x - track.x - track.width * progress),
+          goalDistance: goal ? Number(goal.dataset.distance) : null };
       });
-      await expect.poll(async () => { await page.clock.runFor(32); return (await readGeometry()).error; }, { message: `feet leave the road at ${width}px` }).toBeLessThan(1);
+      await expect.poll(async () => { await page.clock.runFor(32); return (await readGeometry()).error; }, { message: `actor leaves its anchor at ${width}px` }).toBeLessThan(1);
       const geometry = await readGeometry();
-      expect(geometry.dash).toBeCloseTo(geometry.position, 5);
-      expect(geometry.remaining).toBe(geometry.expectedRemaining);
-      expect(geometry.surface).not.toBe('none');
+      expect(geometry.markerError).toBeLessThan(.1);
+      expect(geometry.progress).toBeCloseTo(elapsed / 600_000, 2);
+      if (elapsed >= 540_000) expect(geometry.goalDistance).toBeGreaterThan(0);
+      else expect(geometry.goalDistance).toBeNull();
       await assertInsideTrack(page);
       if (testInfo.project.name === 'chromium' && width === 390) await page.screenshot({ path: `artifacts/road-mobile-${elapsed}.png`, fullPage: true });
     }

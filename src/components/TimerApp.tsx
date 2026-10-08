@@ -151,12 +151,12 @@ export function TimerApp() {
       </button>
       <p className="display-mode-hint">{display.mode === 'expanded' || !display.nativeSupported ? '페이지 안에서 여행 화면을 크게 보여요.' : '여행 화면을 크게 보여요. 끝낼 때는 부모 메뉴나 Esc를 눌러요.'}</p>
       <div className="setting-row"><div><strong>소리 ON / OFF</strong><p>출발과 도착을 다정한 소리로 알려요.</p></div><button className={`toggle ${soundEnabled ? 'on' : ''}`} role="switch" aria-checked={soundEnabled} aria-label="소리 ON/OFF" onClick={toggleSound}><span /></button></div>
-      <div className="setting-row"><div><strong>숫자로 남은 시간 표시</strong><p>꺼도 친구의 위치로 시간을 알 수 있어요.</p></div><button className={`toggle ${showNumericTime ? 'on' : ''}`} role="switch" aria-checked={showNumericTime} aria-label="숫자로 남은 시간 표시" onClick={() => setShowNumericTime(!showNumericTime)}><span /></button></div>
+      <div className="setting-row"><div><strong>숫자로 남은 시간 표시</strong><p>꺼도 위쪽 여행 길로 시간을 알 수 있어요.</p></div><button className={`toggle ${showNumericTime ? 'on' : ''}`} role="switch" aria-checked={showNumericTime} aria-label="숫자로 남은 시간 표시" onClick={() => setShowNumericTime(!showNumericTime)}><span /></button></div>
       <button className="text-button" onClick={() => setModal('help')}><CircleHelp size={20} /> 사용 안내</button>
     </Modal> : null}
     {modal === 'help' ? <Modal title="작은 기다림을 여행으로" onClose={() => setModal(null)}>
       <div className="help-steps"><p><span>1</span> 아이와 함께 지킬 약속을 골라요.</p><p><span>2</span> 기다릴 시간과 여행 친구를 정해요.</p><p><span>3</span> 친구가 도착하면 약속한 일을 해요.</p><p><span><Star size={14} /></span> 약속을 지켰다면 별 하나를 선물해요!</p></div>
-      <p className="modal-description">화면이 잠기거나 다른 탭에 가도 시간은 흘러요. 돌아오면 친구가 알맞은 위치에서 기다리고 있어요.</p>
+      <p className="modal-description">화면이 잠기거나 다른 탭에 가도 시간은 흘러요. 돌아오면 위쪽 작은 친구가 알맞은 위치에 있어요.</p>
       <p className="modal-description">휴대폰에서는 출발!을 누를 때 소리를 준비해요. 화면 잠금 중에는 소리가 늦어질 수 있어요. 돌아온 뒤 소리 안내를 누르면 다시 켤 수 있어요.</p>
       <p className="settings-note">⭐ 별은 칭찬이에요. 오늘의 별은 매일 새로 시작해요.</p>
     </Modal> : null}

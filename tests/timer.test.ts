@@ -2,7 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { advanceSession, ARRIVAL_DURATION_MS, awardStar, formatRemaining, isSession, pauseSession, resumeSession, timerProgress } from '../src/lib/timer';
 import { assetPath } from '../src/lib/assetPath';
-import { journeyPoint } from '../src/lib/journey';
 import type { TimerSession } from '../src/types/timer';
 
 const start = 1_000_000;
@@ -14,8 +13,6 @@ test('position represents timestamp progress at 0/25/50/75/100%', () => {
   for (const progress of [0, .25, .5, .75, 1]) assert.equal(timerProgress(session, start + progress * 600_000).progress, progress);
   assert.equal(timerProgress(session, start + 900_000).remaining, 0);
   assert.equal(timerProgress(session, start - 1000).progress, 0);
-  assert.deepEqual(journeyPoint(0), { x: 200, y: 450 });
-  assert.deepEqual(journeyPoint(1), { x: 600, y: 240 });
 });
 test('pause freezes remaining time and resume excludes paused duration', () => {
   const paused = pauseSession(session, start + 120_000);

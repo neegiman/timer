@@ -20,8 +20,8 @@ test('articulated feet really exchange steps, and pause/refresh preserve their j
   await page.setViewportSize({ width: 390, height: 844 });
   await begin(page);
   const clock = await page.locator('.character-wrapper').evaluate((element) => parseFloat(getComputedStyle(element).getPropertyValue('--cycle')));
-  // walk-1 starts at 2800ms. Sample opposite contact poses in a complete cycle.
-  await seek(page, 2800 + clock * 48);
+  // The gentle 800ms start consumes 400ms of gait time; sample opposite contact poses.
+  await seek(page, 400 + clock * 48);
   const feet = () => page.locator('.traveler-body .character-artwork').evaluate((svg) => {
     const root = svg as SVGSVGElement;
     const inverse = root.getScreenCTM()!.inverse();
@@ -33,7 +33,7 @@ test('articulated feet really exchange steps, and pause/refresh preserve their j
   const first = await feet();
   expect(first[0]).toBeGreaterThan(first[1]);
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/full-body-walk-a.png', fullPage: true });
-  await seek(page, 2800 + clock * 48.5);
+  await seek(page, 400 + clock * 48.5);
   const second = await feet();
   expect(second[0]).toBeLessThan(second[1]);
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/full-body-walk-b.png', fullPage: true });
@@ -80,7 +80,7 @@ test('all eight friends share their full artwork in selection and journey, inclu
     const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
     for (const [width, height] of [[320, 740], [844, 390]]) {
       await page.setViewportSize({ width, height });
-      await page.clock.setSystemTime(arrival + 1900);
+      await page.clock.setSystemTime(arrival + 650);
       await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
       await page.clock.runFor(32);
       const scene = (await page.locator('.journey-scene').boundingBox())!;
@@ -103,8 +103,60 @@ test('reduced motion disables joint loops while the timestamp journey still adva
   await begin(page);
   await seek(page, 40_000);
   const frozen = await joints(page);
-  const position = await page.locator('.character-wrapper').getAttribute('data-position');
+  const position = await page.locator('.progress-marker').getAttribute('data-progress');
   await page.clock.runFor(500);
   expect(await joints(page)).toEqual(frozen);
-  expect(await page.locator('.character-wrapper').getAttribute('data-position')).not.toBe(position);
+  expect(await page.locator('.progress-marker').getAttribute('data-progress')).not.toBe(position);
+  await expect(page.locator('[data-layer="ground"]')).toHaveAttribute('data-scroll-offset', '0.000000');
+});
+
+test('planted SVG feet stay on the ground and move with it without sliding', async ({ page }) => {
+  await page.clock.install();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await begin(page);
+  // Freeze between reads too: otherwise slower WebKit calls can advance into toe-off.
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+  await seek(page, 400 + 780 * 48.1);
+  const contact = () => page.evaluate(() => {
+    const scene = document.querySelector<HTMLElement>('.journey-scene')!;
+    const foot = scene.querySelector<SVGGElement>('[data-joint="front-foot"]')!;
+    const sole = new DOMPoint(0, 7).matrixTransform(foot.getScreenCTM()!);
+    return { x: sole.x, y: sole.y, groundY: scene.getBoundingClientRect().y + Number(scene.dataset.groundY), distance: Number(scene.dataset.groundDistance) };
+  });
+  const first = await contact();
+  await page.clock.runFor(100);
+  const second = await contact();
+  // SVG layout rounds subpixels differently across browser engines; remain well below one pixel.
+  expect(Math.abs(first.y - first.groundY)).toBeLessThan(.25);
+  expect(Math.abs(second.y - second.groundY)).toBeLessThan(.25);
+  expect(Math.abs(second.x - first.x + second.distance - first.distance)).toBeLessThan(.25);
+  expect(second.distance).toBeGreaterThan(first.distance);
+});
+
+test('repeated scenery tiles match at their seams and keep slower parallax layers', async ({ page }) => {
+  await page.clock.install();
+  await begin(page);
+  await seek(page, 40_000);
+  const layers = await page.locator('[data-layer]').evaluateAll(async (elements) => {
+    return Promise.all(elements.map(async (element) => {
+      const svg = element.querySelector('svg')!;
+      const standalone = svg.cloneNode(true) as SVGSVGElement;
+      standalone.setAttribute('width', '1920'); standalone.setAttribute('height', '600');
+      const image = new Image();
+      const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(standalone)], { type: 'image/svg+xml' }));
+      try {
+        image.src = url;
+        await image.decode();
+        const canvas = document.createElement('canvas'); canvas.width = 1920; canvas.height = 600;
+        const context = canvas.getContext('2d')!; context.drawImage(image, 0, 0, 1920, 600);
+        const left = context.getImageData(479, 0, 1, 600).data;
+        const right = context.getImageData(480, 0, 1, 600).data;
+        let difference = 0;
+        for (let index = 0; index < left.length; index++) difference = Math.max(difference, Math.abs(left[index] - right[index]));
+        return { name: (element as HTMLElement).dataset.layer, rate: Number((element as HTMLElement).dataset.rate), difference };
+      } finally { URL.revokeObjectURL(url); }
+    }));
+  });
+  expect(layers.map((layer) => layer.rate)).toEqual([.08, .2, .65, 1]);
+  for (const layer of layers) expect(layer.difference, `${layer.name} has a visible tile seam`).toBeLessThanOrEqual(5);
 });

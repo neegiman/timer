@@ -39,8 +39,18 @@ export function useVisualTimer(ready: boolean) {
     return id;
   };
 
-  const pause = () => setSession((current) => current ? pauseSession(current, Date.now()) : null);
-  const resume = () => setSession((current) => current ? resumeSession(current, Date.now()) : null);
+  const pause = () => {
+    const timestamp = Date.now();
+    setNow(timestamp);
+    setSession((current) => current ? pauseSession(current, timestamp) : null);
+  };
+  const resume = () => {
+    // Sample the clock in the same update as the shifted deadline. Otherwise the
+    // old UI sample can briefly send the journey back across a message milestone.
+    const timestamp = Date.now();
+    setNow(timestamp);
+    setSession((current) => current ? resumeSession(current, timestamp) : null);
+  };
   const exit = () => setSession(null);
   const restart = () => session ? start(session.durationMs / 60_000, session.characterId, session.promise) : null;
   const values = session ? timerProgress(session, now || session.startTimestamp) : { remaining: 0, progress: 0 };

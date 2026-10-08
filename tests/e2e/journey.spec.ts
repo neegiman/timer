@@ -25,7 +25,7 @@ test('10-minute bath journey, arrival sound once, reward persists across refresh
   const supportsAudio = await page.evaluate(() => typeof AudioContext !== 'undefined');
   if (!supportsAudio) testInfo.annotations.push({ type: 'audio-environment-limitation', description: 'This Windows WebKit build has no Web Audio API. Audio source/decode assertions run in Chromium; real iPhone Safari remains a manual device check.' });
   await start(page);
-  await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'INTRO');
+  await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'WALK');
   await page.clock.fastForward(2000);
   if (supportsAudio) {
     await expect.poll(() => page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/start.mp3')).length)).toBe(1);
@@ -35,7 +35,7 @@ test('10-minute bath journey, arrival sound once, reward persists across refresh
   await page.clock.fastForward(148_000);
   await expect.poll(async () => Number(await page.getByTestId('traveler').getAttribute('data-progress'))).toBeGreaterThanOrEqual(.25);
   await page.clock.fastForward(427_000);
-  await expect(page.getByRole('status')).toHaveText('거의 다 왔어요!');
+  await expect(page.getByTestId('journey-message')).toHaveText('거의 다 왔어! 이제 곧 약속 시간이야! 🏁');
   await page.clock.fastForward(25_000);
   await expect(page.locator('[data-status="arriving"]')).toBeVisible();
   await expect(page.getByTestId('traveler')).toHaveAttribute('data-progress', '1');
@@ -174,6 +174,7 @@ test('320px, phone, tablet and landscape have no horizontal overflow', async ({ 
   }
   await page.clock.fastForward(603_000);
   await page.clock.fastForward(6000);
+  await expect(page.getByTestId('journey-message')).toHaveCSS('opacity', '1');
   for (const [width, height] of [[320, 740], [390, 844], [844, 390]]) {
     await page.setViewportSize({ width, height });
     await page.clock.runFor(32);
@@ -181,7 +182,7 @@ test('320px, phone, tablet and landscape have no horizontal overflow', async ({ 
     const traveler = await page.getByTestId('traveler').boundingBox();
     expect(traveler!.y).toBeGreaterThanOrEqual(scene!.y);
     expect(traveler!.x + traveler!.width).toBeLessThanOrEqual(scene!.x + scene!.width);
-    expect(traveler!.x + traveler!.width / 2).toBeGreaterThan(scene!.x + scene!.width * .75);
+    expect(Math.abs(traveler!.x + traveler!.width / 2 - (scene!.x + scene!.width * .42))).toBeLessThan(.25);
     if (testInfo.project.name === 'chromium' && width === 390) await page.screenshot({ path: 'artifacts/arrival-mobile.png', fullPage: true });
   }
 });
