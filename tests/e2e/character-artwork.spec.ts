@@ -25,9 +25,11 @@ test('articulated feet really exchange steps, and pause/refresh preserve their j
   const feet = () => page.locator('.traveler-body .character-artwork').evaluate((svg) => {
     const root = svg as SVGSVGElement;
     const inverse = root.getScreenCTM()!.inverse();
-    return [['nearForeAnkle', 110], ['nearHindAnkle', 48]].map(([name, hipX]) => {
+    return ['nearForeAnkle', 'nearHindAnkle'].map((name) => {
       const foot = root.querySelector<SVGGElement>(`[data-animal-joint="${name}"]`)!;
-      return new DOMPoint(0, 0).matrixTransform(foot.getScreenCTM()!).matrixTransform(inverse).x - Number(hipX);
+      const hip = foot.closest<SVGGElement>('[data-paw]')!;
+      const origin = new DOMPoint(0, 0).matrixTransform(hip.getScreenCTM()!).matrixTransform(inverse);
+      return new DOMPoint(0, 0).matrixTransform(foot.getScreenCTM()!).matrixTransform(inverse).x - origin.x;
     });
   });
   const first = await feet();

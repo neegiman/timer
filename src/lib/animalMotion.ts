@@ -1,3 +1,5 @@
+import { rabbitAnatomy } from './rabbitAnatomy';
+
 /** Animal-specific motion studies. Illustrative gait rigs, not measured motion-capture data. */
 export type AnimalId = 'rabbit' | 'bear' | 'dog' | 'cat' | 'chick';
 export type PawName = 'nearHind' | 'farHind' | 'nearFore' | 'farFore';
@@ -14,7 +16,7 @@ const fore = (x: number, y = 163): PawRig => ({ x, y, upper: 22, lower: 24, bend
 export const animalProfiles: Record<AnimalId, AnimalProfile> = {
   rabbit: { name: '토끼', cycleMs: 1250, support: .38, travel: 30, lift: 12,
     phases: { nearHind: .54, farHind: .54, nearFore: 0, farFore: .06 },
-    paws: { nearHind: hind(48), farHind: hind(65), nearFore: fore(110), farFore: fore(127) },
+    paws: rabbitAnatomy.paws,
     description: '두 뒷발로 밀고, 앞발부터 내려와요. 귀는 조금 늦게 따라 움직여요.',
     fur: '#ede1cd', light: '#fff8ec', shade: '#d6c4ad', line: '#a48d71' },
   bear: { name: '곰', cycleMs: 1800, support: .72, travel: 60, lift: 6,

@@ -6,6 +6,7 @@ import { animalActionPose, settleAnimalPose } from '../src/lib/animalActionPose'
 import { animalIds, animalPose } from '../src/lib/animalMotion';
 import { motionProfile } from '../src/lib/motionProfiles';
 import { locomotionTime } from '../src/lib/journey';
+import { rabbitAnatomy } from '../src/lib/rabbitAnatomy';
 
 test('five ImageGen atlases retain transparent alpha and lossless visible fur pixels', async () => {
   for (const id of animalIds) {
@@ -34,6 +35,25 @@ test('each painted atlas contains twelve distinct nonempty, in-bounds parts', as
       let painted = 0;
       for (let row = y; row < y + height; row++) for (let column = x; column < x + width; column++) if (pixels[(row * atlas.width + column) * 4 + 3] >= 160) painted++;
       assert.ok(painted > 500, `${id}/${name} is empty`);
+    }
+  }
+});
+
+test('rabbit torso and head preserve the painted proportions and cover all four limb sockets', async () => {
+  const atlas = atlases.rabbit;
+  const { data, info } = await sharp('public/characters/raster-v1/rabbit.webp').ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  for (const name of ['torso', 'head', 'earNear', 'earFar'] as const) {
+    const bounds = rabbitAnatomy[name], source = atlas.parts[name];
+    assert.ok(Math.abs(bounds.width / bounds.height / (source[2] / source[3]) - 1) < .001, `${name} is stretched`);
+  }
+  const torso = rabbitAnatomy.torso, [left, top, width, height] = atlas.parts.torso;
+  for (const [name, rig] of Object.entries(rabbitAnatomy.paws)) {
+    // A root must be buried in opaque fur, including a 3-unit overlap around it.
+    // This catches the former far foreleg placed beyond the chest, not just IK accuracy.
+    for (const dx of [-3, 0, 3]) for (const dy of [-3, 0, 3]) {
+      const x = Math.round(left + (rig.x + dx - torso.x) / torso.width * width);
+      const y = Math.round(top + (rig.y + dy - torso.y) / torso.height * height);
+      assert.ok(data[(y * info.width + x) * 4 + 3] >= 240, `${name} root is outside the painted body at ${dx},${dy}`);
     }
   }
 });
