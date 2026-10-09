@@ -56,9 +56,10 @@ h1:focus { outline: none; }
 .painted-animal-thumbnail { position: relative; }
 .painted-thumbnail-crop { position: absolute; display: block; background-repeat: no-repeat; }
 .character-choice img { display: block; width: 72px; height: 72px; object-fit: contain; }
-.time-choice { flex-direction: row; align-items: baseline; gap: 3px; min-height: 126px; }
+.time-choice { flex-direction: row; align-items: center; justify-content: center; gap: 0; min-height: 126px; appearance: none; -webkit-appearance: none; }
+.time-choice-label { display: inline-flex; align-items: baseline; justify-content: center; gap: 3px; line-height: 1; }
 .time-choice strong { font-size: 42px; }
-.time-choice > span { font-size: 22px; }
+.time-choice-unit { font-size: 22px; }
 .custom-time { align-items: center; font-size: 22px; line-height: 1.5; }
 .custom-choice { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; min-height: 52px; margin-top: 16px; padding: 12px; border: 2px dashed #dddcca; border-radius: 18px; background: white; font-size: 19px; font-weight: 650; }
 .custom-choice.active { background: var(--orange-light); border-color: #e99156; }
@@ -288,7 +289,7 @@ h1:focus { outline: none; }
   .character-choice img { width: 64px; height: 64px; }
   .character-choice .character-icon { width: 62px !important; height: 82px !important; }
   .time-choice strong { font-size: 36px; }
-  .time-choice > span { font-size: 20px; }
+  .time-choice-unit { font-size: 20px; }
   .promise-choice-icon { width: 72px; height: 72px; }
   .custom-choice { font-size: 18px; }
   .setup-actions { margin-top: 20px; }

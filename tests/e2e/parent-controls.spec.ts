@@ -105,3 +105,38 @@ test('countdown digits and their caption each sit at the horizontal center', asy
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
 });
+
+test('time selection labels stay horizontally and vertically centered on phone and desktop', async ({ page, isMobile }, testInfo) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: '시간', exact: true }).click();
+  const assertCentered = async () => {
+    const offsets = await page.locator('.time-choice').evaluateAll((buttons) => buttons.map((button) => {
+      const range = document.createRange(); range.selectNodeContents(button);
+      const text = range.getBoundingClientRect(), box = button.getBoundingClientRect();
+      return { name: button.textContent, x: text.x + text.width / 2 - box.x - box.width / 2,
+        y: text.y + text.height / 2 - box.y - box.height / 2 };
+    }));
+    for (const label of offsets) {
+      expect(Math.abs(label.x), `${label.name} horizontal center`).toBeLessThan(2);
+      expect(Math.abs(label.y), `${label.name} vertical center`).toBeLessThan(2);
+    }
+  };
+  for (const [width, height] of [[320, 740], [390, 844], [430, 932], [844, 390], [1280, 900]]) {
+    await page.setViewportSize({ width, height });
+    await assertCentered();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const name of ['5 분', '30 분', '직접 설정']) {
+    const button = page.getByRole('button', { name, exact: true });
+    if (isMobile) await button.tap(); else await button.click();
+    await expect(button).toHaveAttribute('aria-pressed', 'true');
+    await assertCentered();
+  }
+  await page.getByRole('spinbutton', { name: '직접 설정 시간' }).fill('120');
+  await assertCentered();
+  await page.getByRole('button', { name: '다음', exact: true }).click();
+  await page.getByRole('button', { name: '시간', exact: true }).click();
+  await assertCentered();
+  await page.screenshot({ path: `artifacts/time-selection-centered-${testInfo.project.name}.png`, fullPage: true });
+});

@@ -10,10 +10,10 @@ export function TimeSelector({ minutes, onChange, customMode, onCustomMode }: {
       {durations.map((duration) => <button type="button" key={duration}
         className={`choice time-choice ${!customMode && minutes === duration ? 'selected' : ''}`}
         aria-pressed={!customMode && minutes === duration} onClick={() => { onCustomMode(false); onChange(duration); }}>
-        <strong>{duration}</strong><span>분</span>
+        <span className="time-choice-label"><strong>{duration}</strong><span className="time-choice-unit">분</span></span>
       </button>)}
       <button type="button" className={`choice time-choice custom-time ${customMode ? 'selected' : ''}`}
-        aria-pressed={customMode} onClick={() => onCustomMode(true)}>직접<br />설정</button>
+        aria-pressed={customMode} onClick={() => onCustomMode(true)}><span>직접<br />설정</span></button>
     </div>
     {customMode ? <div className="duration-input">
       <button type="button" className="icon-button" aria-label="1분 줄이기" disabled={minutes <= 1} onClick={() => onChange(Math.max(1, minutes - 1))}><Minus size={18} /></button>
