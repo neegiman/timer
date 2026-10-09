@@ -111,12 +111,11 @@ export function TimerApp() {
     <p className="sr-only" aria-live="polite">{display.announcement}</p>
 
     <main>
-      {active && needsGesture && soundEnabled ? <button className="audio-recovery" onClick={unlock}><Volume2 size={22} /> 소리 켜기</button> : null}
-
       {active ? <div className="timer-layout">
           <VisualTimer character={character} promise={timer.session?.promise ?? promise} progress={timer.progress}
             remaining={timer.remaining} minutes={timer.session ? timer.session.durationMs / 60_000 : minutes}
             status={timer.status} showNumericTime={showNumericTime} animation={animation.state} input={animation.input} sampledAt={animation.sampledAt} theme={appearance.theme} season={appearance.season} />
+          {needsGesture && soundEnabled ? <button className="audio-recovery" onClick={unlock}><Volume2 size={22} /> 소리 켜기</button> : null}
           {completed ? <StarReward awarded={awarded} count={todayCount} onAward={claimStar} onNewJourney={exit} /> : null}
         </div> : <section className="setup-card" aria-label="여행 준비">
           <nav className="setup-steps" aria-label="준비 단계">

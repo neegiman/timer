@@ -23,8 +23,6 @@ h1:focus { outline: none; }
 .app-shell:is([data-display="native"], [data-display="expanded"]) { max-width: none; background: var(--paper); }
 .app-shell[data-display="expanded"] { position: fixed; inset: 0; z-index: 20; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .app-shell:is([data-display="native"], [data-display="expanded"]) .timer-layout { max-width: 1200px; }
-.app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { height: clamp(320px, calc(100dvh - 280px), 760px); }
-.app-shell:is([data-display="native"], [data-display="expanded"])[data-status="completed"] .journey-scene { height: clamp(320px, calc(100dvh - 430px), 550px); }
 .site-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 24px; }
 .brand { display: flex; align-items: center; gap: 7px; font-size: 23px; font-weight: 800; white-space: nowrap; }
 .story-icon { display: inline-block; flex: none; object-fit: contain; vertical-align: middle; }
@@ -325,8 +323,6 @@ h1:focus { outline: none; }
 
 /* Fixed character, scrolling meadow and an independent elapsed-time journey indicator. */
 .journey-overview { text-align: center; margin-bottom: 18px; }
-.app-shell { --recovery-height: 0px; }
-.app-shell:has(.audio-recovery) { --recovery-height: 68px; }
 .stage-message { display: grid; align-items: center; min-height: 2.7em; max-width: 760px; margin: 0 auto; font-size: clamp(24px, 5.5vw, 34px); line-height: 1.35; word-break: keep-all; }
 .stage-message > span { grid-area: 1 / 1; }
 .message-reserve { visibility: hidden; pointer-events: none; user-select: none; }
@@ -390,17 +386,15 @@ h1:focus { outline: none; }
 .arrival-sparkles i:nth-of-type(6) { left: 17%; top: 38%; background: #a7bd88; animation-delay: .2s; }
 @keyframes messageIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes confettiFall { 0% { opacity: 0; transform: translateY(-10px) rotate(0); } 20% { opacity: .8; } 100% { opacity: 0; transform: translateY(80px) rotate(120deg); } }
-.app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { height: clamp(260px, calc(100dvh - 360px - var(--recovery-height)), 650px); }
-.app-shell:is([data-display="native"], [data-display="expanded"])[data-status="completed"] .journey-scene { height: clamp(260px, calc(100dvh - 500px - var(--recovery-height)), 500px); }
+/* Keep the ground and finish line in the same place through arrival and rewards. */
+.app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { height: clamp(260px, calc(100dvh - 360px), 650px); }
 @media (max-height: 500px) and (orientation: landscape) {
   .character-wrapper { width: min(100px, var(--actor-limit, 100px)); }
-  .app-shell:has(.audio-recovery) { --recovery-height: 52px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .audio-recovery { min-height: 44px; padding: 8px 14px; margin-bottom: 8px; font-size: 18px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-card { grid-template-columns: minmax(0, 1fr) minmax(220px, 30%); gap: 8px 12px; align-items: center; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-overview { grid-column: 2; grid-row: 1; align-self: center; margin-bottom: 0; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .stage-message { min-height: 2.7em; font-size: 20px; }
-  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene,
-  .app-shell:is([data-display="native"], [data-display="expanded"])[data-status="completed"] .journey-scene { grid-column: 1; grid-row: 1 / span 2; height: max(190px, calc(100dvh - 110px - var(--recovery-height))); }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { grid-column: 1; grid-row: 1 / span 2; height: max(190px, calc(100dvh - 110px)); }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-message { grid-column: 2; grid-row: 2; padding: 0; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) { flex-direction: row; gap: 6px; font-size: 18px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) span { font-size: 28px; }
