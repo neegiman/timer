@@ -4,6 +4,8 @@ import { clamp, finishApproach, groundDistance, locomotionTime, loopOffset, smoo
 import { getCharacterPose, type JointName } from '@/lib/characterPose';
 import { motionProfile } from '@/lib/motionProfiles';
 import type { AnimationInput, AnimationState } from '@/types/animation';
+import { animalActionPose, isAnimalId, settleAnimalPose } from '@/lib/animalActionPose';
+import { animalProfiles, type AnimalJoint } from '@/lib/animalMotion';
 
 /** A shared elapsed-time clock drives feet, ground and scenery. Frame updates never enter React state. */
 export function useJourneyRenderer(input: AnimationInput, state: AnimationState, sampledAt: number, characterId: string) {
@@ -17,6 +19,8 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
   const snapshot = useRef({ input, sampledAt });
   const animations = useRef<Animation[]>([]);
   const joints = useRef<{ element: SVGGElement; name: JointName }[]>([]);
+  const animalJoints = useRef<{ element: SVGGElement; name: AnimalJoint }[]>([]);
+  const animalBody = useRef<SVGGElement | null>(null);
 
   useEffect(() => { snapshot.current = { input, sampledAt }; }, [input, sampledAt]);
   useEffect(() => {
@@ -24,6 +28,9 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     for (const animation of animations.current) animation.pause();
     joints.current = Array.from(body.current?.querySelectorAll<SVGGElement>('[data-joint]') ?? [])
       .map((element) => ({ element, name: element.dataset.joint as JointName }));
+    animalJoints.current = Array.from(body.current?.querySelectorAll<SVGGElement>('[data-animal-joint]') ?? [])
+      .map((element) => ({ element, name: element.dataset.animalJoint as AnimalJoint }));
+    animalBody.current = body.current?.querySelector<SVGGElement>('[data-animal-body]') ?? null;
   }, [state.phaseKey, state.characterAction, characterId]);
 
   useEffect(() => {
@@ -32,6 +39,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     const sprite = body.current;
     if (!element || !actor || !sprite) return;
     const profile = motionProfile(characterId);
+    const animalId = isAnimalId(characterId) ? characterId : null;
     const layers = Array.from(element.querySelectorAll<HTMLElement>('[data-layer]'));
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
@@ -52,12 +60,12 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       const elapsed = clamp(next.totalDuration - next.remainingTime, 0, next.totalDuration);
       const gait = locomotionTime(elapsed, next.totalDuration);
       const scale = actorWidth / 160;
-      const distance = groundDistance(gait, profile.cycleMs) * scale;
+      const distance = (animalId ? gait / profile.cycleMs * animalProfiles[animalId].travel : groundDistance(gait, profile.cycleMs)) * scale;
       const x = width * .42;
       const groundY = height * .78;
       const reduced = preference.matches;
       const walking = pose.phase === 'WALK';
-      const bob = walking && !reduced && profile.kind === 'animal' ? Math.sin(gait / profile.cycleMs * Math.PI * 4) * .55 : 0;
+      const bob = 0;
 
       actor.style.transform = `translate3d(${x}px, ${groundY}px, 0)`;
       actor.dataset.position = '.42';
@@ -77,8 +85,14 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       const animationTime = walking ? gait : pose.actionElapsedMs;
       for (const animation of animations.current) animation.currentTime = animationTime;
 
+      if (animalId) {
+        const animal = pose.phase === 'SETTLE' ? settleAnimalPose(animalId, gait, pose.actionElapsedMs, reduced)
+          : animalActionPose(animalId, pose.characterAction, animationTime, reduced);
+        animalBody.current?.setAttribute('transform', `translate(0 ${animal.bob.toFixed(5)})`);
+        for (const joint of animalJoints.current) joint.element.setAttribute('transform', `rotate(${animal.joints[joint.name].toFixed(5)})`);
+      }
       let jointPose = getCharacterPose(pose.characterAction, animationTime, profile.cycleMs, reduced, bob);
-      if (pose.phase === 'SETTLE') {
+      if (!animalId && pose.phase === 'SETTLE') {
         const last = getCharacterPose('walk', gait, profile.cycleMs, reduced);
         const blend = smoothstep(pose.actionElapsedMs / 350);
         for (const name of Object.keys(jointPose) as JointName[]) jointPose[name] = last[name] + (jointPose[name] - last[name]) * blend;
@@ -94,7 +108,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         layer.style.transform = `translate3d(${-offset}px, 0, 0)`;
         layer.dataset.scrollOffset = offset.toFixed(6);
       }
-      const destination = finishApproach(pose.position, width, x, actorWidth);
+      const destination = finishApproach(pose.position, width, x, actorWidth, animalId ? .46 : .35);
       if (goal.current) {
         goal.current.style.transform = `translate3d(${destination.x}px, ${groundY}px, 0)`;
         goal.current.style.opacity = String(destination.opacity);

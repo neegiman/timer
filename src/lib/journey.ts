@@ -17,9 +17,9 @@ export const groundDistance = (gaitMs: number, cycleMs: number, stride = WALK_ST
 export const loopOffset = (distance: number, period = TILE_WIDTH) => ((distance % period) + period) % period;
 
 /** A single, non-repeating destination approaches in the final 10%; it cannot arrive early. */
-export function finishApproach(progress: number, width: number, actorX: number, actorWidth: number) {
+export function finishApproach(progress: number, width: number, actorX: number, actorWidth: number, frontRatio = .35) {
   const fraction = progress >= 1 ? 1 : clamp((progress - .9) / .1);
-  const target = actorX + actorWidth * .35;
+  const target = actorX + actorWidth * frontRatio;
   const start = Math.max(target + 32, width - 42);
   return { x: fraction === 1 ? target : start + (target - start) * fraction, opacity: progress < .9 ? 0 : .2 + .8 * clamp(fraction / .2), target };
 }

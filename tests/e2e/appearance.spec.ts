@@ -79,7 +79,7 @@ test('manual day/night persists, retains gait position and fits phone/landscape 
   await menu(page);
   await page.getByRole('button', { name: '일시정지', exact: true }).click();
   const readPose = () => page.locator('.character-wrapper').evaluate((actor) => ({ transform: (actor as HTMLElement).style.transform,
-    joints: [...actor.querySelectorAll('[data-joint]')].map((joint) => joint.getAttribute('transform')), gait: (actor as HTMLElement).dataset.gaitTime }));
+    joints: [...actor.querySelectorAll('[data-joint], [data-animal-joint]')].map((joint) => joint.getAttribute('transform')), gait: (actor as HTMLElement).dataset.gaitTime }));
   const pose = await readPose();
   const ground = Number(await page.locator('.ground-layer').getAttribute('data-scroll-offset'));
   for (const theme of ['night', 'day'] as const) {

@@ -105,7 +105,7 @@ test('pause freezes joints, scroll, miniature and time; refresh/resume preserve 
   const pose = () => page.evaluate(() => ({
     gait: document.querySelector('.character-wrapper')!.getAttribute('data-gait-time'),
     body: document.querySelector('.traveler-body')!.getAttribute('style'),
-    joints: [...document.querySelectorAll('.traveler-body [data-joint]')].map((element) => element.getAttribute('transform')),
+    joints: [...document.querySelectorAll('.traveler-body [data-joint], .traveler-body [data-animal-joint]')].map((element) => element.getAttribute('transform')),
     layers: [...document.querySelectorAll('[data-layer]')].map((element) => element.getAttribute('style')),
     miniature: document.querySelector('.progress-marker')!.getAttribute('style'),
     number: document.querySelector('[data-testid="countdown"]')!.textContent,
@@ -164,6 +164,10 @@ test('1 and 120 minute journeys stay calm in their last ten seconds and stop at 
     const duration = minutes * 60_000;
     for (const remaining of [9900, 2900, 100]) {
       await seek(page, duration - remaining);
+      // The test clock is frozen. Wait for React to commit the new sample
+      // (and mount the final-10% goal), then let its first rAF paint run.
+      await expect(page.getByTestId('traveler')).toHaveAttribute('data-progress', String((duration - remaining) / duration));
+      await page.clock.runFor(16);
       await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'WALK');
       if (remaining <= duration * .1) {
         expect(Number(await page.getByTestId('journey-goal').getAttribute('data-distance'))).toBeGreaterThan(0);

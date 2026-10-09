@@ -75,7 +75,10 @@ test('planted animal paws have no sliding and motion reduction leaves a still st
   expect(Math.abs(second.y - second.baseline)).toBeLessThan(.3);
   expect(Math.abs(second.x - first.x + second.ground - first.ground)).toBeLessThan(.3);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.clock.runFor(32);
+  await expect.poll(async () => {
+    await page.clock.runFor(32);
+    return page.locator('[data-animal-scene="dog"]').getAttribute('data-ground-distance');
+  }).toBe('0.00000');
   const before = await page.locator('[data-animal-joint="nearHindHip"]').first().getAttribute('transform');
   await page.clock.runFor(2000);
   expect(await page.locator('[data-animal-joint="nearHindHip"]').first().getAttribute('transform')).toBe(before);
@@ -85,6 +88,7 @@ test('planted animal paws have no sliding and motion reduction leaves a still st
 test('all four mammal legs have painted limbs and separately visible front and rear paws', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./animal-preview/');
+  await page.getByRole('button', { name: '보행 구조 보기', exact: true }).click();
   await expect(page.locator('[data-animal-scene]')).toHaveCount(5);
   const results = await page.locator('.natural-animal-artwork:not([data-animal="chick"])').evaluateAll(async (elements) => {
     const scale = 4;

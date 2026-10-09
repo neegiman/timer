@@ -13,7 +13,7 @@ async function seek(page: Page, elapsed: number) {
   await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
   await page.clock.runFor(32);
 }
-const joints = (page: Page) => page.locator('.traveler-body [data-joint]').evaluateAll((elements) => elements.map((element) => element.getAttribute('transform')));
+const joints = (page: Page) => page.locator('.traveler-body [data-joint], .traveler-body [data-animal-joint]').evaluateAll((elements) => elements.map((element) => element.getAttribute('transform')));
 
 test('articulated feet really exchange steps, and pause/refresh preserve their joint clock', async ({ page }, testInfo) => {
   await page.clock.install();
@@ -25,9 +25,9 @@ test('articulated feet really exchange steps, and pause/refresh preserve their j
   const feet = () => page.locator('.traveler-body .character-artwork').evaluate((svg) => {
     const root = svg as SVGSVGElement;
     const inverse = root.getScreenCTM()!.inverse();
-    return ['front-foot', 'back-foot'].map((name) => {
-      const foot = root.querySelector<SVGGElement>(`[data-joint="${name}"]`)!;
-      return new DOMPoint(0, 0).matrixTransform(foot.getScreenCTM()!).matrixTransform(inverse).x;
+    return [['nearForeAnkle', 110], ['nearHindAnkle', 48]].map(([name, hipX]) => {
+      const foot = root.querySelector<SVGGElement>(`[data-animal-joint="${name}"]`)!;
+      return new DOMPoint(0, 0).matrixTransform(foot.getScreenCTM()!).matrixTransform(inverse).x - Number(hipX);
     });
   });
   const first = await feet();
@@ -69,7 +69,8 @@ test('all eight friends share their full artwork in selection and journey, inclu
     await expect(page.locator('.traveler-body .character-emoji')).toHaveCount(0);
     if (['rabbit', 'bear', 'dog', 'cat', 'chick'].includes(id)) {
       await expect(artwork.locator('[data-body]')).toHaveCount(1);
-      expect(await artwork.locator('[data-joint]').count()).toBeGreaterThanOrEqual(12);
+      expect(await artwork.locator('[data-animal-joint]').count()).toBeGreaterThanOrEqual(id === 'chick' ? 9 : 16);
+      await expect(artwork).toHaveAttribute('data-artwork', 'imagegen');
     } else if (id !== 'rocket') {
       const wheel = artwork.locator('[data-joint="wheel-front"]');
       const before = await wheel.getAttribute('transform');
@@ -84,7 +85,21 @@ test('all eight friends share their full artwork in selection and journey, inclu
       await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
       await page.clock.runFor(32);
       const scene = (await page.locator('.journey-scene').boundingBox())!;
-      const shape = (await artwork.locator(':scope > g').last().boundingBox())!;
+      const shape = await artwork.evaluate((element) => {
+        const parts = [...element.querySelectorAll<SVGSVGElement>('[data-painted-part]')];
+        if (!parts.length) {
+          const bounds = element.querySelector(':scope > g')!.getBoundingClientRect();
+          return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
+        }
+        // An atlas image's unclipped bbox is larger than its rendered part. Check each clipping viewport.
+        const points = parts.flatMap((part) => {
+          const x = part.x.baseVal.value, y = part.y.baseVal.value, width = part.width.baseVal.value, height = part.height.baseVal.value;
+          const matrix = (part.parentElement as unknown as SVGGraphicsElement).getScreenCTM()!;
+          return [[x, y], [x + width, y], [x, y + height], [x + width, y + height]].map(([px, py]) => new DOMPoint(px, py).matrixTransform(matrix));
+        });
+        const left = Math.min(...points.map((point) => point.x)), top = Math.min(...points.map((point) => point.y));
+        return { x: left, y: top, width: Math.max(...points.map((point) => point.x)) - left, height: Math.max(...points.map((point) => point.y)) - top };
+      });
       expect(shape.x, `${name} clips on left`).toBeGreaterThanOrEqual(scene.x);
       expect(shape.x + shape.width, `${name} clips on right`).toBeLessThanOrEqual(scene.x + scene.width);
       expect(shape.y, `${name} clips above scene`).toBeGreaterThanOrEqual(scene.y);
@@ -113,14 +128,14 @@ test('reduced motion disables joint loops while the timestamp journey still adva
 test('planted SVG feet stay on the ground and move with it without sliding', async ({ page }) => {
   await page.clock.install();
   await page.setViewportSize({ width: 390, height: 844 });
-  await begin(page);
+  await begin(page, '강아지');
   // Freeze between reads too: otherwise slower WebKit calls can advance into toe-off.
   await page.clock.pauseAt(new Date(Date.now() + 1000));
-  await seek(page, 400 + 780 * 48.1);
+  await seek(page, 400 + 1440 * 48.1);
   const contact = () => page.evaluate(() => {
     const scene = document.querySelector<HTMLElement>('.journey-scene')!;
-    const foot = scene.querySelector<SVGGElement>('[data-joint="front-foot"]')!;
-    const sole = new DOMPoint(0, 7).matrixTransform(foot.getScreenCTM()!);
+    const foot = scene.querySelector<SVGGElement>('[data-animal-joint="nearHindAnkle"]')!;
+    const sole = new DOMPoint(0, 4).matrixTransform(foot.getScreenCTM()!);
     return { x: sole.x, y: sole.y, groundY: scene.getBoundingClientRect().y + Number(scene.dataset.groundY), distance: Number(scene.dataset.groundDistance) };
   });
   const first = await contact();

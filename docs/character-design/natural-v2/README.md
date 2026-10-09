@@ -2,6 +2,8 @@
 
 미리보기: https://neegiman.github.io/timer/animal-preview/
 
+현재 버전은 [원화 애니메이션 적용 기록](../raster-v1/README.md)을 참고하세요. 아래 문서는 초기 외형·보행 구조 시안의 기록이며, 이후 ImageGen 원화를 실제 타이머에 적용했습니다. 미리보기의 **보행 구조 보기**로 이 SVG 시안을 계속 비교할 수 있습니다.
+
 ## 결과물과 범위
 
 - `public/images/animal-design/natural-concepts-v2.png`: ImageGen 기본 내장 도구로 생성한 토끼·곰·강아지·고양이·병아리 그림 시안. 사진이나 검증된 스프라이트 시트가 아닙니다.

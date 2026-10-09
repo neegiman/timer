@@ -6,11 +6,13 @@ import { useEffect, useRef, useState } from 'react';
 import { NaturalAnimalArtwork } from './NaturalAnimalArtwork';
 import { animalIds, animalPose, animalProfiles, type AnimalId, type AnimalJoint } from '@/lib/animalMotion';
 import { assetPath } from '@/lib/assetPath';
+import { PaintedAnimalArtwork } from './PaintedAnimalArtwork';
 
 export function AnimalMotionPreview() {
   const gallery = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(true);
   const [slow, setSlow] = useState(false);
+  const [painted, setPainted] = useState(true);
   const clock = useRef({ accumulated: 0, startedAt: 0, rate: 1, playing: true });
   const sampleClock = () => {
     const current = clock.current;
@@ -66,7 +68,7 @@ export function AnimalMotionPreview() {
     document.addEventListener('visibilitychange', onVisibility);
     draw();
     return () => { cancelAnimationFrame(frame); observer.disconnect(); document.removeEventListener('visibilitychange', onVisibility); };
-  }, []);
+  }, [painted]);
 
   return <main className="animal-preview">
     <Link href="/" className="animal-back-link">← 약속 여행으로 돌아가기</Link>
@@ -74,7 +76,7 @@ export function AnimalMotionPreview() {
       <h1>동물처럼 움직여요</h1><p>낮은 몸통, 네 발, 귀와 꼬리까지.<br />동물마다 다른 움직임을 만나보세요.</p></header>
     <figure className="animal-concept-board">
       <Image src={assetPath('/images/animal-design/natural-concepts-v2.png')} width={1536} height={1024} priority alt="자연스러운 동물 체형을 반영한 토끼, 곰, 강아지, 고양이, 병아리의 그림책 디자인 시안" />
-      <figcaption>ImageGen으로 만든 그림 시안이에요. 아래 움직임은 보행을 확인하는 SVG 시안이며, 원화의 털 표현은 아직 적용하지 않았어요.</figcaption>
+      <figcaption>ImageGen으로 만든 외형 시안이에요. 아래에서는 털 질감을 살린 원화와 보행 구조를 바꿔가며 비교할 수 있어요. 원화의 움직임은 실제 타이머에도 적용했어요.</figcaption>
     </figure>
     <section className="animal-motion-section" aria-labelledby="animal-motion-heading">
       <h2 id="animal-motion-heading">움직임을 비교해 보세요</h2>
@@ -82,6 +84,7 @@ export function AnimalMotionPreview() {
         <button type="button" onClick={toggle} aria-pressed={playing}>{playing ? '⏸ 잠깐 멈춤' : '▶ 이어 보기'}</button>
         <button type="button" onClick={changeSpeed} aria-pressed={slow}>🐢 {slow ? '느리게 보는 중' : '느리게 보기'}</button>
         <button type="button" onClick={reset}>↺ 다시 보기</button>
+        <button type="button" onClick={() => setPainted(!painted)} aria-pressed={!painted}>{painted ? '보행 구조 보기' : '원화로 보기'}</button>
       </div>
       <div ref={gallery} className="animal-motion-grid">
         {animalIds.map((id) => <article className="animal-study-card" key={id}>
@@ -90,7 +93,7 @@ export function AnimalMotionPreview() {
             <span className="animal-study-cloud" aria-hidden="true">☁</span>
             <div className="animal-study-ground" aria-hidden="true" />
             <span className="animal-study-shadow" aria-hidden="true" />
-            <div className="animal-study-actor"><NaturalAnimalArtwork id={id} /></div>
+            <div className="animal-study-actor">{painted ? <PaintedAnimalArtwork id={id} /> : <NaturalAnimalArtwork id={id} />}</div>
           </div><p>{animalProfiles[id].description}</p>
         </article>)}
       </div>
