@@ -274,7 +274,7 @@ h1:focus { outline: none; }
 .traveler-body { transform-origin: 50% var(--foot-origin); }
 .sprite-motion:is([data-action="walk"], [data-action="idle"]) { animation: none; }
 .character-shadow { top: calc(var(--foot-origin) - 3px); bottom: auto; height: 7px; }
-.journey-goal { position: absolute; z-index: 3; left: 0; top: 0; opacity: 0; pointer-events: none; will-change: transform; }
+.journey-goal { position: absolute; z-index: 3; right: 56px; top: 78%; opacity: 0; pointer-events: none; }
 .goal-line { position: absolute; left: -6px; top: -10px; width: 12px; height: 24px; border: 2px solid #fff9e9; border-radius: 3px; background: conic-gradient(#719064 25%, #fff9e9 0 50%, #719064 0 75%, #fff9e9 0); background-size: 10px 10px; }
 .journey-goal .finish-point { left: 0; top: 0; padding-top: 7px; flex-direction: row; gap: 4px; }
 .journey-goal .destination-icon { font-size: 28px; }

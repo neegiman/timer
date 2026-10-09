@@ -159,14 +159,14 @@ test('fixed character, separate progress and destination stay aligned after resi
         const goal = document.querySelector<HTMLElement>('.journey-goal');
         return { error: Math.hypot(box.x - scenery.x - scenery.width * .42, box.y - scenery.y - scenery.height * .78),
           progress, markerError: Math.abs(marker.x - track.x - track.width * progress),
-          goalDistance: goal ? Number(goal.dataset.distance) : null };
+          goalError: goal ? Math.hypot(goal.getBoundingClientRect().x - scenery.right + 56, goal.getBoundingClientRect().y - scenery.y - scenery.height * .78) : null };
       });
       await expect.poll(async () => { await page.clock.runFor(32); return (await readGeometry()).error; }, { message: `actor leaves its anchor at ${width}px` }).toBeLessThan(1);
       const geometry = await readGeometry();
       expect(geometry.markerError).toBeLessThan(.1);
       expect(geometry.progress).toBeCloseTo(elapsed / 600_000, 2);
-      if (elapsed >= 540_000) expect(geometry.goalDistance).toBeGreaterThan(0);
-      else expect(geometry.goalDistance).toBeNull();
+      if (elapsed >= 540_000) expect(geometry.goalError).toBeLessThan(.1);
+      else expect(geometry.goalError).toBeNull();
       await assertInsideTrack(page);
       if (testInfo.project.name === 'chromium' && width === 390) await page.screenshot({ path: `artifacts/road-mobile-${elapsed}.png`, fullPage: true });
     }

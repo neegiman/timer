@@ -18,7 +18,7 @@ async function seek(page: Page, elapsed: number) {
   await page.clock.runFor(32);
 }
 
-test('fixed walking, one-time 50/90 messages, approaching finish and ordered celebration', async ({ page }, testInfo) => {
+test('fixed walking, one-time 50/90 messages, stationary finish and ordered celebration', async ({ page }, testInfo) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await instrumentAudio(page);
@@ -62,20 +62,22 @@ test('fixed walking, one-time 50/90 messages, approaching finish and ordered cel
   await page.clock.runFor(1000);
   if (supportsAudio) await expect.poll(() => played('sparkle')).toBe(1);
   expect(await page.evaluate(() => (window as unknown as { messageChanges: number }).messageChanges)).toBe(2);
-  let previousDistance = Infinity;
+  const goalX = await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x);
+  let previousGround = Number(await scene.getAttribute('data-ground-distance'));
   for (const elapsed of [550_000, 570_000, 590_000, 599_900]) {
     await seek(page, elapsed);
     await expect(scene).toHaveAttribute('data-phase', 'WALK');
     expect(await main.evaluate((element) => element.getBoundingClientRect().x)).toBeCloseTo(fixedX, 4);
-    const distance = Number(await page.getByTestId('journey-goal').getAttribute('data-distance'));
-    expect(distance).toBeLessThan(previousDistance);
-    expect(distance).toBeGreaterThan(0);
-    previousDistance = distance;
+    expect(await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x)).toBeCloseTo(goalX, 4);
+    const ground = Number(await scene.getAttribute('data-ground-distance'));
+    expect(ground).toBeGreaterThan(previousGround);
+    previousGround = ground;
+    if (testInfo.project.name === 'chromium' && elapsed === 590_000) await page.screenshot({ path: 'artifacts/fixed-finish-near-390.png', fullPage: true });
   }
   await seek(page, 600_000);
   await expect(scene).toHaveAttribute('data-phase', 'SETTLE');
   await expect(message).toHaveText('도착! 약속 시간이 됐어! 참 잘했어! 🎉');
-  await expect(page.getByTestId('journey-goal')).toHaveAttribute('data-distance', '0.000000');
+  expect(await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x)).toBeCloseTo(goalX, 4);
   const stopped = await page.locator('[data-layer="ground"]').getAttribute('style');
   const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
   for (const [offset, phase] of [[450, 'JUMP'], [1000, 'LAND'], [1400, 'CELEBRATE']] as const) {
@@ -83,11 +85,13 @@ test('fixed walking, one-time 50/90 messages, approaching finish and ordered cel
     await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
     await page.clock.runFor(32);
     await expect(scene).toHaveAttribute('data-phase', phase);
+    expect(await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x)).toBeCloseTo(goalX, 4);
     expect(await page.locator('[data-layer="ground"]').getAttribute('style')).toBe(stopped);
     await expect(page.getByRole('button', { name: '⭐ 약속 지켰어요' })).toHaveCount(0);
   }
   await page.clock.fastForward(5000);
   await expect(page.locator('[data-status="completed"]')).toBeVisible();
+  if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/fixed-finish-completed-390.png', fullPage: true });
   if (supportsAudio) {
     for (const sound of ['finish', 'midpoint', 'sparkle']) await expect.poll(() => played(sound)).toBe(1);
     expect(await page.evaluate(() => window.audioDiagnostics)).toEqual([]);
@@ -95,21 +99,27 @@ test('fixed walking, one-time 50/90 messages, approaching finish and ordered cel
   expect(errors).toEqual([]);
 });
 
-test('pause freezes joints, scroll, miniature and time; refresh/resume preserve the clock', async ({ page }) => {
+test('pause freezes joints, scroll, miniature and time; finish stays fixed through refresh/resume', async ({ page }) => {
   await page.clock.install();
   await begin(page);
-  await seek(page, 300_100);
+  await seek(page, 570_100);
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '일시정지', exact: true }).click();
   await page.clock.runFor(64);
-  const pose = () => page.evaluate(() => ({
-    gait: document.querySelector('.character-wrapper')!.getAttribute('data-gait-time'),
-    body: document.querySelector('.traveler-body')!.getAttribute('style'),
-    joints: [...document.querySelectorAll('.traveler-body [data-joint], .traveler-body [data-animal-joint]')].map((element) => element.getAttribute('transform')),
-    layers: [...document.querySelectorAll('[data-layer]')].map((element) => element.getAttribute('style')),
-    miniature: document.querySelector('.progress-marker')!.getAttribute('style'),
-    number: document.querySelector('[data-testid="countdown"]')!.textContent,
-  }));
+  const pose = () => page.evaluate(() => {
+    const goal = document.querySelector('.journey-goal')!.getBoundingClientRect();
+    const scene = document.querySelector('.journey-scene')!.getBoundingClientRect();
+    return {
+      gait: document.querySelector('.character-wrapper')!.getAttribute('data-gait-time'),
+      body: document.querySelector('.traveler-body')!.getAttribute('style'),
+      joints: [...document.querySelectorAll('.traveler-body [data-joint], .traveler-body [data-animal-joint]')].map((element) => element.getAttribute('transform')),
+      layers: [...document.querySelectorAll('[data-layer]')].map((element) => element.getAttribute('style')),
+      miniature: document.querySelector('.progress-marker')!.getAttribute('style'),
+      // Opening the parent menu can scroll the page on mobile; compare scene coordinates.
+      goal: { x: goal.x - scene.x, y: goal.y - scene.y },
+      number: document.querySelector('[data-testid="countdown"]')!.textContent,
+    };
+  });
   const frozen = await pose();
   await page.clock.fastForward(5000);
   expect(await pose()).toEqual(frozen);
@@ -120,7 +130,7 @@ test('pause freezes joints, scroll, miniature and time; refresh/resume preserve 
   await page.evaluate(() => {
     Object.assign(window, { wrongResumeStage: false });
     new MutationObserver(() => {
-      if (document.querySelector('.journey-scene')!.getAttribute('data-stage') !== 'halfway') {
+      if (document.querySelector('.journey-scene')!.getAttribute('data-stage') !== 'near') {
         (window as unknown as { wrongResumeStage: boolean }).wrongResumeStage = true;
       }
     }).observe(document.querySelector('.journey-scene')!, { attributes: true, attributeFilter: ['data-stage'] });
@@ -131,6 +141,7 @@ test('pause freezes joints, scroll, miniature and time; refresh/resume preserve 
   expect(Number(resumed.gait) - Number(frozen.gait)).toBeLessThan(500);
   expect(resumed.joints).not.toEqual(frozen.joints);
   expect(resumed.layers).not.toEqual(frozen.layers);
+  expect(resumed.goal).toEqual(frozen.goal);
   expect(await page.evaluate(() => (window as unknown as { wrongResumeStage: boolean }).wrongResumeStage)).toBe(false);
 });
 
@@ -170,14 +181,14 @@ test('1 and 120 minute journeys stay calm in their last ten seconds and stop at 
       await page.clock.runFor(16);
       await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'WALK');
       if (remaining <= duration * .1) {
-        expect(Number(await page.getByTestId('journey-goal').getAttribute('data-distance'))).toBeGreaterThan(0);
+        await expect(page.getByTestId('journey-goal').locator('.finish-flag')).toBeVisible();
       } else {
         // In a one-minute journey, ten seconds remaining is still before 90%.
         await expect(page.getByTestId('journey-goal')).toHaveCount(0);
       }
     }
     await seek(page, duration);
-    await expect(page.getByTestId('journey-goal')).toHaveAttribute('data-distance', '0.000000');
+    await expect(page.getByTestId('journey-goal').locator('.finish-flag')).toBeVisible();
     await expect(page.getByTestId('countdown')).toContainText('00:00');
   }
 });

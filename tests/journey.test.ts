@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { finishApproach, groundDistance, locomotionTime, loopOffset, SUPPORT_FRACTION, TILE_WIDTH } from '../src/lib/journey';
+import { finishOpacity, groundDistance, locomotionTime, loopOffset, SUPPORT_FRACTION, TILE_WIDTH } from '../src/lib/journey';
 import { footTarget } from '../src/lib/characterPose';
 
 test('locomotion gently starts and stops, keeping the same speed across milestones', () => {
@@ -38,18 +38,10 @@ test('scenery wraps by precisely one whole tile without accumulated drift', () =
   }
 });
 
-test('single finish approaches continuously only in the final tenth and arrives exactly at zero', () => {
-  for (const width of [288, 358, 768, 1200]) {
-    const actorX = width * .42;
-    assert.equal(finishApproach(.89999, width, actorX, 124).opacity, 0);
-    let previous = Infinity;
-    for (const progress of [.9, .91, .95, .99, .99999, 1]) {
-      const goal = finishApproach(progress, width, actorX, 124);
-      assert.ok(goal.x <= previous);
-      if (progress < 1) assert.ok(goal.x > goal.target);
-      else assert.equal(goal.x, goal.target);
-      previous = goal.x;
-    }
-    assert.deepEqual(finishApproach(2, width, actorX, 124), finishApproach(1, width, actorX, 124));
-  }
+test('the fixed finish landmark appears only in the final tenth and fades in gently', () => {
+  assert.equal(finishOpacity(0), 0);
+  assert.equal(finishOpacity(.89999), 0);
+  assert.equal(finishOpacity(.9), .2);
+  assert.ok(finishOpacity(.91) > .2 && finishOpacity(.91) < 1);
+  for (const progress of [.93, .95, .99, .99999, 1, 2]) assert.equal(finishOpacity(progress), 1);
 });

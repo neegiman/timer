@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { getAnimationState } from '@/lib/animation';
-import { clamp, finishApproach, groundDistance, locomotionTime, loopOffset, smoothstep, TILE_WIDTH } from '@/lib/journey';
+import { clamp, finishOpacity, groundDistance, locomotionTime, loopOffset, smoothstep, TILE_WIDTH } from '@/lib/journey';
 import { getCharacterPose, type JointName } from '@/lib/characterPose';
 import { motionProfile } from '@/lib/motionProfiles';
 import type { AnimationInput, AnimationState } from '@/types/animation';
@@ -135,12 +135,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         layer.style.transform = `translate3d(${-offset}px, 0, 0)`;
         layer.dataset.scrollOffset = offset.toFixed(6);
       }
-      const destination = finishApproach(pose.position, width, x, actorWidth, animalId ? .46 : .35);
-      if (goal.current) {
-        goal.current.style.transform = `translate3d(${destination.x}px, ${groundY}px, 0)`;
-        goal.current.style.opacity = String(destination.opacity);
-        goal.current.dataset.distance = Math.max(0, destination.x - destination.target).toFixed(6);
-      }
+      if (goal.current) goal.current.style.opacity = String(finishOpacity(pose.position));
       fill.current?.style.setProperty('transform', `scaleX(${pose.position})`);
       marker.current?.style.setProperty('transform', `translate3d(${pose.position * progressWidth}px, 0, 0)`);
       if (marker.current) marker.current.dataset.progress = pose.position.toFixed(6);
