@@ -72,21 +72,31 @@ export function useAudio(enabled: boolean) {
   // Called synchronously from an explicit button tap: crucial for mobile Safari.
   const unlock = useCallback(() => {
     enabledRef.current = true;
-    const AudioContextClass = window.AudioContext ?? (window as SafariWindow).webkitAudioContext;
-    if (!AudioContextClass) return;
-    if (!context.current) context.current = new AudioContextClass();
-    const ctx = context.current;
-    const resume = ctx.resume();
-    // Prime the output within the gesture, even while MP3 decoding is still pending.
-    const silence = ctx.createBufferSource();
-    silence.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
-    silence.connect(ctx.destination);
-    silence.start();
-    void resume.then(() => {
-      setNeedsGesture(false);
-      if (pending.current) { const { sound, key } = pending.current; pending.current = null; void play(sound, key); }
-    }).catch(() => setNeedsGesture(true));
-    for (const sound of ['start', 'almost', 'finish', 'success', 'midpoint', 'sparkle', 'tick', 'strong-tick', 'whoosh', 'pop', 'land'] as Sound[]) void load(sound, ctx).catch(() => {});
+    try {
+      const AudioContextClass = window.AudioContext ?? (window as SafariWindow).webkitAudioContext;
+      if (!AudioContextClass) { setNeedsGesture(true); return; }
+      if (!context.current || context.current.state === 'closed') {
+        context.current = new AudioContextClass();
+        buffers.current.clear();
+      }
+      const ctx = context.current;
+      // Observe rejection before priming: creating/starting the silent source can
+      // also fail after mobile audio interruption. Neither may block timer controls.
+      void Promise.resolve(ctx.resume()).then(() => {
+        if (ctx.state !== 'running') { setNeedsGesture(true); return; }
+        setNeedsGesture(false);
+        if (pending.current) { const { sound, key } = pending.current; pending.current = null; void play(sound, key); }
+      }).catch(() => setNeedsGesture(true));
+      // Prime the output within the gesture, even while MP3 decoding is still pending.
+      const silence = ctx.createBufferSource();
+      silence.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+      silence.connect(ctx.destination);
+      silence.start();
+      for (const sound of ['start', 'almost', 'finish', 'success', 'midpoint', 'sparkle', 'tick', 'strong-tick', 'whoosh', 'pop', 'land'] as Sound[]) void load(sound, ctx).catch(() => {});
+    } catch {
+      // Audio output is optional. Keep the timer action responsive and offer retry.
+      setNeedsGesture(true);
+    }
   }, [load, play]);
 
   const playOnce = useCallback((sound: Sound, key: string) => {

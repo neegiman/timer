@@ -231,7 +231,7 @@ h1:focus { outline: none; }
 .journey-message { text-align: center; padding: 20px 0 8px; }
 .promise-reminder, .completion-promise { display: flex; justify-content: center; align-items: center; gap: 10px; font-size: 24px; font-weight: 750; line-height: 1.5; overflow-wrap: anywhere; }
 .promise-reminder span, .completion-promise span { flex-shrink: 0; font-size: 40px; }
-.numeric-time { display: inline-flex; align-items: baseline; gap: 8px; font-size: 22px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 12px; }
+.numeric-time { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; font-size: 22px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 12px; }
 .numeric-time span { font-size: 16px; }
 .reward-panel { max-width: 520px; text-align: center; margin: 12px auto 0; }
 .reward-button { width: 100%; }

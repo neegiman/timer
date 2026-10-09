@@ -93,9 +93,10 @@ export function TimerApp() {
   const exit = () => { stop(); timer.exit(); setSetupStep(0); setModal(null); scrollTop(); };
   const restart = () => {
     stop();
-    if (soundEnabled) unlock();
     timer.restart();
     setModal(null);
+    scrollTop();
+    if (soundEnabled) unlock();
   };
 
   const changeStep = (step: number) => { setSetupStep(step); scrollTop('smooth'); };
