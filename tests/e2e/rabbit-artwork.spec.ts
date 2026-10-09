@@ -1,4 +1,77 @@
 import { test, expect } from '@playwright/test';
+import sharp from 'sharp';
+
+test('rabbit selection stays painted after repeated taps, leaving the step and refreshing', async ({ page }, testInfo) => {
+  await page.clock.install();
+  await page.goto('./');
+  await page.getByRole('button', { name: '친구', exact: true }).click();
+  const rabbit = page.getByRole('button', { name: '토끼', exact: true });
+  const checkPaint = async () => {
+    await expect(rabbit).toHaveAttribute('aria-pressed', 'true');
+    const crop = rabbit.locator('.painted-thumbnail-crop');
+    await crop.evaluate(async (element) => {
+      const image = new Image(); image.src = getComputedStyle(element).backgroundImage.slice(5, -2); await image.decode();
+    });
+    const pixels = await sharp(await rabbit.locator('.character-icon').screenshot({ animations: 'allow' })).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const background = [...pixels.data.subarray(0, 3)];
+    let painted = 0;
+    for (let pixel = 0; pixel < pixels.data.length; pixel += 4) {
+      if (background.reduce((difference, value, channel) => difference + Math.abs(value - pixels.data[pixel + channel]), 0) > 30) painted++;
+    }
+    expect(painted / (pixels.info.width * pixels.info.height), 'selected rabbit is blank').toBeGreaterThan(.04);
+  };
+  for (const other of ['곰', '강아지', '고양이']) {
+    await page.getByRole('button', { name: other, exact: true }).click();
+    await rabbit.click(); await page.clock.runFor(1600); await checkPaint();
+  }
+  await page.getByRole('button', { name: '시간', exact: true }).click();
+  await page.getByRole('button', { name: '친구', exact: true }).click();
+  await checkPaint();
+  await page.reload(); await page.getByRole('button', { name: '친구', exact: true }).click();
+  await checkPaint();
+  if (testInfo.project.name === 'chromium') await rabbit.screenshot({ path: 'artifacts/rabbit-selected-stable.png', animations: 'allow' });
+});
+
+test('rabbit rolls its heel over a grounded toe without sliding, then folds its ankle', async ({ page }, testInfo) => {
+  await page.clock.install();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('./');
+  await page.getByRole('button', { name: '친구', exact: true }).click();
+  await page.getByRole('button', { name: '토끼', exact: true }).click();
+  await page.getByRole('button', { name: '출발!' }).click();
+  await expect(page.locator('[data-status="running"]')).toBeVisible();
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+  const start = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).startTimestamp);
+  const seek = async (cycle: number) => {
+    // The 800ms acceleration contributes 400ms less gait time than wall time.
+    await page.clock.setSystemTime(start + 400 + cycle * 1250);
+    await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
+    await page.clock.runFor(16);
+  };
+  const contact = () => page.evaluate(() => {
+    const scene = document.querySelector<HTMLElement>('.journey-scene')!;
+    const ankle = scene.querySelector<SVGGElement>('[data-animal-joint="nearHindAnkle"]')!;
+    const toe = new DOMPoint(14, 4).matrixTransform(ankle.getScreenCTM()!);
+    const heel = new DOMPoint(-4, 4).matrixTransform(ankle.getScreenCTM()!);
+    return { toe: { x: toe.x, y: toe.y }, heelY: heel.y,
+      groundY: scene.getBoundingClientRect().y + Number(scene.dataset.groundY), distance: Number(scene.dataset.groundDistance) };
+  });
+  await seek(48.75);
+  const first = await contact();
+  await page.clock.runFor(50);
+  const second = await contact();
+  for (const pose of [first, second]) {
+    expect(Math.abs(pose.toe.y - pose.groundY)).toBeLessThan(.25);
+    expect(pose.heelY).toBeLessThan(pose.toe.y);
+  }
+  expect(second.toe.y - second.heelY).toBeGreaterThan(first.toe.y - first.heelY);
+  expect(Math.abs(second.toe.x - first.toe.x + second.distance - first.distance)).toBeLessThan(.25);
+  await seek(49.1);
+  const swing = await contact();
+  expect(swing.toe.y).toBeLessThan(swing.groundY - 1);
+  expect(swing.heelY).toBeGreaterThan(swing.toe.y);
+  if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/rabbit-joints-mobile.png', fullPage: true });
+});
 
 test('rabbit painted feet remain joined to its body across twelve gait poses', async ({ page }, testInfo) => {
   await page.clock.install();
@@ -19,10 +92,7 @@ test('rabbit painted feet remain joined to its body across twelve gait poses', a
         const ankle = paw.querySelector<SVGGElement>('[data-animal-joint$="Ankle"]')!;
         return { name: paw.dataset.paw, points: [0, 3, 6, 9].map((x) => point(ankle, x, 0)) };
       });
-      // Every limb layer must sit behind the same painted torso.
-      const torso = svg.querySelector('[data-painted-part="torso"]')!;
-      const coveredRoots = [...svg.querySelectorAll('[data-paw]')].every((paw) => Boolean(paw.compareDocumentPosition(torso) & Node.DOCUMENT_POSITION_FOLLOWING));
-      return { html: svg.outerHTML, center: point(body, 74, 160), paws, coveredRoots };
+      return { html: svg.outerHTML, center: point(body, 74, 160), paws };
     }));
   }
   const results = await page.evaluate(async (frames) => {
@@ -54,7 +124,7 @@ test('rabbit painted feet remain joined to its body across twelve gait poses', a
             connected[next] = 1; queue[write++] = next;
           }
         }
-        results.push({ coveredRoots: frame.coveredRoots, paws: frame.paws.map((paw) => ({ name: paw.name,
+        results.push({ paws: frame.paws.map((paw) => ({ name: paw.name,
           attached: paw.points.some((point) => connected[Math.round(point.y * scale) * width + Math.round(point.x * scale)] === 1),
         })) });
       } finally { URL.revokeObjectURL(url); }
@@ -62,7 +132,6 @@ test('rabbit painted feet remain joined to its body across twelve gait poses', a
     return results;
   }, frames);
   for (const [index, frame] of results.entries()) {
-    expect(frame.coveredRoots).toBe(true);
     for (const paw of frame.paws) expect(paw.attached, `${paw.name} detached at pose ${index}`).toBe(true);
   }
   if (testInfo.project.name === 'chromium') await page.locator('[data-animal-scene="rabbit"]').screenshot({ path: 'artifacts/rabbit-attached-pose.png' });

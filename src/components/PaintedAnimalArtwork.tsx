@@ -5,6 +5,20 @@ import { assetPath } from '@/lib/assetPath';
 import { rabbitAnatomy } from '@/lib/rabbitAnatomy';
 
 type PartName = keyof typeof atlases.rabbit.parts;
+/** A bounded CSS image crop avoids nested SVG repainting when a choice is tapped on mobile. */
+export function PaintedAnimalThumbnail({ id, label }: { id: AnimalId; label: string }) {
+  const atlas = atlases[id], [x, y, width, height] = atlas.parts.thumbnail;
+  const scale = Math.min(160 / width, 186 / height), drawWidth = width * scale, drawHeight = height * scale;
+  return <span className="character-artwork painted-animal-thumbnail" data-character={id} data-artwork="imagegen" role="img" aria-label={label}>
+    <span className="painted-thumbnail-crop" aria-hidden="true" style={{
+      left: `${(160 - drawWidth) / 320 * 100}%`, top: `${(210 - drawHeight) / 420 * 100}%`,
+      width: `${drawWidth / 160 * 100}%`, height: `${drawHeight / 210 * 100}%`,
+      backgroundImage: `url("${assetPath(`/characters/raster-v1/${id}.webp`)}")`,
+      backgroundSize: `${atlas.width / width * 100}% ${atlas.height / height * 100}%`,
+      backgroundPosition: `${x / (atlas.width - width) * 100}% ${y / (atlas.height - height) * 100}%`,
+    }} />
+  </span>;
+}
 function Part({ id, part, x, y, width, height, contain = false }: {
   id: AnimalId; part: PartName; x: number; y: number; width: number; height: number; contain?: boolean;
 }) {
@@ -16,6 +30,7 @@ function Part({ id, part, x, y, width, height, contain = false }: {
 }
 
 function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; far?: boolean; filter: string }) {
+  const prefix = useId().replace(/:/g, '');
   const rig = animalProfiles[id].paws[name];
   if (!rig) return null;
   const rest = animalPose(id, 0, false).joints;
@@ -30,9 +45,14 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
   const lowerWidth = rabbit ? lowerHeight * parts[lowerPart][2] / parts[lowerPart][3] : bird ? 3.5 : upperWidth * .72;
   const pawWidth = bird ? 19 : hind && rabbit ? 28 : rabbit ? 17 : id === 'bear' ? 24 : 21;
   const pawHeight = rabbit ? pawWidth * parts[pawPart][3] / parts[pawPart][2] : 13;
+  const blendedRoot = rabbit && !far;
   return <g data-paw={name} transform={`translate(${rig.x} ${rig.y})`} filter={far ? filter : undefined}>
+    {blendedRoot ? <defs>
+      <linearGradient id={`${prefix}-root-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={-overlap} x2="0" y2="12"><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
+      <mask id={`${prefix}-root-mask`} maskUnits="userSpaceOnUse" x="-30" y="-10" width="60" height="70"><rect x="-30" y="-10" width="60" height="70" fill={`url(#${prefix}-root-fade)`} /></mask>
+    </defs> : null}
     <g data-animal-joint={`${name}Hip`} transform={`rotate(${rest[`${name}Hip`]})`}>
-      <Part id={id} part={upperPart} x={-upperWidth / 2} y={-overlap} width={upperWidth} height={upperHeight} />
+      <g mask={blendedRoot ? `url(#${prefix}-root-mask)` : undefined}><Part id={id} part={upperPart} x={-upperWidth / 2} y={-overlap} width={upperWidth} height={upperHeight} /></g>
       <g transform={`translate(0 ${rig.upper})`}><g data-animal-joint={`${name}Knee`} transform={`rotate(${rest[`${name}Knee`]})`}>
         <Part id={id} part={lowerPart} x={-lowerWidth / 2} y={-overlap} width={lowerWidth} height={lowerHeight} />
         <g transform={`translate(0 ${rig.lower})`}><g data-animal-joint={`${name}Ankle`} transform={`rotate(${rest[`${name}Ankle`]})`}>
@@ -44,7 +64,7 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
 }
 
 /** ImageGen's transparent painted parts, posed by the same four-paw rig as the motion study. */
-export function PaintedAnimalArtwork({ id, label, thumbnail = false }: { id: AnimalId; label?: string; thumbnail?: boolean }) {
+export function PaintedAnimalArtwork({ id, label }: { id: AnimalId; label?: string }) {
   const prefix = useId().replace(/:/g, ''), bird = id === 'chick', rabbit = id === 'rabbit', dog = id === 'dog';
   const filter = `url(#${prefix}-far-fur)`;
   const torso = rabbit ? rabbitAnatomy.torso : { x: bird ? 45 : 24, y: bird ? 131 : id === 'bear' ? 123 : 133, width: bird ? 69 : 102, height: bird ? 57 : id === 'bear' ? 56 : 41 };
@@ -54,7 +74,6 @@ export function PaintedAnimalArtwork({ id, label, thumbnail = false }: { id: Ani
   const earFar = rabbit ? rabbitAnatomy.earFar : { anchorX: 113, anchorY: 126, x: -7, y: dog ? -3 : -17, width: dog ? 18 : 17, height: dog ? 32 : 20 };
   return <svg viewBox="0 0 160 210" className="character-artwork natural-animal-artwork painted-animal-artwork" data-character={id} data-animal={id}
     data-artwork="imagegen" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} focusable="false">
-    {thumbnail ? <Part id={id} part="thumbnail" x={0} y={12} width={160} height={186} contain /> : <>
       <defs><filter id={`${prefix}-far-fur`} colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse" x="-65" y="-25" width="140" height="105">
         <feComponentTransfer><feFuncR type="linear" slope=".79" /><feFuncG type="linear" slope=".79" /><feFuncB type="linear" slope=".79" /></feComponentTransfer>
       </filter></defs>
@@ -63,8 +82,7 @@ export function PaintedAnimalArtwork({ id, label, thumbnail = false }: { id: Ani
           <Part id={id} part="tail" x={id === 'cat' || dog ? -24 : -16} y={id === 'cat' || dog ? -51 : -13} width={id === 'cat' || dog ? 35 : 23} height={id === 'cat' || dog ? 57 : 24} />
         </g></g>
         <PaintedPaw id={id} name="farHind" far filter={filter} /><PaintedPaw id={id} name="farFore" far filter={filter} />
-        {rabbit ? <><PaintedPaw id={id} name="nearHind" filter={filter} /><PaintedPaw id={id} name="nearFore" filter={filter} /></> : null}
-        {/* The rabbit's painted haunch/chest cover its limb roots, rather than floating on top of them. */}
+        {/* Far limbs stay behind the torso; near limb roots blend into its fur. */}
         <Part id={id} part="torso" {...torso} />
         <g transform={`translate(${pivot.x} ${pivot.y})`}><g data-animal-joint="head"><g transform={`translate(${-pivot.x} ${-pivot.y})`}>
           {!bird ? <g transform={`translate(${earFar.anchorX} ${earFar.anchorY})`}><g data-animal-joint="earFar">
@@ -76,8 +94,7 @@ export function PaintedAnimalArtwork({ id, label, thumbnail = false }: { id: Ani
           </g></g> : null}
         </g></g></g>
         {bird ? <g transform="translate(67 154)"><g data-animal-joint="wing"><Part id={id} part="earNear" x={-5} y={-9} width={37} height={29} /></g></g> : null}
-        {!rabbit ? <><PaintedPaw id={id} name="nearHind" filter={filter} /><PaintedPaw id={id} name="nearFore" filter={filter} /></> : null}
+        <PaintedPaw id={id} name="nearHind" filter={filter} /><PaintedPaw id={id} name="nearFore" filter={filter} />
       </g>
-    </>}
   </svg>;
 }

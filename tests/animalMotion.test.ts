@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { animalFoot, animalIds, animalPose, animalProfiles, PAW_BASELINE, type PawName } from '../src/lib/animalMotion';
+import { animalFoot, animalIds, animalPose, animalProfiles, PAW_BASELINE, rabbitFootPitch, type PawName } from '../src/lib/animalMotion';
 
 test('rabbit hind paws push off together; four-legged walkers have a four-beat sequence', () => {
   const rabbit = animalProfiles.rabbit;
@@ -23,8 +23,9 @@ test('support paws move exactly with the ground and stay at the baseline', () =>
         const rig = profile.paws[paw as PawName]!;
         const hip = (pose.joints[`${paw as PawName}Hip`] + 90) * Math.PI / 180;
         const knee = pose.joints[`${paw as PawName}Knee`] * Math.PI / 180;
-        const x = rig.x + rig.upper * Math.cos(hip) + rig.lower * Math.cos(hip + knee);
-        const y = rig.y + rig.upper * Math.sin(hip) + rig.lower * Math.sin(hip + knee) + 4 + pose.bob;
+        const pitch = foot.pitch * Math.PI / 180;
+        const x = rig.x + rig.upper * Math.cos(hip) + rig.lower * Math.cos(hip + knee) + foot.contactX * Math.cos(pitch) - 4 * Math.sin(pitch);
+        const y = rig.y + rig.upper * Math.sin(hip) + rig.lower * Math.sin(hip + knee) + foot.contactX * Math.sin(pitch) + 4 * Math.cos(pitch) + pose.bob;
         assert.ok(Math.abs(x - foot.x) < .001, `${id} ${paw} misses target horizontally`);
         assert.ok(Math.abs(y - foot.y) < .001, `${id} ${paw} misses its vertical target`);
         if (foot.planted) assert.ok(Math.abs(y - PAW_BASELINE) < .001, `${id} ${paw} is not planted on the ground`);
@@ -45,8 +46,28 @@ test('paws retain ground-relative velocity at lift-off and touchdown; rabbit hop
     }
   }
   const rabbit = animalPose('rabbit', animalProfiles.rabbit.cycleMs * .89);
-  assert.ok(rabbit.bob < -4.9);
+  assert.ok(rabbit.bob < -1.9 && rabbit.bob >= -2.4);
   assert.ok(Object.values(rabbit.feet).every((foot) => !foot.planted && foot.y < PAW_BASELINE));
+});
+
+test('rabbit paws roll over their toes, fold in swing and open smoothly for contact', () => {
+  const profile = animalProfiles.rabbit;
+  for (const hind of [true, false]) {
+    assert.equal(rabbitFootPitch(0, profile.support, hind), 0);
+    assert.ok(rabbitFootPitch(profile.support * .95, profile.support, hind) > (hind ? 20 : 10));
+    assert.ok(rabbitFootPitch(profile.support + (1 - profile.support) * .35, profile.support, hind) < (hind ? -20 : -12));
+    for (const boundary of [0, profile.support, profile.support + (1 - profile.support) * .35, 1]) {
+      assert.ok(Math.abs(rabbitFootPitch(boundary - .000001, profile.support, hind) - rabbitFootPitch(boundary + .000001, profile.support, hind)) < .001);
+    }
+  }
+  // The toe stays on the ground as the heel rises; the knee never flips its bend direction.
+  for (let sample = 0; sample < 400; sample++) {
+    const pose = animalPose('rabbit', profile.cycleMs * sample / 400);
+    for (const paw of Object.keys(profile.paws) as PawName[]) {
+      assert.ok(pose.joints[`${paw}Knee`] * profile.paws[paw]!.bend > 0);
+      assert.ok(Math.abs(pose.joints[`${paw}Hip`]) < 85);
+    }
+  }
 });
 
 test('cat hind paw registers at the preceding forepaw ground location', () => {

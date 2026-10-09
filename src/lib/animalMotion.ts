@@ -45,6 +45,16 @@ export const PAW_BASELINE = 205;
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const degrees = (value: number) => value * 180 / Math.PI;
 const wrap = (value: number) => ((value % 1) + 1) % 1;
+const ease = (value: number) => { const t = clamp(value, 0, 1); return t * t * (3 - 2 * t); };
+
+/** Heel rises over a planted toe, then the paw folds and opens before landing. */
+export function rabbitFootPitch(phase: number, support: number, hind: boolean) {
+  const p = wrap(phase), push = hind ? 24 : 12, folded = hind ? -22 : -14;
+  if (p < support) return push * ease((p / support - .72) / .28);
+  const swing = (p - support) / (1 - support);
+  return swing < .35 ? push + (folded - push) * ease(swing / .35)
+    : folded * (1 - ease((swing - .35) / .65));
+}
 
 export function animalFoot(phase: number, profile: AnimalProfile) {
   const p = wrap(phase);
@@ -70,17 +80,22 @@ export function animalPose(id: AnimalId, elapsedMs: number, moving = true) {
   const profile = animalProfiles[id];
   const cycle = Math.max(0, elapsedMs) / profile.cycleMs;
   const p = wrap(cycle);
-  // Rabbits briefly float between hindlimb propulsion and forelimb landing.
-  const hop = id === 'rabbit' && moving ? (p > .84 && p < .94 ? Math.sin((p - .84) / .1 * Math.PI) ** 2 * 5 : 0) : 0;
+  // Weight rises during hind-paw propulsion, then settles through fore-paw contact.
+  const hop = id === 'rabbit' && moving ? 2.4 * (p < .86 ? ease((p - .72) / .14) : 1 - ease((p - .86) / .12)) : 0;
   const bob = !moving ? 0 : id === 'rabbit' ? -hop : Math.sin(cycle * Math.PI * 4) * (id === 'bear' ? .65 : id === 'chick' ? .7 : .25);
   const joints = {} as Record<AnimalJoint, number>;
-  const feet = {} as Partial<Record<PawName, { x: number; y: number; planted: boolean }>>;
+  const feet = {} as Partial<Record<PawName, { x: number; y: number; planted: boolean; contactX: number; pitch: number }>>;
   for (const [paw, rig] of Object.entries(profile.paws) as [PawName, PawRig][]) {
     const foot = moving ? animalFoot(cycle + profile.phases[paw], profile) : { x: 0, lift: 0, planted: true };
-    const y = PAW_BASELINE - 4 - rig.y - bob - foot.lift;
-    const solved = animalLeg(foot.x, y, rig);
-    joints[`${paw}Hip`] = solved.hip; joints[`${paw}Knee`] = solved.knee; joints[`${paw}Ankle`] = solved.ankle;
-    feet[paw] = { x: rig.x + foot.x, y: PAW_BASELINE - foot.lift, planted: foot.planted };
+    const pitch = id === 'rabbit' && moving ? rabbitFootPitch(cycle + profile.phases[paw], profile.support, paw.includes('Hind')) : 0;
+    const contactX = id === 'rabbit' ? paw.includes('Hind') ? 14 : 7 : 0;
+    const angle = pitch * Math.PI / 180;
+    const soleX = contactX * Math.cos(angle) - 4 * Math.sin(angle);
+    const soleY = contactX * Math.sin(angle) + 4 * Math.cos(angle);
+    const y = PAW_BASELINE - soleY - rig.y - bob - foot.lift;
+    const solved = animalLeg(foot.x + contactX - soleX, y, rig);
+    joints[`${paw}Hip`] = solved.hip; joints[`${paw}Knee`] = solved.knee; joints[`${paw}Ankle`] = solved.ankle + pitch;
+    feet[paw] = { x: rig.x + foot.x + contactX, y: PAW_BASELINE - foot.lift, planted: foot.planted, contactX, pitch };
   }
   joints.head = moving ? Math.sin(cycle * Math.PI * 2) * (id === 'chick' ? 2 : .8) : 0;
   joints.earNear = moving ? Math.sin(cycle * Math.PI * 2 - .8) * (id === 'rabbit' ? 4 : id === 'dog' ? 3 : .6) : 0;

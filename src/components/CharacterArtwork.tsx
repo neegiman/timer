@@ -1,4 +1,4 @@
-import { PaintedAnimalArtwork } from './PaintedAnimalArtwork';
+import { PaintedAnimalArtwork, PaintedAnimalThumbnail } from './PaintedAnimalArtwork';
 import { isAnimalId } from '@/lib/animalActionPose';
 
 function Wheel({ x, joint }: { x: number; joint: 'front' | 'back' | 'middle' }) {
@@ -35,7 +35,7 @@ function VehicleArtwork({ id }: { id: string }) {
 
 /** Shared painted animal art and original vehicle art for selection and the journey. */
 export function CharacterArtwork({ id, label }: { id: string; label?: string }) {
-  if (isAnimalId(id)) return <PaintedAnimalArtwork id={id} label={label} thumbnail={Boolean(label)} />;
+  if (isAnimalId(id)) return label ? <PaintedAnimalThumbnail id={id} label={label} /> : <PaintedAnimalArtwork id={id} />;
   return <svg className="character-artwork vehicle-sprite" data-character={id} viewBox="0 0 160 210"
     role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} focusable="false">
     <VehicleArtwork id={id} />

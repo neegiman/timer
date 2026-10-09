@@ -52,7 +52,8 @@ h1:focus { outline: none; }
 .character-icon { display: inline-block; flex-shrink: 0; vertical-align: middle; }
 .character-icon .character-artwork { display: block; width: 100%; height: 100%; overflow: visible; }
 .character-choice .character-icon { width: 76px !important; height: 100px !important; }
-.character-choice[data-phase="READY"] > span:first-child { animation: idleBody 3s ease-in-out infinite; }
+.painted-animal-thumbnail { position: relative; }
+.painted-thumbnail-crop { position: absolute; display: block; background-repeat: no-repeat; }
 .character-choice img { display: block; width: 72px; height: 72px; object-fit: contain; }
 .time-choice { flex-direction: row; align-items: baseline; gap: 3px; min-height: 126px; }
 .time-choice strong { font-size: 42px; }
