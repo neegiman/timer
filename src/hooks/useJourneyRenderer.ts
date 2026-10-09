@@ -8,6 +8,7 @@ import { animalActionPose, isAnimalId, settleAnimalPose } from '@/lib/animalActi
 import { animalProfiles, type AnimalJoint } from '@/lib/animalMotion';
 import { PRINCESS_GAIT, princessPose, settlePrincessPose } from '@/lib/princessMotion';
 import { PRINCE_GAIT, princeFrame, princeViewBox } from '@/lib/princeMotion';
+import { isPixelVehicle, vehicleFrame, vehicleViewBox } from '@/lib/pixelVehicles';
 
 /** A shared elapsed-time clock drives feet, ground and scenery. Frame updates never enter React state. */
 export function useJourneyRenderer(input: AnimationInput, state: AnimationState, sampledAt: number, characterId: string) {
@@ -24,6 +25,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
   const animalJoints = useRef<{ element: SVGGElement; name: AnimalJoint }[]>([]);
   const animalBody = useRef<SVGGElement | null>(null);
   const princeSprite = useRef<SVGSVGElement | null>(null);
+  const vehicleSprite = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => { snapshot.current = { input, sampledAt }; }, [input, sampledAt]);
   useEffect(() => {
@@ -35,6 +37,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       .map((element) => ({ element, name: element.dataset.animalJoint as AnimalJoint }));
     animalBody.current = body.current?.querySelector<SVGGElement>('[data-animal-body]') ?? null;
     princeSprite.current = body.current?.querySelector<SVGSVGElement>('[data-prince-sprite]') ?? null;
+    vehicleSprite.current = body.current?.querySelector<SVGSVGElement>('[data-vehicle-sprite]') ?? null;
   }, [state.phaseKey, state.characterAction, characterId]);
 
   useEffect(() => {
@@ -44,6 +47,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     if (!element || !actor || !sprite) return;
     const profile = motionProfile(characterId);
     const animalId = isAnimalId(characterId) ? characterId : null;
+    const vehicleId = isPixelVehicle(characterId) ? characterId : null;
     const layers = Array.from(element.querySelectorAll<HTMLElement>('[data-layer]'));
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
@@ -100,6 +104,15 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         }
       }
 
+      if (vehicleSprite.current && vehicleId) {
+        const pixelFrame = pose.phase === 'SETTLE' && pose.actionElapsedMs < 175 ? vehicleFrame(vehicleId, 'walk', gait, reduced)
+          : vehicleFrame(vehicleId, pose.characterAction, animationTime, reduced);
+        if (vehicleSprite.current.dataset.frame !== String(pixelFrame)) {
+          vehicleSprite.current.setAttribute('viewBox', vehicleViewBox(pixelFrame));
+          vehicleSprite.current.dataset.frame = String(pixelFrame);
+        }
+      }
+
       if (animalId) {
         const animal = pose.phase === 'SETTLE' ? settleAnimalPose(animalId, gait, pose.actionElapsedMs, reduced)
           : animalActionPose(animalId, pose.characterAction, animationTime, reduced);
@@ -114,10 +127,6 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         const last = getCharacterPose('walk', gait, profile.cycleMs, reduced);
         const blend = smoothstep(pose.actionElapsedMs / 350);
         for (const name of Object.keys(jointPose) as JointName[]) jointPose[name] = last[name] + (jointPose[name] - last[name]) * blend;
-      }
-      if (profile.kind === 'vehicle' && !reduced) {
-        const angle = groundDistance(gait, profile.cycleMs) / 16 * 180 / Math.PI % 360;
-        jointPose = { ...jointPose, 'wheel-front': angle, 'wheel-back': angle, 'wheel-middle': angle };
       }
       for (const joint of joints.current) joint.element.setAttribute('transform', `rotate(${jointPose[joint.name].toFixed(5)})`);
       for (const layer of layers) {

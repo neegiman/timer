@@ -78,16 +78,11 @@ test('all nine friends share their full artwork in selection and journey, includ
       await expect(artwork).toHaveAttribute('data-artwork', 'imagegen');
       await expect(artwork.locator('[data-leg]')).toHaveCount(2);
       await expect(artwork.locator('[data-arm]')).toHaveCount(2);
-    } else if (id === 'prince') {
+    } else if (['prince', 'car', 'train', 'rocket'].includes(id)) {
       await expect(artwork).toHaveAttribute('data-artwork', 'pixel');
       const before = await artwork.getAttribute('data-frame');
-      await page.clock.runFor(150);
+      await page.clock.runFor(350);
       expect(await artwork.getAttribute('data-frame')).not.toBe(before);
-    } else if (id !== 'rocket') {
-      const wheel = artwork.locator('[data-joint="wheel-front"]');
-      const before = await wheel.getAttribute('transform');
-      await page.clock.runFor(150);
-      expect(await wheel.getAttribute('transform')).not.toBe(before);
     }
     await seek(page, 600_000);
     const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
@@ -99,7 +94,7 @@ test('all nine friends share their full artwork in selection and journey, includ
       const scene = (await page.locator('.journey-scene').boundingBox())!;
       const shape = await artwork.evaluate((element) => {
         const parts = [...element.querySelectorAll<SVGSVGElement>('[data-painted-part]')];
-        if (element.hasAttribute('data-prince-sprite')) {
+        if (element.hasAttribute('data-prince-sprite') || element.hasAttribute('data-vehicle-sprite')) {
           const bounds = element.getBoundingClientRect();
           return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
         }

@@ -135,11 +135,10 @@ h1:focus { outline: none; }
 .sprite-motion[data-action="jump"] { animation: jumpBody .6s linear both; }
 .sprite-motion[data-action="land"] { animation: landBody .4s ease-out both; }
 .sprite-motion[data-action="celebrate"] { animation: happyBody 2.6s ease-in-out infinite; }
-.sprite-motion:is([data-character="chick"], [data-character="princess"], [data-character="prince"])[data-action="celebrate"] { animation: none; }
-.pixel-prince-artwork { image-rendering: pixelated; shape-rendering: crispEdges; }
-.character-icon .pixel-prince-artwork, .traveler-body .pixel-prince-artwork { overflow: hidden; }
+.sprite-motion:is([data-character="chick"], [data-character="princess"], [data-character="prince"], [data-character="car"], [data-character="train"], [data-character="rocket"])[data-action="celebrate"] { animation: none; }
+.pixel-prince-artwork, .pixel-vehicle-artwork { image-rendering: pixelated; shape-rendering: crispEdges; }
+.character-icon :is(.pixel-prince-artwork, .pixel-vehicle-artwork), .traveler-body :is(.pixel-prince-artwork, .pixel-vehicle-artwork) { overflow: hidden; }
 .character-eyes { transform-box: fill-box; transform-origin: center; animation: eyeBlink 4.2s linear infinite; }
-.sprite-motion .rocket-flame { transform-box: fill-box; transform-origin: 50% 0; animation: flamePulse .4s ease-in-out infinite; }
 .parallax-layer { position: absolute; inset: 0; pointer-events: none; }
 .parallax-layer svg { display: block; width: 100%; height: 100%; }
 .tree-layer { z-index: 1; }
@@ -192,7 +191,6 @@ h1:focus { outline: none; }
 @keyframes jumpBody { 0% { transform: scaleY(1); } 15% { transform: scaleY(.86) scaleX(1.06); } 42%, 55% { transform: translateY(calc(var(--jump-height) * -1)) scaleY(1.06); } 100% { transform: translateY(0) scaleY(1); } }
 @keyframes landBody { 0%, 100% { transform: scaleY(1); } 25% { transform: scaleY(.85) scaleX(1.07); } 65% { transform: scaleY(1.08) scaleX(.97); } }
 @keyframes happyBody { 0%, 100% { transform: rotate(-1deg); } 50% { transform: translateY(-2px) rotate(1deg); } }
-@keyframes flamePulse { 0%, 100% { transform: scaleY(.85); } 50% { transform: scaleY(1.08); } }
 @keyframes eyeBlink { 0%, 44%, 48%, 100% { transform: scaleY(1); } 46% { transform: scaleY(.1); } }
 @keyframes celebrateStar { 0% { opacity: 0; transform: scale(.5) translateY(6px); } 30% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: translateY(-15px) scale(.8); } }
 @keyframes flag-wave { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(12deg); } }
