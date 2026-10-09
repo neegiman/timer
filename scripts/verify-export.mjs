@@ -33,7 +33,7 @@ for (const file of files) {
 }
 const soundFiles = (await readdir(path.join(root, 'sounds'))).filter((name) => name.endsWith('.mp3'));
 assert.equal(soundFiles.length, 11, 'Missing animation sound assets');
-for (const animal of ['rabbit', 'dog', 'cat', 'chick', 'princess']) {
+for (const animal of ['rabbit', 'dog', 'cat', 'chick', 'princess', 'princess-upper-v2']) {
   const file = await stat(path.join(root, 'characters', 'raster-v1', `${animal}.webp`));
   assert.ok(file.size > 100_000, `Missing painted ${animal} atlas`);
 }

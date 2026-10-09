@@ -2,24 +2,32 @@ import { useId } from 'react';
 import atlas from '@/lib/princessAtlas.json';
 import { princessAnatomy as anatomy, princessPose } from '@/lib/princessMotion';
 import { assetPath } from '@/lib/assetPath';
+import { princessPart, type PrincessPart } from '@/lib/princessArtwork';
 
-type PartName = keyof typeof atlas.parts;
+type PartName = PrincessPart;
 type Landmark = { pivot: { x: number; y: number }; tip: { x: number; y: number } };
-const source = assetPath('/characters/raster-v1/princess.webp');
 
 /** Keep the original painted proportions; only the SVG viewport selects each cutout. */
 function Part({ part, x, y, width, height }: { part: PartName; x: number; y: number; width: number; height: number }) {
-  return <svg x={x} y={y} width={width} height={height} viewBox={atlas.parts[part].join(' ')}
+  const sheet = princessPart(part);
+  return <svg x={x} y={y} width={width} height={height} viewBox={sheet.region.join(' ')}
     preserveAspectRatio="none" overflow="hidden" data-painted-part={part}>
-    <image href={source} width={atlas.width} height={atlas.height} />
+    <image href={assetPath(sheet.source)} width={sheet.width} height={sheet.height} />
   </svg>;
 }
 
-function Bone({ part, length, landmarks }: { part: PartName; length: number; landmarks: Landmark }) {
+function Bone({ part, length, landmarks, blendRoot = false }: { part: PartName; length: number; landmarks: Landmark; blendRoot?: boolean }) {
+  const prefix = useId().replace(/:/g, '');
   const dx = landmarks.tip.x - landmarks.pivot.x, dy = landmarks.tip.y - landmarks.pivot.y;
-  const scale = length / Math.hypot(dx, dy), [, , width, height] = atlas.parts[part];
-  return <g transform={`rotate(${90 - Math.atan2(dy, dx) * 180 / Math.PI})`}>
-    <Part part={part} x={-landmarks.pivot.x * scale} y={-landmarks.pivot.y * scale} width={width * scale} height={height * scale} />
+  const scale = length / Math.hypot(dx, dy), [, , width, height] = princessPart(part).region;
+  return <g>
+    {blendRoot ? <defs>
+      <linearGradient id={`${prefix}-elbow-fade`} gradientUnits="userSpaceOnUse" x1="0" y1="-3" x2="0" y2="3"><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
+      <mask id={`${prefix}-elbow-mask`} maskUnits="userSpaceOnUse" x="-30" y="-12" width="60" height="90"><rect x="-30" y="-12" width="60" height="90" fill={`url(#${prefix}-elbow-fade)`} /></mask>
+    </defs> : null}
+    <g mask={blendRoot ? `url(#${prefix}-elbow-mask)` : undefined}><g transform={`rotate(${90 - Math.atan2(dy, dx) * 180 / Math.PI})`}>
+      <Part part={part} x={-landmarks.pivot.x * scale} y={-landmarks.pivot.y * scale} width={width * scale} height={height * scale} />
+    </g></g>
   </g>;
 }
 
@@ -46,7 +54,7 @@ function Arm({ side }: { side: 'front' | 'back' }) {
     <g data-joint={`${side}-arm`} transform={`rotate(${rest[`${side}-arm`]})`}>
       <Bone part={side === 'front' ? 'upperArm' : 'backUpperArm'} length={rig.upper} landmarks={rig.upperArt} />
       <g transform={`translate(0 ${rig.upper})`}><g data-joint={`${side}-elbow`} transform={`rotate(${rest[`${side}-elbow`]})`}>
-        <Bone part={side === 'front' ? 'foreArm' : 'backForeArm'} length={rig.lower} landmarks={rig.lowerArt} />
+        <Bone part={side === 'front' ? 'foreArm' : 'backForeArm'} length={rig.lower} landmarks={rig.lowerArt} blendRoot />
       </g></g>
     </g>
   </g>;
@@ -61,14 +69,20 @@ export function PaintedPrincessArtwork() {
       <filter id={`${prefix}-far-limb`} colorInterpolationFilters="sRGB" x="-100%" y="-100%" width="300%" height="300%">
       <feComponentTransfer><feFuncR type="linear" slope=".88" /><feFuncG type="linear" slope=".88" /><feFuncB type="linear" slope=".88" /></feComponentTransfer>
     </filter></defs>
-    <g filter={`url(#${prefix}-far-limb)`}><Arm side="back" /><Leg side="back" /></g>
+    <g filter={`url(#${prefix}-far-limb)`}><Leg side="back" /></g>
+    <g transform={`translate(${anatomy.headPivot.x} ${anatomy.headPivot.y})`}><g data-joint="head" data-head-layer="back">
+      <g transform={`translate(${anatomy.hairPivot.x - anatomy.headPivot.x} ${anatomy.hairPivot.y - anatomy.headPivot.y})`}><g data-joint="hair">
+        <Part part="hair" x={anatomy.hair.x - anatomy.hairPivot.x} y={anatomy.hair.y - anatomy.hairPivot.y} width={anatomy.hair.width} height={anatomy.hair.height} />
+      </g></g>
+    </g></g>
     <Leg side="front" />
     <Part part="bodice" {...anatomy.bodice} />
+    <g filter={`url(#${prefix}-far-limb)`}><Arm side="back" /></g>
     <g transform={`translate(${anatomy.skirtPivot.x} ${anatomy.skirtPivot.y})`}><g data-joint="skirt">
       <Part part="skirt" x={anatomy.skirt.x - anatomy.skirtPivot.x} y={anatomy.skirt.y - anatomy.skirtPivot.y} width={anatomy.skirt.width} height={anatomy.skirt.height} />
     </g></g>
     <Arm side="front" />
-    <g transform={`translate(${anatomy.headPivot.x} ${anatomy.headPivot.y})`}><g data-joint="head">
+    <g transform={`translate(${anatomy.headPivot.x} ${anatomy.headPivot.y})`}><g data-joint="head" data-head-layer="front">
       <Part part="head" x={anatomy.head.x - anatomy.headPivot.x} y={anatomy.head.y - anatomy.headPivot.y} width={anatomy.head.width} height={anatomy.head.height} />
     </g></g>
   </svg>;
@@ -76,15 +90,15 @@ export function PaintedPrincessArtwork() {
 
 /** A bounded CSS crop stays visible when choices are tapped repeatedly on mobile. */
 export function PaintedPrincessThumbnail({ label }: { label: string }) {
-  const [x, y, width, height] = atlas.parts.thumbnail;
+  const sheet = princessPart('thumbnail'), [x, y, width, height] = sheet.region;
   const scale = Math.min(160 / width, 186 / height), drawWidth = width * scale, drawHeight = height * scale;
   return <span className="character-artwork painted-animal-thumbnail" data-character="princess" data-artwork="imagegen" role="img" aria-label={label}>
     <span className="painted-thumbnail-crop" aria-hidden="true" style={{
       left: `${(160 - drawWidth) / 320 * 100}%`, top: `${(210 - drawHeight) / 420 * 100}%`,
       width: `${drawWidth / 160 * 100}%`, height: `${drawHeight / 210 * 100}%`,
-      backgroundImage: `url("${source}")`,
-      backgroundSize: `${atlas.width / width * 100}% ${atlas.height / height * 100}%`,
-      backgroundPosition: `${x / (atlas.width - width) * 100}% ${y / (atlas.height - height) * 100}%`,
+      backgroundImage: `url("${assetPath(sheet.source)}")`,
+      backgroundSize: `${sheet.width / width * 100}% ${sheet.height / height * 100}%`,
+      backgroundPosition: `${x / (sheet.width - width) * 100}% ${y / (sheet.height - height) * 100}%`,
     }} />
   </span>;
 }

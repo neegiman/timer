@@ -18,7 +18,7 @@ test('painted princess stays connected and grounded through selection, walking, 
     await expect(choice).toHaveAttribute('aria-pressed', 'true');
     await expect(choice.locator('[data-character="princess"]')).toBeVisible();
   }
-  await expect(choice.locator('.painted-thumbnail-crop')).toHaveCSS('background-image', /\/timer\/characters\/raster-v1\/princess.webp/);
+  await expect(choice.locator('.painted-thumbnail-crop')).toHaveCSS('background-image', /\/timer\/characters\/raster-v1\/princess-upper-v2.webp/);
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/princess-selection-320.png', fullPage: true });
   await page.getByRole('button', { name: '출발!' }).click();
   await expect(page.locator('[data-status="running"]')).toBeVisible();
@@ -83,7 +83,7 @@ test('painted princess stays connected and grounded through selection, walking, 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   // WebKit delivers its media change asynchronously, independently of the mocked frame clock.
   await expect.poll(() => page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
-  await expect(page.locator('.traveler-body [data-joint="front-arm"]')).toHaveAttribute('transform', 'rotate(-8.00000)');
+  await expect(page.locator('.traveler-body [data-joint="front-arm"]')).toHaveAttribute('transform', 'rotate(4.00000)');
   await expect(async () => { await page.clock.runFor(32); await check(true); }).toPass({ timeout: 3000 });
   const reduced = await joints(); await page.clock.runFor(200); expect(await joints()).toEqual(reduced);
   await page.emulateMedia({ reducedMotion: 'no-preference' });

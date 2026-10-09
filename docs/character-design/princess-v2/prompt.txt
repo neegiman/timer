@@ -1,0 +1,16 @@
+Use case: precise-object-edit.
+Asset type: revised transparent animation cutout sheet for the SAME princess in the referenced production artwork.
+Input image: the existing princess parts atlas is the identity, colors, costume and painting reference. Preserve her face, small gold crown, warm brown eyes, chestnut hair color, rose/peach dress design, cream tights, rose Mary Jane shoes, age-appropriate modest clothing, and soft watercolor/gouache picture-book rendering.
+Primary changes: give her LONG flowing chestnut hair down to her waist, and supply anatomically clean arm pieces for a gentle walking rig. Her torso must have NO attached arms or puff sleeves; puff sleeves belong ONLY on the separate upper-arm pieces. Relaxed human arms, not stiff sticks.
+Create ONE landscape sheet with EXACTLY FOUR COLUMNS and TWO ROWS (8 isolated pieces), generous transparent gutters, no labels or numbers, no scenery, no shadow, no decorative particles, real alpha transparency. Every piece fully inside its own cell. Limbs point vertically downward, with round overlapping joint ends and no sockets/holes. Same colors and texture in all pieces.
+TOP ROW left to right:
+1. HEAD + small crown + face-framing chestnut hair together, three-quarter view facing RIGHT. A clear visible neck below the jaw for attaching to the existing bodice. The face and crown match the reference. This is the front/head part; most LONG hair is supplied separately in cell 2.
+2. LONG BACK HAIR only, chestnut wavy hair mass from the back of the head/crown down to waist length, gently flowing behind toward LEFT, rounded readable silhouette. No face, no crown, no skin. This piece sits BEHIND head, shoulders and torso; rounded substantial root at top so it can overlap inside the head, broad flowing waves at bottom.
+3. Rose/peach BODICE from neck through waist, matching the reference neckline, gold buttons and waist bow. SLEEVELESS torso cutout for assembly: no puff sleeves, no arms, no hands, no skirt, no head. Rounded shoulder edges and side arm openings. No floating fragments.
+4. NEAR UPPER ARM only, from rounded shoulder joint to elbow: matching rose PUFF SLEEVE at top and exposed upper arm below. No forearm, no hand. Vertical relaxed limb. The sleeve moves with this upper arm.
+BOTTOM ROW left to right:
+5. FAR UPPER ARM, same anatomy as cell 4, matching puff sleeve and exposed skin, no hand or forearm.
+6. NEAR FOREARM from elbow to a small relaxed natural hand. Skin only, NO sleeve, NO upper arm, no extra fingers. Vertical, hand below wrist.
+7. FAR FOREARM from elbow to relaxed hand, matching cell 6. Skin only, NO sleeve or upper arm.
+8. COMPLETE assembled princess for the character selection thumbnail: crown, same face, clearly LONG waist-length wavy hair, same rose puff-sleeve dress with knee-length flared skirt, cream tights, rose shoes. Full body standing naturally facing RIGHT, exactly two arms and two legs, gentle smile, knees/shins/feet visible.
+Keep the existing identity and calm mood. No bob haircut on the complete princess, no duplicated sleeves on the bodice, no isolated sleeve fragments, no elongated forearms or missing elbows, no text, no watermark.
