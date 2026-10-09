@@ -26,8 +26,9 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
   await expect(page.locator('[data-status="running"]')).toBeVisible();
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   const sprite = page.locator('.traveler-body [data-prince-sprite]');
+  const miniature = page.locator('.progress-marker [data-prince-sprite]');
   await expect(sprite).toHaveCSS('overflow', 'hidden');
-  await expect(page.locator('.progress-marker [data-prince-sprite]')).toHaveCSS('overflow', 'hidden');
+  await expect(miniature).toHaveCSS('overflow', 'hidden');
   const start = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).startTimestamp);
   const seek = async (time: number) => {
     await page.clock.setSystemTime(time);
@@ -40,6 +41,8 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
     const frame = Number(await sprite.getAttribute('data-frame'));
     expect(frame).toBeGreaterThanOrEqual(1); expect(frame).toBeLessThanOrEqual(12);
     await expect(sprite).toHaveAttribute('viewBox', princeViewBox(frame));
+    await expect(miniature).toHaveAttribute('data-frame', String(frame));
+    await expect(miniature).toHaveAttribute('viewBox', princeViewBox(frame));
     frames.push(await sprite.evaluate((node) => node.outerHTML));
     await expect(page.locator('.character-wrapper')).toHaveAttribute('data-position', '.42');
   }
@@ -48,20 +51,28 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
   const frozen = await sprite.getAttribute('data-frame'), distance = await page.locator('.journey-scene').getAttribute('data-ground-distance');
+  await expect(miniature).toHaveAttribute('data-frame', frozen!);
   await page.clock.runFor(3000); await expect(sprite).toHaveAttribute('data-frame', frozen!);
+  await expect(miniature).toHaveAttribute('data-frame', frozen!);
   await expect(page.locator('.journey-scene')).toHaveAttribute('data-ground-distance', distance!);
   await page.reload(); await page.clock.runFor(32); await expect(sprite).toHaveAttribute('data-frame', frozen!);
+  await expect(miniature).toHaveAttribute('data-frame', frozen!);
   await expect(page.locator('[data-status="paused"]')).toBeVisible();
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '계속', exact: true }).click(); await page.clock.runFor(150);
   expect(await sprite.getAttribute('data-frame')).not.toBe(frozen);
+  expect(await miniature.getAttribute('data-frame')).toBe(await sprite.getAttribute('data-frame'));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(sprite).toHaveAttribute('data-frame', '0');
+  await expect(miniature).toHaveAttribute('data-frame', '0');
   await page.clock.runFor(300); await expect(sprite).toHaveAttribute('data-frame', '0');
   await expect(page.locator('[data-layer="ground"]')).toHaveAttribute('data-scroll-offset', '0.000000');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const target = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).targetTimestamp);
-  await seek(target); await page.clock.runFor(finishPhaseStart('CELEBRATE') + 150);
+  await seek(target);
+  await expect(miniature).toHaveAttribute('data-frame', '0');
+  await expect(miniature).toHaveAttribute('viewBox', princeViewBox(0));
+  await page.clock.runFor(finishPhaseStart('CELEBRATE') + 150);
   await expect(page.locator('.sprite-motion')).toHaveAttribute('data-action', 'celebrate');
   expect(Number(await sprite.getAttribute('data-frame'))).toBeGreaterThanOrEqual(15);
   const raisedFrames: string[] = [];
@@ -72,6 +83,7 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
     await page.clock.runFor(300);
   }
   await page.clock.runFor(4000); await expect(page.locator('[data-status="completed"]')).toBeVisible();
+  await expect(miniature).toHaveAttribute('data-frame', '0');
   if (await page.evaluate(() => typeof AudioContext !== 'undefined')) {
     await expect.poll(() => page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/finish.mp3')).length)).toBe(1);
   }

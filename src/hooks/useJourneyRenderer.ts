@@ -14,6 +14,12 @@ import { sceneryEvent, sceneryParticle } from '@/lib/sceneryEvents';
 import type { Season } from '@/lib/seasons';
 import type { SceneTheme } from '@/lib/dayNight';
 
+function drawPrinceFrame(element: SVGSVGElement | null | undefined, frame: number) {
+  if (!element || element.dataset.frame === String(frame)) return;
+  element.setAttribute('viewBox', princeViewBox(frame));
+  element.dataset.frame = String(frame);
+}
+
 /** A shared elapsed-time clock drives feet, ground and scenery. Frame updates never enter React state. */
 export function useJourneyRenderer(input: AnimationInput, state: AnimationState, sampledAt: number, characterId: string, season: Season, theme: SceneTheme) {
   const scene = useRef<HTMLDivElement>(null);
@@ -49,6 +55,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     const actor = wrapper.current;
     const sprite = body.current;
     if (!element || !actor || !sprite) return;
+    const progressPrince = characterId === 'prince' ? marker.current?.querySelector<SVGSVGElement>('[data-prince-sprite]') : null;
     const profile = motionProfile(characterId);
     const animalId = isAnimalId(characterId) ? characterId : null;
     const vehicleId = isPixelVehicle(characterId) ? characterId : null;
@@ -108,11 +115,11 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       if (princeSprite.current) {
         const pixelFrame = pose.phase === 'SETTLE' && pose.actionElapsedMs < 175 ? princeFrame('walk', gait, reduced)
           : princeFrame(pose.characterAction, animationTime, reduced);
-        if (princeSprite.current.dataset.frame !== String(pixelFrame)) {
-          princeSprite.current.setAttribute('viewBox', princeViewBox(pixelFrame));
-          princeSprite.current.dataset.frame = String(pixelFrame);
-        }
+        drawPrinceFrame(princeSprite.current, pixelFrame);
       }
+      // The miniature shares the existing gait clock, but rests at its destination
+      // once time is up while the main character finishes its crossing/celebration.
+      drawPrinceFrame(progressPrince, princeFrame(next.hasStarted && !next.isFinished && next.remainingTime > 0 ? 'walk' : 'idle', gait, reduced));
 
       if (vehicleSprite.current && vehicleId) {
         const pixelFrame = pose.phase === 'SETTLE' && pose.actionElapsedMs < 175 ? vehicleFrame(vehicleId, 'walk', gait, reduced)
