@@ -135,7 +135,9 @@ h1:focus { outline: none; }
 .sprite-motion[data-action="jump"] { animation: jumpBody .6s linear both; }
 .sprite-motion[data-action="land"] { animation: landBody .4s ease-out both; }
 .sprite-motion[data-action="celebrate"] { animation: happyBody 2.6s ease-in-out infinite; }
-.sprite-motion:is([data-character="chick"], [data-character="princess"])[data-action="celebrate"] { animation: none; }
+.sprite-motion:is([data-character="chick"], [data-character="princess"], [data-character="prince"])[data-action="celebrate"] { animation: none; }
+.pixel-prince-artwork { image-rendering: pixelated; shape-rendering: crispEdges; }
+.character-icon .pixel-prince-artwork, .traveler-body .pixel-prince-artwork { overflow: hidden; }
 .character-eyes { transform-box: fill-box; transform-origin: center; animation: eyeBlink 4.2s linear infinite; }
 .sprite-motion .rocket-flame { transform-box: fill-box; transform-origin: 50% 0; animation: flamePulse .4s ease-in-out infinite; }
 .parallax-layer { position: absolute; inset: 0; pointer-events: none; }

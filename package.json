@@ -12,7 +12,7 @@
     "test": "tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
     "sounds": "node scripts/generate-sounds.mjs",
-    "characters": "node scripts/prepare-character-atlases.mjs && node scripts/prepare-princess-atlas.mjs"
+    "characters": "node scripts/prepare-character-atlases.mjs && node scripts/prepare-princess-atlas.mjs && tsx scripts/generate-pixel-prince.ts"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

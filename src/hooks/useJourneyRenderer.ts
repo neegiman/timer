@@ -7,6 +7,7 @@ import type { AnimationInput, AnimationState } from '@/types/animation';
 import { animalActionPose, isAnimalId, settleAnimalPose } from '@/lib/animalActionPose';
 import { animalProfiles, type AnimalJoint } from '@/lib/animalMotion';
 import { PRINCESS_GAIT, princessPose, settlePrincessPose } from '@/lib/princessMotion';
+import { PRINCE_GAIT, princeFrame, princeViewBox } from '@/lib/princeMotion';
 
 /** A shared elapsed-time clock drives feet, ground and scenery. Frame updates never enter React state. */
 export function useJourneyRenderer(input: AnimationInput, state: AnimationState, sampledAt: number, characterId: string) {
@@ -22,6 +23,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
   const joints = useRef<{ element: SVGGElement; name: JointName }[]>([]);
   const animalJoints = useRef<{ element: SVGGElement; name: AnimalJoint }[]>([]);
   const animalBody = useRef<SVGGElement | null>(null);
+  const princeSprite = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => { snapshot.current = { input, sampledAt }; }, [input, sampledAt]);
   useEffect(() => {
@@ -32,6 +34,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     animalJoints.current = Array.from(body.current?.querySelectorAll<SVGGElement>('[data-animal-joint]') ?? [])
       .map((element) => ({ element, name: element.dataset.animalJoint as AnimalJoint }));
     animalBody.current = body.current?.querySelector<SVGGElement>('[data-animal-body]') ?? null;
+    princeSprite.current = body.current?.querySelector<SVGSVGElement>('[data-prince-sprite]') ?? null;
   }, [state.phaseKey, state.characterAction, characterId]);
 
   useEffect(() => {
@@ -62,7 +65,8 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       const gait = locomotionTime(elapsed, next.totalDuration);
       const scale = actorWidth / 160;
       const distance = (animalId ? gait / profile.cycleMs * animalProfiles[animalId].travel
-        : characterId === 'princess' ? gait / profile.cycleMs * PRINCESS_GAIT.travel : groundDistance(gait, profile.cycleMs)) * scale;
+        : characterId === 'princess' ? gait / profile.cycleMs * PRINCESS_GAIT.travel
+        : characterId === 'prince' ? gait / profile.cycleMs * PRINCE_GAIT.travel : groundDistance(gait, profile.cycleMs)) * scale;
       const x = width * .42;
       const groundY = height * .78;
       const reduced = preference.matches;
@@ -86,6 +90,15 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       }
       const animationTime = walking ? gait : pose.actionElapsedMs;
       for (const animation of animations.current) animation.currentTime = animationTime;
+
+      if (princeSprite.current) {
+        const pixelFrame = pose.phase === 'SETTLE' && pose.actionElapsedMs < 175 ? princeFrame('walk', gait, reduced)
+          : princeFrame(pose.characterAction, animationTime, reduced);
+        if (princeSprite.current.dataset.frame !== String(pixelFrame)) {
+          princeSprite.current.setAttribute('viewBox', princeViewBox(pixelFrame));
+          princeSprite.current.dataset.frame = String(pixelFrame);
+        }
+      }
 
       if (animalId) {
         const animal = pose.phase === 'SETTLE' ? settleAnimalPose(animalId, gait, pose.actionElapsedMs, reduced)

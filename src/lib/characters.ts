@@ -3,6 +3,7 @@ import type { Character } from '@/types/timer';
 export const characters: Character[] = [
   { id: 'rabbit', name: '토끼', icon: '🐰', type: 'illustration' },
   { id: 'princess', name: '공주', icon: '👸', type: 'illustration' },
+  { id: 'prince', name: '왕자', icon: '🤴', type: 'illustration' },
   { id: 'car', name: '자동차', icon: '🚗', type: 'illustration' },
   { id: 'train', name: '기차', icon: '🚂', type: 'illustration' },
   { id: 'rocket', name: '로켓', icon: '🚀', type: 'illustration' },

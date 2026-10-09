@@ -1,6 +1,7 @@
 import { PaintedAnimalArtwork, PaintedAnimalThumbnail } from './PaintedAnimalArtwork';
 import { isAnimalId } from '@/lib/animalActionPose';
 import { PaintedPrincessArtwork, PaintedPrincessThumbnail } from './PaintedPrincessArtwork';
+import { PixelPrinceArtwork } from './PixelPrinceArtwork';
 
 function Wheel({ x, joint }: { x: number; joint: 'front' | 'back' | 'middle' }) {
   return <g transform={`translate(${x} 181)`}><circle r="16" fill="#566353" /><circle r="11" fill="#fff2d3" />
@@ -36,6 +37,7 @@ function VehicleArtwork({ id }: { id: string }) {
 
 /** Shared painted animal art and original vehicle art for selection and the journey. */
 export function CharacterArtwork({ id, label }: { id: string; label?: string }) {
+  if (id === 'prince') return <PixelPrinceArtwork label={label} />;
   if (id === 'princess') return label ? <PaintedPrincessThumbnail label={label} /> : <PaintedPrincessArtwork />;
   if (isAnimalId(id)) return label ? <PaintedAnimalThumbnail id={id} label={label} /> : <PaintedAnimalArtwork id={id} />;
   return <svg className="character-artwork vehicle-sprite" data-character={id} viewBox="0 0 160 210"
