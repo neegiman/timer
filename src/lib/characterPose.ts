@@ -2,7 +2,7 @@ import type { CharacterAction } from '@/types/animation';
 import { SUPPORT_FRACTION } from './journey';
 
 export type JointName = 'front-thigh' | 'front-shin' | 'front-foot' | 'back-thigh' | 'back-shin' | 'back-foot' |
-  'front-arm' | 'front-elbow' | 'back-arm' | 'back-elbow' | 'head' | 'ear-front' | 'ear-back' | 'tail' | 'wheel-front' | 'wheel-back' | 'wheel-middle';
+  'front-arm' | 'front-elbow' | 'back-arm' | 'back-elbow' | 'head' | 'skirt' | 'ear-front' | 'ear-back' | 'tail' | 'wheel-front' | 'wheel-back' | 'wheel-middle';
 export type CharacterPose = Record<JointName, number>;
 export const LEG_LENGTH = { thigh: 21, shin: 22 };
 const degrees = (radians: number) => radians * 180 / Math.PI;
@@ -86,7 +86,7 @@ export function getCharacterPose(action: CharacterAction, elapsedMs: number, cyc
     'front-thigh': near.hip, 'front-shin': near.knee, 'front-foot': near.ankle,
     'back-thigh': far.hip, 'back-shin': far.knee, 'back-foot': far.ankle,
     'front-arm': frontArm, 'front-elbow': elbow, 'back-arm': backArm, 'back-elbow': elbow,
-    head, 'ear-front': ear, 'ear-back': ear * .8, tail: walking ? -swing * 7 : 0,
+    head, skirt: 0, 'ear-front': ear, 'ear-back': ear * .8, tail: walking ? -swing * 7 : 0,
     'wheel-front': wheel, 'wheel-back': wheel, 'wheel-middle': wheel,
   };
 }

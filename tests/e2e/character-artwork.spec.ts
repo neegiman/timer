@@ -55,11 +55,11 @@ test('articulated feet really exchange steps, and pause/refresh preserve their j
   expect(await joints(page)).not.toEqual(frozen);
 });
 
-test('all seven friends share their full artwork in selection and journey, including mobile finish poses', async ({ page }, testInfo) => {
+test('all eight friends share their full artwork in selection and journey, including mobile finish poses', async ({ page }, testInfo) => {
   await page.clock.install();
   await page.setViewportSize({ width: 320, height: 740 });
   await page.goto('./');
-  for (const [name, id] of [['토끼', 'rabbit'], ['강아지', 'dog'], ['고양이', 'cat'], ['병아리', 'chick'], ['자동차', 'car'], ['기차', 'train'], ['로켓', 'rocket']]) {
+  for (const [name, id] of [['토끼', 'rabbit'], ['강아지', 'dog'], ['고양이', 'cat'], ['병아리', 'chick'], ['공주', 'princess'], ['자동차', 'car'], ['기차', 'train'], ['로켓', 'rocket']]) {
     await page.getByRole('button', { name: '친구', exact: true }).click();
     const choice = page.getByRole('button', { name, exact: true });
     await expect(choice.locator('.character-artwork')).toHaveAttribute('data-character', id);
@@ -74,6 +74,10 @@ test('all seven friends share their full artwork in selection and journey, inclu
       await expect(artwork.locator('[data-body]')).toHaveCount(1);
       expect(await artwork.locator('[data-animal-joint]').count()).toBeGreaterThanOrEqual(id === 'chick' ? 9 : 16);
       await expect(artwork).toHaveAttribute('data-artwork', 'imagegen');
+    } else if (id === 'princess') {
+      await expect(artwork).toHaveAttribute('data-artwork', 'imagegen');
+      await expect(artwork.locator('[data-leg]')).toHaveCount(2);
+      await expect(artwork.locator('[data-arm]')).toHaveCount(2);
     } else if (id !== 'rocket') {
       const wheel = artwork.locator('[data-joint="wheel-front"]');
       const before = await wheel.getAttribute('transform');

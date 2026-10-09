@@ -6,6 +6,7 @@ import { motionProfile } from '@/lib/motionProfiles';
 import type { AnimationInput, AnimationState } from '@/types/animation';
 import { animalActionPose, isAnimalId, settleAnimalPose } from '@/lib/animalActionPose';
 import { animalProfiles, type AnimalJoint } from '@/lib/animalMotion';
+import { PRINCESS_GAIT, princessPose, settlePrincessPose } from '@/lib/princessMotion';
 
 /** A shared elapsed-time clock drives feet, ground and scenery. Frame updates never enter React state. */
 export function useJourneyRenderer(input: AnimationInput, state: AnimationState, sampledAt: number, characterId: string) {
@@ -60,7 +61,8 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       const elapsed = clamp(next.totalDuration - next.remainingTime, 0, next.totalDuration);
       const gait = locomotionTime(elapsed, next.totalDuration);
       const scale = actorWidth / 160;
-      const distance = (animalId ? gait / profile.cycleMs * animalProfiles[animalId].travel : groundDistance(gait, profile.cycleMs)) * scale;
+      const distance = (animalId ? gait / profile.cycleMs * animalProfiles[animalId].travel
+        : characterId === 'princess' ? gait / profile.cycleMs * PRINCESS_GAIT.travel : groundDistance(gait, profile.cycleMs)) * scale;
       const x = width * .42;
       const groundY = height * .78;
       const reduced = preference.matches;
@@ -91,8 +93,11 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         animalBody.current?.setAttribute('transform', `translate(0 ${animal.bob.toFixed(5)})`);
         for (const joint of animalJoints.current) joint.element.setAttribute('transform', `rotate(${animal.joints[joint.name].toFixed(5)})`);
       }
-      let jointPose = getCharacterPose(pose.characterAction, animationTime, profile.cycleMs, reduced, bob);
-      if (!animalId && pose.phase === 'SETTLE') {
+      let jointPose = characterId === 'princess' ? princessPose(pose.characterAction, animationTime, reduced)
+        : getCharacterPose(pose.characterAction, animationTime, profile.cycleMs, reduced, bob);
+      if (characterId === 'princess' && pose.phase === 'SETTLE') {
+        jointPose = settlePrincessPose(gait, pose.actionElapsedMs, reduced);
+      } else if (!animalId && pose.phase === 'SETTLE') {
         const last = getCharacterPose('walk', gait, profile.cycleMs, reduced);
         const blend = smoothstep(pose.actionElapsedMs / 350);
         for (const name of Object.keys(jointPose) as JointName[]) jointPose[name] = last[name] + (jointPose[name] - last[name]) * blend;

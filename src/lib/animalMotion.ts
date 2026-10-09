@@ -60,7 +60,7 @@ function footPitch(phase: number, support: number, push: number, folded: number)
     : folded * (1 - ease((swing - .35) / .65));
 }
 
-export function animalFoot(phase: number, profile: AnimalProfile) {
+export function animalFoot(phase: number, profile: Pick<AnimalProfile, 'travel' | 'support' | 'lift'>) {
   const p = wrap(phase);
   const stride = profile.travel * profile.support / 2;
   if (p < profile.support) {

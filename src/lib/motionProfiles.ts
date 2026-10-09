@@ -1,6 +1,8 @@
 import { animalProfiles } from './animalMotion';
+import { PRINCESS_GAIT } from './princessMotion';
 /** Profiles share the same timer progress; each gait keeps feet on its ground baseline. */
 export const motionProfiles = {
+  princess: { kind: 'human', cycleMs: PRINCESS_GAIT.cycleMs, groundY: PRINCESS_GAIT.groundY },
   rabbit: { kind: 'animal', cycleMs: animalProfiles.rabbit.cycleMs, groundY: 205 },
   chick: { kind: 'animal', cycleMs: animalProfiles.chick.cycleMs, groundY: 205 },
   dog: { kind: 'animal', cycleMs: animalProfiles.dog.cycleMs, groundY: 205 },
