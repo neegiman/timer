@@ -63,16 +63,19 @@ export function buildPrinceFrame(index: number) {
     rect(Math.round(hand.x) - 1, Math.round(hand.y) - 1, 2, 2, near ? 'S' : 's');
   };
   const leg = (near: boolean) => {
-    const rig = { x: near ? 14 : 19, y: 31, upper: 8, lower: 8.5, bend: 1 as const };
-    const foot = walk ? animalFoot(phase + (near ? 0 : .5), PRINCE_GAIT) : { x: near ? 2 : -2, lift: 0, planted: true };
+    // Rest with two straight, separated legs under the hips. Walking needs a
+    // little reach beyond the vertical stance, not permanently folded knees.
+    const rig = { x: near ? (walk ? 14 : 13) : (walk ? 19 : 20), y: 31, upper: 7.5, lower: 8, bend: 1 as const };
+    const foot = walk ? animalFoot(phase + (near ? 0 : .5), PRINCE_GAIT) : { x: 0, lift: 0, planted: true };
     const ankle = { x: Math.round(rig.x + foot.x / 4), y: 46 - Math.round(foot.lift / 4) };
     const solved = animalLeg(ankle.x - rig.x, ankle.y - rig.y, rig), hip = (solved.hip + 90) * Math.PI / 180;
-    const knee = { x: rig.x + Math.cos(hip) * rig.upper, y: rig.y + Math.sin(hip) * rig.upper };
-    stroke(knee, ankle, 4, 'O'); stroke(knee, ankle, 2, near ? 'D' : 'O');
+    const knee = walk ? { x: rig.x + Math.cos(hip) * rig.upper, y: rig.y + Math.sin(hip) * rig.upper }
+      : { x: rig.x, y: 39 };
+    stroke(knee, ankle, 4, 'O'); stroke(knee, ankle, 2, near || !walk ? 'D' : 'O');
     stroke(rig, knee, 5, 'O'); stroke(rig, knee, 3, near ? 'B' : 'D');
     // The boot's final row is always the planted ground row (47).
     rect(ankle.x - 2, ankle.y - 1, 5, 2, 'O'); rect(ankle.x - 1, ankle.y - 1, 3, 2, 'T');
-    rect(ankle.x - 2, ankle.y + 1, 7, 1, 'O'); rect(ankle.x, ankle.y, 4, 1, 't');
+    rect(ankle.x - 2, ankle.y + 1, walk ? 7 : 6, 1, 'O'); rect(ankle.x, ankle.y, 4, 1, 't');
     rect(ankle.x - 1, ankle.y - 2, 3, 1, 'G');
     feet.push({ x: ankle.x, sole: ankle.y + 2, planted: foot.planted });
   };

@@ -2,7 +2,7 @@ import type { CharacterAction } from '../types/animation';
 
 export const PRINCE_GAIT = { cycleMs: 1200, support: .66, travel: 40, lift: 6, groundY: 205 };
 export const PRINCE_SHEET = { columns: 6, rows: 3, frameWidth: 160, frameHeight: 210, walkFrames: 12, frames: 18 };
-export const PRINCE_ASSET = '/characters/pixel-v1/prince-celebrate-v2.svg';
+export const PRINCE_ASSET = '/characters/pixel-v1/prince-upright-v3.svg';
 
 /** Whole-body pixel frames follow the timer's gait clock, including pause/restore. */
 export function princeFrame(action: CharacterAction, elapsed: number, reduced = false) {

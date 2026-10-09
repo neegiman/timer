@@ -58,6 +58,20 @@ test('jump and all three celebration frames paint both hands outside the face', 
   }
 });
 
+test('standing and raised-arm poses have two straight legs and separate grounded boots', () => {
+  for (const frame of [0, 13, 14, 15, 16, 17]) {
+    const { pixels, feet } = buildPrinceFrame(frame);
+    for (let y = 37; y <= 42; y++) {
+      assert.ok(pixels[y][13] && pixels[y][20], `Frame ${frame}: a leg bends away from its hip`);
+      assert.equal(pixels[y][16], null, `Frame ${frame}: knees collapse into the middle`);
+      assert.equal(pixels[y][17], null, `Frame ${frame}: legs are fused`);
+    }
+    for (let y = 43; y <= 47; y++) assert.equal(pixels[y][17], null, `Frame ${frame}: boots overlap`);
+    assert.equal(feet.length, 2);
+    for (const foot of feet) assert.equal(foot.sole * 4 + 13, PRINCE_GAIT.groundY);
+  }
+});
+
 test('pixel boots stay grounded and match scenery travel within one native pixel', () => {
   const samples = Array.from({ length: 12 }, (_, i) => buildPrinceFrame(i + 1));
   for (const frame of samples) {

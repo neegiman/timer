@@ -20,6 +20,7 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
     await expect(choice.locator('[data-prince-sprite]')).toHaveCSS('overflow', 'hidden');
   }
   await expect(choice.locator('image')).toHaveAttribute('href', `/timer${PRINCE_ASSET}`);
+  const standingFrame = await choice.locator('[data-prince-sprite]').evaluate((node) => node.outerHTML);
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/prince-selection-320.png', fullPage: true });
   await page.getByRole('button', { name: '출발!' }).click();
   await expect(page.locator('[data-status="running"]')).toBeVisible();
@@ -88,7 +89,7 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
     const blob = await (await fetch(sourcePath)).blob();
     const source = await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(blob); });
     const canvas = document.createElement('canvas'); canvas.width = 160; canvas.height = 210;
-    const context = canvas.getContext('2d')!, result: { area: number; bottom: number; parts: number; hands: number[] }[] = [];
+    const context = canvas.getContext('2d')!, result: { area: number; bottom: number; parts: number; hands: number[]; straightLegs: boolean }[] = [];
     for (const markup of frames) {
       const svg = new DOMParser().parseFromString(markup.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '), 'image/svg+xml').documentElement;
       svg.setAttribute('width', '160'); svg.setAttribute('height', '210'); svg.querySelector('image')!.setAttribute('href', source);
@@ -113,15 +114,20 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
             }
           }
         }
-        result.push({ area, bottom: bottom + 1, parts, hands });
+        const nativeAlpha = (x: number, y: number) => pixels[((13 + y * 4 + 2) * 160 + 16 + x * 4 + 2) * 4 + 3];
+        const straightLegs = [37, 38, 39, 40, 41, 42].every((y) => nativeAlpha(13, y) >= 128 && nativeAlpha(20, y) >= 128 && nativeAlpha(17, y) === 0)
+          && [43, 44, 45, 46, 47].every((y) => nativeAlpha(17, y) === 0);
+        result.push({ area, bottom: bottom + 1, parts, hands, straightLegs });
       } finally { URL.revokeObjectURL(url); }
     }
     return result;
-  }, { frames: [...frames, ...raisedFrames], sourcePath: `/timer${PRINCE_ASSET}` });
+  }, { frames: [standingFrame, ...frames, ...raisedFrames], sourcePath: `/timer${PRINCE_ASSET}` });
   for (const frame of raster) {
     expect(frame.area).toBeGreaterThan(6400); expect(frame.bottom).toBe(205); expect(frame.parts).toBe(1);
   }
+  expect(raster[0].straightLegs, 'Selected prince should stand with straight, separated legs').toBe(true);
   for (const frame of raster.slice(-3)) {
+    expect(frame.straightLegs, 'Celebration should keep both legs upright and boots separate').toBe(true);
     expect(frame.hands[0], 'Near raised hand is missing from the actual sprite').toBeGreaterThanOrEqual(64);
     expect(frame.hands[1], 'Far raised hand is missing from the actual sprite').toBeGreaterThanOrEqual(64);
   }

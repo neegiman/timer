@@ -19,7 +19,7 @@ try {
   for (const match of previewHTML.matchAll(/(?:src|href)="(\/timer\/[^"?#]+\.(?:js|css))"/g)) assets.add(match[1]);
   const sounds = ['start', 'almost', 'finish', 'success', 'midpoint', 'sparkle', 'tick', 'strong-tick', 'whoosh', 'pop', 'land'];
   const animals = ['rabbit', 'dog', 'cat', 'chick', 'princess', 'princess-upper-v2'].map((id) => `/timer/characters/raster-v1/${id}.webp`);
-  const pixels = ['prince-celebrate-v2', 'car', 'train', 'rocket-horizontal-v3'].map((id) => `/timer/characters/pixel-v1/${id}.svg`);
+  const pixels = ['prince-upright-v3', 'car', 'train', 'rocket-horizontal-v3'].map((id) => `/timer/characters/pixel-v1/${id}.svg`);
   const storyIcons = ['handshake', 'bath', 'sleep', 'meal', 'tidy', 'outside', 'video', 'clock', 'rabbit'].map((id) => `/timer/images/story-v1/${id}.webp`);
   storyIcons.push(...['custom', 'home', 'flag', 'star'].map((id) => `/timer/images/story-v1/${id}.svg`));
   const appIcons = ['favicon-handshake-v1', 'promise-handshake-v1', 'apple-touch-handshake-v1'].map((id) => `/timer/images/${id}.png`);
