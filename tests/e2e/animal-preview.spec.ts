@@ -1,3 +1,4 @@
+import { walkingPawContact } from '../../src/lib/walkingAnatomy';
 import { test, expect } from '@playwright/test';
 
 test('animal studies articulate paws with the ground, keep a fixed body and pause without restarting', async ({ page }, testInfo) => {
@@ -7,8 +8,8 @@ test('animal studies articulate paws with the ground, keep a fixed body and paus
   await page.goto('./animal-preview/');
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   await expect(page.getByRole('heading', { name: '동물처럼 움직여요', exact: true })).toBeVisible();
-  await expect(page.locator('[data-animal-scene]')).toHaveCount(5);
-  await expect(page.locator('.animal-concept-board img')).toHaveAttribute('src', '/timer/images/animal-design/natural-concepts-v2.png');
+  await expect(page.locator('[data-animal-scene]')).toHaveCount(4);
+  await expect(page.locator('.animal-concept-friends [data-character]')).toHaveCount(4);
   const read = () => page.evaluate(() => [...document.querySelectorAll<HTMLElement>('[data-animal-scene]')].map((scene) => ({
     id: scene.dataset.animalScene, time: scene.dataset.motionTime,
     ground: scene.querySelector<HTMLElement>('.animal-study-ground')!.style.transform,
@@ -51,7 +52,7 @@ test('animal studies articulate paws with the ground, keep a fixed body and paus
     if (testInfo.project.name === 'chromium') await page.screenshot({ path: `artifacts/natural-animal-preview-${width}.png`, fullPage: true });
   }
   await page.reload();
-  await expect(page.locator('[data-animal-scene]')).toHaveCount(5);
+  await expect(page.locator('[data-animal-scene]')).toHaveCount(4);
   expect(errors).toEqual([]);
 });
 
@@ -61,13 +62,13 @@ test('planted animal paws have no sliding and motion reduction leaves a still st
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   await page.getByRole('button', { name: '다시 보기', exact: false }).click();
   await page.clock.runFor(50);
-  const contact = () => page.evaluate(() => {
+  const contact = () => page.evaluate((sole) => {
     const scene = document.querySelector<HTMLElement>('[data-animal-scene="dog"]')!;
     const ankle = scene.querySelector<SVGGElement>('[data-animal-joint="nearHindAnkle"]')!;
-    const point = new DOMPoint(0, 4).matrixTransform(ankle.getScreenCTM()!);
+    const point = new DOMPoint(sole.x, sole.y).matrixTransform(ankle.getScreenCTM()!);
     const bounds = scene.getBoundingClientRect();
     return { x: point.x, y: point.y, baseline: bounds.y + bounds.height * .75, ground: Number(scene.dataset.groundDistance) };
-  });
+  }, walkingPawContact('dog', true));
   const first = await contact();
   await page.clock.runFor(100);
   const second = await contact();
@@ -85,11 +86,11 @@ test('planted animal paws have no sliding and motion reduction leaves a still st
   for (const ground of await page.locator('.animal-study-ground').all()) await expect(ground).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
 });
 
-test('all four mammal legs have painted limbs and separately visible front and rear paws', async ({ page }, testInfo) => {
+test('all three mammal legs have painted limbs and separately visible front and rear paws', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./animal-preview/');
   await page.getByRole('button', { name: '보행 구조 보기', exact: true }).click();
-  await expect(page.locator('[data-animal-scene]')).toHaveCount(5);
+  await expect(page.locator('[data-animal-scene]')).toHaveCount(4);
   const results = await page.locator('.natural-animal-artwork:not([data-animal="chick"])').evaluateAll(async (elements) => {
     const scale = 4;
     const raster = async (svg: SVGSVGElement) => {
@@ -135,7 +136,7 @@ test('all four mammal legs have painted limbs and separately visible front and r
       return { animal: svg.dataset.animal, paws };
     }));
   });
-  expect(results).toHaveLength(4);
+  expect(results).toHaveLength(3);
   for (const { animal, paws } of results) {
     expect(paws).toHaveLength(4);
     for (const paw of paws) {

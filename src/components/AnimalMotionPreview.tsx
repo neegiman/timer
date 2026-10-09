@@ -1,12 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { NaturalAnimalArtwork } from './NaturalAnimalArtwork';
 import { animalIds, animalPose, animalProfiles, type AnimalId, type AnimalJoint } from '@/lib/animalMotion';
-import { assetPath } from '@/lib/assetPath';
-import { PaintedAnimalArtwork } from './PaintedAnimalArtwork';
+import { PaintedAnimalArtwork, PaintedAnimalThumbnail } from './PaintedAnimalArtwork';
 
 export function AnimalMotionPreview() {
   const gallery = useRef<HTMLDivElement>(null);
@@ -75,7 +73,9 @@ export function AnimalMotionPreview() {
     <header><p className="animal-preview-eyebrow">새로운 동물 친구 · 디자인과 움직임 시안</p>
       <h1>동물처럼 움직여요</h1><p>낮은 몸통, 네 발, 귀와 꼬리까지.<br />동물마다 다른 움직임을 만나보세요.</p></header>
     <figure className="animal-concept-board">
-      <Image src={assetPath('/images/animal-design/natural-concepts-v2.png')} width={1536} height={1024} priority alt="자연스러운 동물 체형을 반영한 토끼, 곰, 강아지, 고양이, 병아리의 그림책 디자인 시안" />
+      <div className="animal-concept-friends">{animalIds.map((id) => <div key={id}>
+        <PaintedAnimalThumbnail id={id} label={animalProfiles[id].name} /><span>{animalProfiles[id].name}</span>
+      </div>)}</div>
       <figcaption>ImageGen으로 만든 외형 시안이에요. 아래에서는 털 질감을 살린 원화와 보행 구조를 바꿔가며 비교할 수 있어요. 원화의 움직임은 실제 타이머에도 적용했어요.</figcaption>
     </figure>
     <section className="animal-motion-section" aria-labelledby="animal-motion-heading">

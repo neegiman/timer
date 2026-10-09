@@ -2,11 +2,11 @@
 
 미리보기: https://neegiman.github.io/timer/animal-preview/
 
-현재 버전은 [원화 애니메이션 적용 기록](../raster-v1/README.md)을 참고하세요. 아래 문서는 초기 외형·보행 구조 시안의 기록이며, 이후 ImageGen 원화를 실제 타이머에 적용했습니다. 미리보기의 **보행 구조 보기**로 이 SVG 시안을 계속 비교할 수 있습니다.
+곰이 포함된 초기 시안은 이 문서에 기록으로만 보존합니다. 현재 목록에서는 곰을 제거했습니다. 현재 버전은 [원화 애니메이션 적용 기록](../raster-v1/README.md)을 참고하세요. 아래 문서는 초기 외형·보행 구조 시안의 기록이며, 이후 ImageGen 원화를 실제 타이머에 적용했습니다. 미리보기의 **보행 구조 보기**로 이 SVG 시안을 계속 비교할 수 있습니다.
 
 ## 결과물과 범위
 
-- `public/images/animal-design/natural-concepts-v2.png`: ImageGen 기본 내장 도구로 생성한 토끼·곰·강아지·고양이·병아리 그림 시안. 사진이나 검증된 스프라이트 시트가 아닙니다.
+- [초기 외형 시안 기록](concept-history.png): ImageGen 기본 내장 도구로 생성한 토끼·곰·강아지·고양이·병아리 그림 시안. 사진이나 검증된 스프라이트 시트가 아닙니다.
 - `rabbit-photo-reference.png`: 실제 토끼의 옆모습 사진. [PurePNG 원문](https://purepng.com/photo/578/animals-blonde-rabbit-walking-from-side)의 CC0 / 상업 사용 허용 표기를 확인했습니다. 체형 관찰 자료로 보존하며 앱의 캐릭터로 사용하지 않습니다.
 - `src/components/NaturalAnimalArtwork.tsx`: 낮은 몸통과 네 다리, 동물의 머리·귀·꼬리를 구분한 SVG 보행 시안. 원화의 털 텍스처는 이 단계에서 재현하지 않았습니다.
 - `src/lib/animalMotion.ts`: 동물별 주기·지지 시간·보폭·발 순서·관절 길이·무릎 방향·귀와 꼬리 반응을 정의합니다. 영상에서 추출한 실측 모션 캡처가 아닌 관찰 자료 기반의 근사 모델입니다.

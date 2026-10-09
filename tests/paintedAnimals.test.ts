@@ -8,7 +8,7 @@ import { motionProfile } from '../src/lib/motionProfiles';
 import { locomotionTime } from '../src/lib/journey';
 import { rabbitAnatomy } from '../src/lib/rabbitAnatomy';
 
-test('five ImageGen atlases retain transparent alpha and lossless visible fur pixels', async () => {
+test('four ImageGen atlases retain transparent alpha and lossless visible fur pixels', async () => {
   for (const id of animalIds) {
     const source = await sharp(`docs/character-design/raster-v1/atlases/${id}.png`).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     const asset = await sharp(`public/characters/raster-v1/${id}.webp`).ensureAlpha().raw().toBuffer({ resolveWithObject: true });

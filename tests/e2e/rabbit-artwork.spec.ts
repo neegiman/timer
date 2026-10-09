@@ -21,7 +21,7 @@ test('rabbit selection stays painted after repeated taps, leaving the step and r
     }
     expect(painted / (pixels.info.width * pixels.info.height), 'selected rabbit is blank').toBeGreaterThan(.04);
   };
-  for (const other of ['곰', '강아지', '고양이']) {
+  for (const other of ['병아리', '강아지', '고양이']) {
     await page.getByRole('button', { name: other, exact: true }).click();
     await rabbit.click(); await page.clock.runFor(1600); await checkPaint();
   }

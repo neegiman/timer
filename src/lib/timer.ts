@@ -1,6 +1,7 @@
 import type { TimerSession, TodayStars } from '@/types/timer';
 import { isPromise } from './promises';
 import { FINISH_DURATION_MS } from './animation';
+import { getCharacter } from './characters';
 
 export const ARRIVAL_DURATION_MS = FINISH_DURATION_MS;
 
@@ -33,6 +34,8 @@ export function arriveSession(session: TimerSession, now: number): TimerSession 
 }
 
 export function advanceSession(session: TimerSession, now: number): TimerSession {
+  const characterId = getCharacter(session.characterId).id;
+  if (characterId !== session.characterId) session = { ...session, characterId };
   if (session.status === 'running' && now >= session.targetTimestamp) return arriveSession(session, now);
   if (session.status === 'arriving' && now >= (session.arrivalTimestamp ?? now) + ARRIVAL_DURATION_MS) {
     return { ...session, status: 'completed' };

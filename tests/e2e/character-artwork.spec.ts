@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { walkingPawContact } from '../../src/lib/walkingAnatomy';
 
 async function begin(page: Page, name = '토끼') {
   await page.goto('./');
@@ -54,11 +55,11 @@ test('articulated feet really exchange steps, and pause/refresh preserve their j
   expect(await joints(page)).not.toEqual(frozen);
 });
 
-test('all eight friends share their full artwork in selection and journey, including mobile finish poses', async ({ page }, testInfo) => {
+test('all seven friends share their full artwork in selection and journey, including mobile finish poses', async ({ page }, testInfo) => {
   await page.clock.install();
   await page.setViewportSize({ width: 320, height: 740 });
   await page.goto('./');
-  for (const [name, id] of [['토끼', 'rabbit'], ['곰', 'bear'], ['강아지', 'dog'], ['고양이', 'cat'], ['병아리', 'chick'], ['자동차', 'car'], ['기차', 'train'], ['로켓', 'rocket']]) {
+  for (const [name, id] of [['토끼', 'rabbit'], ['강아지', 'dog'], ['고양이', 'cat'], ['병아리', 'chick'], ['자동차', 'car'], ['기차', 'train'], ['로켓', 'rocket']]) {
     await page.getByRole('button', { name: '친구', exact: true }).click();
     const choice = page.getByRole('button', { name, exact: true });
     await expect(choice.locator('.character-artwork')).toHaveAttribute('data-character', id);
@@ -69,7 +70,7 @@ test('all eight friends share their full artwork in selection and journey, inclu
     const artwork = page.locator('.traveler-body .character-artwork');
     await expect(artwork).toHaveAttribute('data-character', id);
     await expect(page.locator('.traveler-body .character-emoji')).toHaveCount(0);
-    if (['rabbit', 'bear', 'dog', 'cat', 'chick'].includes(id)) {
+    if (['rabbit', 'dog', 'cat', 'chick'].includes(id)) {
       await expect(artwork.locator('[data-body]')).toHaveCount(1);
       expect(await artwork.locator('[data-animal-joint]').count()).toBeGreaterThanOrEqual(id === 'chick' ? 9 : 16);
       await expect(artwork).toHaveAttribute('data-artwork', 'imagegen');
@@ -134,12 +135,12 @@ test('planted SVG feet stay on the ground and move with it without sliding', asy
   // Freeze between reads too: otherwise slower WebKit calls can advance into toe-off.
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   await seek(page, 400 + 1440 * 48.1);
-  const contact = () => page.evaluate(() => {
+  const contact = () => page.evaluate((pad) => {
     const scene = document.querySelector<HTMLElement>('.journey-scene')!;
     const foot = scene.querySelector<SVGGElement>('[data-animal-joint="nearHindAnkle"]')!;
-    const sole = new DOMPoint(0, 4).matrixTransform(foot.getScreenCTM()!);
+    const sole = new DOMPoint(pad.x, pad.y).matrixTransform(foot.getScreenCTM()!);
     return { x: sole.x, y: sole.y, groundY: scene.getBoundingClientRect().y + Number(scene.dataset.groundY), distance: Number(scene.dataset.groundDistance) };
-  });
+  }, walkingPawContact('dog', true));
   const first = await contact();
   await page.clock.runFor(100);
   const second = await contact();

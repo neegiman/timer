@@ -3,6 +3,7 @@ import atlases from '@/lib/animalAtlases.json';
 import { animalPose, animalProfiles, type AnimalId, type PawName } from '@/lib/animalMotion';
 import { assetPath } from '@/lib/assetPath';
 import { rabbitAnatomy } from '@/lib/rabbitAnatomy';
+import { walkingAnatomy, type LimbArtwork } from '@/lib/walkingAnatomy';
 
 type PartName = keyof typeof atlases.rabbit.parts;
 /** A bounded CSS image crop avoids nested SVG repainting when a choice is tapped on mobile. */
@@ -30,13 +31,12 @@ function Part({ id, part, x, y, width, height, contain = false }: {
 }
 
 /** Match painted joint landmarks to the bone; padding is never a rotation pivot. */
-function RabbitHindBone({ part, length }: { part: 'hindUpper' | 'hindLower'; length: number }) {
-  const landmarks = rabbitAnatomy.hindArtwork[part === 'hindUpper' ? 'upper' : 'lower'];
+function PaintedBone({ id, part, length, landmarks }: { id: AnimalId; part: PartName; length: number; landmarks: LimbArtwork['upper'] }) {
   const dx = landmarks.tip.x - landmarks.pivot.x, dy = landmarks.tip.y - landmarks.pivot.y;
-  const scale = length / Math.hypot(dx, dy), [, , width, height] = atlases.rabbit.parts[part];
+  const scale = length / Math.hypot(dx, dy), [, , width, height] = atlases[id].parts[part];
   const angle = 90 - Math.atan2(dy, dx) * 180 / Math.PI;
   return <g transform={`rotate(${angle})`}>
-    <Part id="rabbit" part={part} x={-landmarks.pivot.x * scale} y={-landmarks.pivot.y * scale} width={width * scale} height={height * scale} />
+    <Part id={id} part={part} x={-landmarks.pivot.x * scale} y={-landmarks.pivot.y * scale} width={width * scale} height={height * scale} />
   </g>;
 }
 
@@ -61,28 +61,27 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
   const upperHeight = rig.upper + overlap * 2, lowerHeight = rig.lower + overlap * 2;
   const parts = atlases[id].parts;
   const upperWidth = rabbit ? upperHeight * parts[upperPart][2] / parts[upperPart][3]
-    : (bird ? 7 : id === 'bear' ? 23 : id === 'cat' ? 13 : 17) * (far ? .88 : 1);
+    : (bird ? 7 : id === 'cat' ? 13 : 17) * (far ? .88 : 1);
   const lowerWidth = rabbit ? lowerHeight * parts[lowerPart][2] / parts[lowerPart][3] : bird ? 3.5 : upperWidth * .72;
-  const pawWidth = bird ? 19 : hind && rabbit ? 28 : rabbit ? 17 : id === 'bear' ? 24 : 21;
-  const pawHeight = rabbit ? pawWidth * parts[pawPart][3] / parts[pawPart][2] : 13;
-  const fittedHind = rabbit && hind;
-  const hindPaw = rabbitAnatomy.hindArtwork.paw;
+  const artwork = rabbit && hind ? rabbitAnatomy.hindArtwork : id === 'dog' || id === 'cat' ? walkingAnatomy[id][hind ? 'hindArtwork' : 'foreArtwork'] : null;
+  const pawWidth = artwork?.paw.width ?? (bird ? 19 : 17);
+  const pawHeight = artwork || rabbit ? pawWidth * parts[pawPart][3] / parts[pawPart][2] : 13;
   const pawScale = pawWidth / parts[pawPart][2];
-  const blendedRoot = rabbit && !far;
+  const blendedRoot = !bird && !far;
   return <g data-paw={name} transform={`translate(${rig.x} ${rig.y})`} filter={far ? filter : undefined}>
     {blendedRoot ? <defs>
-      <linearGradient id={`${prefix}-root-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={fittedHind ? -14 : -overlap} x2="0" y2={fittedHind ? 5 : 12}><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
+      <linearGradient id={`${prefix}-root-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={artwork ? -14 : -overlap} x2="0" y2={artwork ? 5 : 12}><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
       <mask id={`${prefix}-root-mask`} maskUnits="userSpaceOnUse" x="-30" y="-30" width="60" height="110"><rect x="-30" y="-30" width="60" height="110" fill={`url(#${prefix}-root-fade)`} /></mask>
     </defs> : null}
     <g data-animal-joint={`${name}Hip`} transform={`rotate(${rest[`${name}Hip`]})`}>
-      <g mask={blendedRoot ? `url(#${prefix}-root-mask)` : undefined}>{fittedHind
-        ? <RabbitHindBone part="hindUpper" length={rig.upper} />
+      <g mask={blendedRoot ? `url(#${prefix}-root-mask)` : undefined}>{artwork
+        ? <PaintedBone id={id} part={upperPart} length={rig.upper} landmarks={artwork.upper} />
         : <Part id={id} part={upperPart} x={-upperWidth / 2} y={-overlap} width={upperWidth} height={upperHeight} />}</g>
       <g transform={`translate(0 ${rig.upper})`}><g data-animal-joint={`${name}Knee`} transform={`rotate(${rest[`${name}Knee`]})`}>
-        {fittedHind ? <RabbitHindBone part="hindLower" length={rig.lower} />
+        {artwork ? <PaintedBone id={id} part={lowerPart} length={rig.lower} landmarks={artwork.lower} />
           : <Part id={id} part={lowerPart} x={-lowerWidth / 2} y={-overlap} width={lowerWidth} height={lowerHeight} />}
         <g transform={`translate(0 ${rig.lower})`}><g data-animal-joint={`${name}Ankle`} transform={`rotate(${rest[`${name}Ankle`]})`}>
-          <Part id={id} part={pawPart} x={fittedHind ? -hindPaw.pivot.x * pawScale : -7} y={fittedHind ? -hindPaw.pivot.y * pawScale : 4 - pawHeight} width={pawWidth} height={pawHeight} />
+          <Part id={id} part={pawPart} x={artwork ? -artwork.paw.pivot.x * pawScale : -7} y={artwork ? -artwork.paw.pivot.y * pawScale : 4 - pawHeight} width={pawWidth} height={pawHeight} />
         </g></g>
       </g></g>
     </g>
@@ -93,11 +92,12 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
 export function PaintedAnimalArtwork({ id, label }: { id: AnimalId; label?: string }) {
   const prefix = useId().replace(/:/g, ''), bird = id === 'chick', rabbit = id === 'rabbit', dog = id === 'dog';
   const filter = `url(#${prefix}-far-fur)`;
-  const torso = rabbit ? rabbitAnatomy.torso : { x: bird ? 45 : 24, y: bird ? 131 : id === 'bear' ? 123 : 133, width: bird ? 69 : 102, height: bird ? 57 : id === 'bear' ? 56 : 41 };
-  const head = rabbit ? rabbitAnatomy.head : { x: bird ? 80 : 93, y: bird ? 110 : 119, width: bird ? 51 : 61, height: bird ? 47 : 42 };
-  const pivot = rabbit ? rabbitAnatomy.headPivot : { x: bird ? 96 : 111, y: bird ? 151 : 147 };
-  const earNear = rabbit ? rabbitAnatomy.earNear : { anchorX: 106, anchorY: 128, x: -9, y: dog ? -4 : -18, width: dog ? 23 : 20, height: dog ? 36 : 23 };
-  const earFar = rabbit ? rabbitAnatomy.earFar : { anchorX: 113, anchorY: 126, x: -7, y: dog ? -3 : -17, width: dog ? 18 : 17, height: dog ? 32 : 20 };
+  const anatomy = rabbit ? rabbitAnatomy : id === 'dog' || id === 'cat' ? walkingAnatomy[id] : null;
+  const torso = anatomy?.torso ?? { x: 45, y: 131, width: 69, height: 57 };
+  const head = anatomy?.head ?? { x: 80, y: 110, width: 51, height: 47 };
+  const pivot = anatomy?.headPivot ?? { x: 96, y: 151 };
+  const earNear = anatomy?.earNear ?? rabbitAnatomy.earNear;
+  const earFar = anatomy?.earFar ?? rabbitAnatomy.earFar;
   const nearEar = !bird ? <PaintedEar id={id} part="earNear" placement={earNear} /> : null;
   return <svg viewBox="0 0 160 210" className="character-artwork natural-animal-artwork painted-animal-artwork" data-character={id} data-animal={id}
     data-artwork="imagegen" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} focusable="false">
@@ -113,9 +113,9 @@ export function PaintedAnimalArtwork({ id, label }: { id: AnimalId; label?: stri
         <Part id={id} part="torso" {...torso} />
         <g transform={`translate(${pivot.x} ${pivot.y})`}><g data-animal-joint="head"><g transform={`translate(${-pivot.x} ${-pivot.y})`}>
           {!bird ? <PaintedEar id={id} part="earFar" placement={earFar} /> : null}
-          {rabbit ? nearEar : null}
+          {!dog ? nearEar : null}
           <Part id={id} part="head" {...head} />
-          {!rabbit ? nearEar : null}
+          {dog ? nearEar : null}
         </g></g></g>
         {bird ? <g transform="translate(67 154)"><g data-animal-joint="wing"><Part id={id} part="earNear" x={-5} y={-9} width={37} height={29} /></g></g> : null}
         <PaintedPaw id={id} name="nearHind" filter={filter} /><PaintedPaw id={id} name="nearFore" filter={filter} />

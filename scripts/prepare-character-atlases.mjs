@@ -3,7 +3,7 @@ import sharp from 'sharp';
 const names = ['torso', 'head', 'earNear', 'earFar', 'tail', 'hindUpper', 'hindLower', 'hindPaw', 'foreUpper', 'foreLower', 'forePaw', 'thumbnail'];
 const manifest = {};
 (async () => {
-  for (const id of ['rabbit', 'bear', 'dog', 'cat', 'chick']) {
+  for (const id of ['rabbit', 'dog', 'cat', 'chick']) {
     const source = `docs/character-design/raster-v1/atlases/${id}.png`;
     const { data, info } = await sharp(source).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     const visited = new Uint8Array(info.width * info.height), queue = new Int32Array(visited.length), components = [];

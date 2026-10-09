@@ -1,7 +1,8 @@
 import { rabbitAnatomy, rabbitHindContact } from './rabbitAnatomy';
+import { walkingAnatomy, walkingPawContact } from './walkingAnatomy';
 
 /** Animal-specific motion studies. Illustrative gait rigs, not measured motion-capture data. */
-export type AnimalId = 'rabbit' | 'bear' | 'dog' | 'cat' | 'chick';
+export type AnimalId = 'rabbit' | 'dog' | 'cat' | 'chick';
 export type PawName = 'nearHind' | 'farHind' | 'nearFore' | 'farFore';
 export type AnimalJoint = `${PawName}Hip` | `${PawName}Knee` | `${PawName}Ankle` | 'head' | 'earNear' | 'earFar' | 'tail' | 'wing';
 export interface PawRig { x: number; y: number; upper: number; lower: number; bend: 1 | -1 }
@@ -10,8 +11,6 @@ export interface AnimalProfile {
   phases: Record<PawName, number>; paws: Partial<Record<PawName, PawRig>>;
   description: string; fur: string; light: string; shade: string; line: string;
 }
-const hind = (x: number, y = 155): PawRig => ({ x, y, upper: 27, lower: 26, bend: 1 });
-const fore = (x: number, y = 163): PawRig => ({ x, y, upper: 22, lower: 24, bend: -1 });
 
 export const animalProfiles: Record<AnimalId, AnimalProfile> = {
   rabbit: { name: '토끼', cycleMs: 1250, support: .38, travel: 30, lift: 12,
@@ -19,19 +18,15 @@ export const animalProfiles: Record<AnimalId, AnimalProfile> = {
     paws: rabbitAnatomy.paws,
     description: '두 뒷발로 밀고, 앞발부터 내려와요. 귀는 조금 늦게 따라 움직여요.',
     fur: '#ede1cd', light: '#fff8ec', shade: '#d6c4ad', line: '#a48d71' },
-  bear: { name: '곰', cycleMs: 1800, support: .72, travel: 60, lift: 6,
-    phases: { nearHind: 0, nearFore: .75, farHind: .5, farFore: .25 },
-    paws: { nearHind: hind(44, 162), farHind: hind(61, 162), nearFore: fore(113, 164), farFore: fore(130, 164) },
-    description: '넓은 네 발을 천천히 디디고, 몸의 무게를 부드럽게 옮겨요.',
-    fur: '#a87950', light: '#d0a77c', shade: '#825a3d', line: '#745138' },
   dog: { name: '강아지', cycleMs: 1440, support: .68, travel: 72, lift: 9,
     phases: { nearHind: 0, nearFore: .75, farHind: .5, farFore: .25 },
-    paws: { nearHind: hind(43, 158), farHind: hind(60, 158), nearFore: fore(109), farFore: fore(126) },
+    paws: walkingAnatomy.dog.paws,
     description: '네 발이 차례대로 땅을 딛어요. 귀와 꼬리도 작은 리듬을 타요.',
     fur: '#ddb787', light: '#f6ddaf', shade: '#bd9465', line: '#a17a53' },
-  cat: { name: '고양이', cycleMs: 1900, support: .7, travel: 92, lift: 7,
+  cat: { name: '고양이', cycleMs: 1900, support: .7,
+    travel: (walkingAnatomy.cat.paws.nearFore.x + walkingPawContact('cat', false).x - walkingAnatomy.cat.paws.nearHind.x - walkingPawContact('cat', true).x) / .75, lift: 7,
     phases: { nearHind: 0, nearFore: .75, farHind: .5, farFore: .25 },
-    paws: { nearHind: hind(42, 160), farHind: hind(59, 160), nearFore: { ...fore(111), upper: 27, lower: 28 }, farFore: { ...fore(128), upper: 27, lower: 28 } },
+    paws: walkingAnatomy.cat.paws,
     description: '몸은 조용히, 뒷발은 앞발이 디딘 자리로 사뿐히 옮겨요. 꼬리가 균형을 잡아요.',
     fur: '#a7aea0', light: '#d8dbcd', shade: '#808e7e', line: '#727e6b' },
   chick: { name: '병아리', cycleMs: 780, support: .65, travel: 18, lift: 5,
@@ -49,7 +44,15 @@ const ease = (value: number) => { const t = clamp(value, 0, 1); return t * t * (
 
 /** Heel rises over a planted toe, then the paw folds and opens before landing. */
 export function rabbitFootPitch(phase: number, support: number, hind: boolean) {
-  const p = wrap(phase), push = hind ? 24 : 12, folded = hind ? -22 : -14;
+  return footPitch(phase, support, hind ? 24 : 12, hind ? -22 : -14);
+}
+
+export function walkingFootPitch(phase: number, support: number, hind: boolean) {
+  return footPitch(phase, support, hind ? 14 : 10, hind ? -18 : -14);
+}
+
+function footPitch(phase: number, support: number, push: number, folded: number) {
+  const p = wrap(phase);
   if (p < support) return push * ease((p / support - .72) / .28);
   const swing = (p - support) / (1 - support);
   return swing < .35 ? push + (folded - push) * ease(swing / .35)
@@ -82,14 +85,16 @@ export function animalPose(id: AnimalId, elapsedMs: number, moving = true) {
   const p = wrap(cycle);
   // Weight rises during hind-paw propulsion, then settles through fore-paw contact.
   const hop = id === 'rabbit' && moving ? 2.4 * (p < .86 ? ease((p - .72) / .14) : 1 - ease((p - .86) / .12)) : 0;
-  const bob = !moving ? 0 : id === 'rabbit' ? -hop : Math.sin(cycle * Math.PI * 4) * (id === 'bear' ? .65 : id === 'chick' ? .7 : .25);
+  const bob = !moving ? 0 : id === 'rabbit' ? -hop : Math.sin(cycle * Math.PI * 4) * (id === 'chick' ? .7 : .25);
   const joints = {} as Record<AnimalJoint, number>;
   const feet = {} as Partial<Record<PawName, { x: number; y: number; planted: boolean; contactX: number; contactY: number; pitch: number }>>;
   for (const [paw, rig] of Object.entries(profile.paws) as [PawName, PawRig][]) {
     const foot = moving ? animalFoot(cycle + profile.phases[paw], profile) : { x: 0, lift: 0, planted: true };
-    const pitch = id === 'rabbit' && moving ? rabbitFootPitch(cycle + profile.phases[paw], profile.support, paw.includes('Hind')) : 0;
-    const contactX = id === 'rabbit' ? paw.includes('Hind') ? rabbitHindContact.x : 7 : 0;
-    const contactY = id === 'rabbit' && paw.includes('Hind') ? rabbitHindContact.y : 4;
+    const hind = paw.includes('Hind'), phase = cycle + profile.phases[paw];
+    const pitch = !moving ? 0 : id === 'rabbit' ? rabbitFootPitch(phase, profile.support, hind)
+      : id === 'dog' || id === 'cat' ? walkingFootPitch(phase, profile.support, hind) : 0;
+    const contact = pawContact(id, hind);
+    const contactX = contact.x, contactY = contact.y;
     const angle = pitch * Math.PI / 180;
     const soleX = contactX * Math.cos(angle) - contactY * Math.sin(angle);
     const soleY = contactX * Math.sin(angle) + contactY * Math.cos(angle);
@@ -104,4 +109,10 @@ export function animalPose(id: AnimalId, elapsedMs: number, moving = true) {
   joints.tail = moving ? Math.sin(cycle * Math.PI * 2 - .7) * (id === 'dog' ? 7 : id === 'cat' ? 4 : 1) : 0;
   joints.wing = moving && id === 'chick' ? Math.sin(cycle * Math.PI * 2 - .4) * 1.5 : 0;
   return { joints, feet, bob, ground: moving ? cycle * profile.travel : 0 };
+}
+
+/** The painted toe pad, shared by IK, the vector study and browser contact checks. */
+export function pawContact(id: AnimalId, hind: boolean) {
+  return id === 'rabbit' ? hind ? rabbitHindContact : { x: 7, y: 4 }
+    : id === 'dog' || id === 'cat' ? walkingPawContact(id, hind) : { x: 0, y: 4 };
 }

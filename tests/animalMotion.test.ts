@@ -7,7 +7,7 @@ test('rabbit hind paws push off together; four-legged walkers have a four-beat s
   assert.equal(rabbit.phases.nearHind, rabbit.phases.farHind);
   assert.notEqual(rabbit.phases.nearHind, rabbit.phases.nearFore);
   assert.equal(Object.keys(animalProfiles.chick.paws).length, 2);
-  for (const id of ['bear', 'dog', 'cat'] as const) assert.equal(new Set(Object.values(animalProfiles[id].phases)).size, 4);
+  for (const id of ['dog', 'cat'] as const) assert.equal(new Set(Object.values(animalProfiles[id].phases)).size, 4);
 });
 
 test('support paws move exactly with the ground and stay at the baseline', () => {
