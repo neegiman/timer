@@ -29,6 +29,17 @@ function Part({ id, part, x, y, width, height, contain = false }: {
   </svg>;
 }
 
+/** Match painted joint landmarks to the bone; padding is never a rotation pivot. */
+function RabbitHindBone({ part, length }: { part: 'hindUpper' | 'hindLower'; length: number }) {
+  const landmarks = rabbitAnatomy.hindArtwork[part === 'hindUpper' ? 'upper' : 'lower'];
+  const dx = landmarks.tip.x - landmarks.pivot.x, dy = landmarks.tip.y - landmarks.pivot.y;
+  const scale = length / Math.hypot(dx, dy), [, , width, height] = atlases.rabbit.parts[part];
+  const angle = 90 - Math.atan2(dy, dx) * 180 / Math.PI;
+  return <g transform={`rotate(${angle})`}>
+    <Part id="rabbit" part={part} x={-landmarks.pivot.x * scale} y={-landmarks.pivot.y * scale} width={width * scale} height={height * scale} />
+  </g>;
+}
+
 function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; far?: boolean; filter: string }) {
   const prefix = useId().replace(/:/g, '');
   const rig = animalProfiles[id].paws[name];
@@ -45,18 +56,24 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
   const lowerWidth = rabbit ? lowerHeight * parts[lowerPart][2] / parts[lowerPart][3] : bird ? 3.5 : upperWidth * .72;
   const pawWidth = bird ? 19 : hind && rabbit ? 28 : rabbit ? 17 : id === 'bear' ? 24 : 21;
   const pawHeight = rabbit ? pawWidth * parts[pawPart][3] / parts[pawPart][2] : 13;
+  const fittedHind = rabbit && hind;
+  const hindPaw = rabbitAnatomy.hindArtwork.paw;
+  const pawScale = pawWidth / parts[pawPart][2];
   const blendedRoot = rabbit && !far;
   return <g data-paw={name} transform={`translate(${rig.x} ${rig.y})`} filter={far ? filter : undefined}>
     {blendedRoot ? <defs>
-      <linearGradient id={`${prefix}-root-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={-overlap} x2="0" y2="12"><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
-      <mask id={`${prefix}-root-mask`} maskUnits="userSpaceOnUse" x="-30" y="-10" width="60" height="70"><rect x="-30" y="-10" width="60" height="70" fill={`url(#${prefix}-root-fade)`} /></mask>
+      <linearGradient id={`${prefix}-root-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={fittedHind ? -14 : -overlap} x2="0" y2={fittedHind ? 5 : 12}><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
+      <mask id={`${prefix}-root-mask`} maskUnits="userSpaceOnUse" x="-30" y="-30" width="60" height="110"><rect x="-30" y="-30" width="60" height="110" fill={`url(#${prefix}-root-fade)`} /></mask>
     </defs> : null}
     <g data-animal-joint={`${name}Hip`} transform={`rotate(${rest[`${name}Hip`]})`}>
-      <g mask={blendedRoot ? `url(#${prefix}-root-mask)` : undefined}><Part id={id} part={upperPart} x={-upperWidth / 2} y={-overlap} width={upperWidth} height={upperHeight} /></g>
+      <g mask={blendedRoot ? `url(#${prefix}-root-mask)` : undefined}>{fittedHind
+        ? <RabbitHindBone part="hindUpper" length={rig.upper} />
+        : <Part id={id} part={upperPart} x={-upperWidth / 2} y={-overlap} width={upperWidth} height={upperHeight} />}</g>
       <g transform={`translate(0 ${rig.upper})`}><g data-animal-joint={`${name}Knee`} transform={`rotate(${rest[`${name}Knee`]})`}>
-        <Part id={id} part={lowerPart} x={-lowerWidth / 2} y={-overlap} width={lowerWidth} height={lowerHeight} />
+        {fittedHind ? <RabbitHindBone part="hindLower" length={rig.lower} />
+          : <Part id={id} part={lowerPart} x={-lowerWidth / 2} y={-overlap} width={lowerWidth} height={lowerHeight} />}
         <g transform={`translate(0 ${rig.lower})`}><g data-animal-joint={`${name}Ankle`} transform={`rotate(${rest[`${name}Ankle`]})`}>
-          <Part id={id} part={pawPart} x={-7} y={4 - pawHeight} width={pawWidth} height={pawHeight} />
+          <Part id={id} part={pawPart} x={fittedHind ? -hindPaw.pivot.x * pawScale : -7} y={fittedHind ? -hindPaw.pivot.y * pawScale : 4 - pawHeight} width={pawWidth} height={pawHeight} />
         </g></g>
       </g></g>
     </g>

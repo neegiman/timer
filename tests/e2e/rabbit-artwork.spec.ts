@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import sharp from 'sharp';
+import { rabbitAnatomy, rabbitHindContact } from '../../src/lib/rabbitAnatomy';
 
 test('rabbit selection stays painted after repeated taps, leaving the step and refreshing', async ({ page }, testInfo) => {
   await page.clock.install();
@@ -48,14 +49,14 @@ test('rabbit rolls its heel over a grounded toe without sliding, then folds its 
     await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
     await page.clock.runFor(16);
   };
-  const contact = () => page.evaluate(() => {
+  const contact = () => page.evaluate((sole) => {
     const scene = document.querySelector<HTMLElement>('.journey-scene')!;
     const ankle = scene.querySelector<SVGGElement>('[data-animal-joint="nearHindAnkle"]')!;
-    const toe = new DOMPoint(14, 4).matrixTransform(ankle.getScreenCTM()!);
-    const heel = new DOMPoint(-4, 4).matrixTransform(ankle.getScreenCTM()!);
+    const toe = new DOMPoint(sole.x, sole.y).matrixTransform(ankle.getScreenCTM()!);
+    const heel = new DOMPoint(-4, sole.y).matrixTransform(ankle.getScreenCTM()!);
     return { toe: { x: toe.x, y: toe.y }, heelY: heel.y,
       groundY: scene.getBoundingClientRect().y + Number(scene.dataset.groundY), distance: Number(scene.dataset.groundDistance) };
-  });
+  }, rabbitHindContact);
   await seek(48.75);
   const first = await contact();
   await page.clock.runFor(50);
@@ -81,7 +82,7 @@ test('rabbit painted feet remain joined to its body across twelve gait poses', a
   const frames = [];
   for (let sample = 0; sample < 12; sample++) {
     await page.clock.runFor(sample === 0 ? 16 : 104);
-    frames.push(await page.locator('[data-animal-scene="rabbit"] .painted-animal-artwork').evaluate((element) => {
+    frames.push(await page.locator('[data-animal-scene="rabbit"] .painted-animal-artwork').evaluate((element, landmarks) => {
       const svg = element as SVGSVGElement, inverse = svg.getScreenCTM()!.inverse();
       const point = (node: SVGGraphicsElement, x: number, y: number) => {
         const result = new DOMPoint(x, y).matrixTransform(node.getScreenCTM()!).matrixTransform(inverse);
@@ -92,9 +93,25 @@ test('rabbit painted feet remain joined to its body across twelve gait poses', a
         const ankle = paw.querySelector<SVGGElement>('[data-animal-joint$="Ankle"]')!;
         return { name: paw.dataset.paw, points: [0, 3, 6, 9].map((x) => point(ankle, x, 0)) };
       });
-      return { html: svg.outerHTML, center: point(body, 74, 160), paws };
-    }));
+      const registrationErrors = ['nearHind', 'farHind'].flatMap((name) => {
+        const limb = svg.querySelector<SVGGElement>(`[data-paw="${name}"]`)!;
+        const atJoint = (joint: string) => point(limb.querySelector<SVGGElement>(`[data-animal-joint="${name}${joint}"]`)!, 0, 0);
+        const atPaint = (part: string, landmark: { x: number; y: number }) => {
+          const painted = limb.querySelector<SVGSVGElement>(`[data-painted-part="${part}"]`)!;
+          return point(painted, painted.viewBox.baseVal.x + landmark.x, painted.viewBox.baseVal.y + landmark.y);
+        };
+        return [
+          [atPaint('hindUpper', landmarks.upper.pivot), atJoint('Hip')],
+          [atPaint('hindUpper', landmarks.upper.tip), atJoint('Knee')],
+          [atPaint('hindLower', landmarks.lower.pivot), atJoint('Knee')],
+          [atPaint('hindLower', landmarks.lower.tip), atJoint('Ankle')],
+          [atPaint('hindPaw', landmarks.paw.pivot), atJoint('Ankle')],
+        ].map(([painted, joint]) => Math.hypot(painted.x - joint.x, painted.y - joint.y));
+      });
+      return { html: svg.outerHTML, center: point(body, 74, 160), paws, registrationErrors };
+    }, rabbitAnatomy.hindArtwork));
   }
+  for (const frame of frames) for (const error of frame.registrationErrors) expect(error, 'painted hind joint misses its rotation pivot').toBeLessThan(.01);
   const results = await page.evaluate(async (frames) => {
     const response = await fetch('/timer/characters/raster-v1/rabbit.webp');
     const blob = new Blob([await response.arrayBuffer()], { type: 'image/webp' });

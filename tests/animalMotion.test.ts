@@ -24,8 +24,8 @@ test('support paws move exactly with the ground and stay at the baseline', () =>
         const hip = (pose.joints[`${paw as PawName}Hip`] + 90) * Math.PI / 180;
         const knee = pose.joints[`${paw as PawName}Knee`] * Math.PI / 180;
         const pitch = foot.pitch * Math.PI / 180;
-        const x = rig.x + rig.upper * Math.cos(hip) + rig.lower * Math.cos(hip + knee) + foot.contactX * Math.cos(pitch) - 4 * Math.sin(pitch);
-        const y = rig.y + rig.upper * Math.sin(hip) + rig.lower * Math.sin(hip + knee) + foot.contactX * Math.sin(pitch) + 4 * Math.cos(pitch) + pose.bob;
+        const x = rig.x + rig.upper * Math.cos(hip) + rig.lower * Math.cos(hip + knee) + foot.contactX * Math.cos(pitch) - foot.contactY * Math.sin(pitch);
+        const y = rig.y + rig.upper * Math.sin(hip) + rig.lower * Math.sin(hip + knee) + foot.contactX * Math.sin(pitch) + foot.contactY * Math.cos(pitch) + pose.bob;
         assert.ok(Math.abs(x - foot.x) < .001, `${id} ${paw} misses target horizontally`);
         assert.ok(Math.abs(y - foot.y) < .001, `${id} ${paw} misses its vertical target`);
         if (foot.planted) assert.ok(Math.abs(y - PAW_BASELINE) < .001, `${id} ${paw} is not planted on the ground`);

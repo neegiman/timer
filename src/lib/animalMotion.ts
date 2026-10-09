@@ -1,4 +1,4 @@
-import { rabbitAnatomy } from './rabbitAnatomy';
+import { rabbitAnatomy, rabbitHindContact } from './rabbitAnatomy';
 
 /** Animal-specific motion studies. Illustrative gait rigs, not measured motion-capture data. */
 export type AnimalId = 'rabbit' | 'bear' | 'dog' | 'cat' | 'chick';
@@ -84,18 +84,19 @@ export function animalPose(id: AnimalId, elapsedMs: number, moving = true) {
   const hop = id === 'rabbit' && moving ? 2.4 * (p < .86 ? ease((p - .72) / .14) : 1 - ease((p - .86) / .12)) : 0;
   const bob = !moving ? 0 : id === 'rabbit' ? -hop : Math.sin(cycle * Math.PI * 4) * (id === 'bear' ? .65 : id === 'chick' ? .7 : .25);
   const joints = {} as Record<AnimalJoint, number>;
-  const feet = {} as Partial<Record<PawName, { x: number; y: number; planted: boolean; contactX: number; pitch: number }>>;
+  const feet = {} as Partial<Record<PawName, { x: number; y: number; planted: boolean; contactX: number; contactY: number; pitch: number }>>;
   for (const [paw, rig] of Object.entries(profile.paws) as [PawName, PawRig][]) {
     const foot = moving ? animalFoot(cycle + profile.phases[paw], profile) : { x: 0, lift: 0, planted: true };
     const pitch = id === 'rabbit' && moving ? rabbitFootPitch(cycle + profile.phases[paw], profile.support, paw.includes('Hind')) : 0;
-    const contactX = id === 'rabbit' ? paw.includes('Hind') ? 14 : 7 : 0;
+    const contactX = id === 'rabbit' ? paw.includes('Hind') ? rabbitHindContact.x : 7 : 0;
+    const contactY = id === 'rabbit' && paw.includes('Hind') ? rabbitHindContact.y : 4;
     const angle = pitch * Math.PI / 180;
-    const soleX = contactX * Math.cos(angle) - 4 * Math.sin(angle);
-    const soleY = contactX * Math.sin(angle) + 4 * Math.cos(angle);
+    const soleX = contactX * Math.cos(angle) - contactY * Math.sin(angle);
+    const soleY = contactX * Math.sin(angle) + contactY * Math.cos(angle);
     const y = PAW_BASELINE - soleY - rig.y - bob - foot.lift;
     const solved = animalLeg(foot.x + contactX - soleX, y, rig);
     joints[`${paw}Hip`] = solved.hip; joints[`${paw}Knee`] = solved.knee; joints[`${paw}Ankle`] = solved.ankle + pitch;
-    feet[paw] = { x: rig.x + foot.x + contactX, y: PAW_BASELINE - foot.lift, planted: foot.planted, contactX, pitch };
+    feet[paw] = { x: rig.x + foot.x + contactX, y: PAW_BASELINE - foot.lift, planted: foot.planted, contactX, contactY, pitch };
   }
   joints.head = moving ? Math.sin(cycle * Math.PI * 2) * (id === 'chick' ? 2 : .8) : 0;
   joints.earNear = moving ? Math.sin(cycle * Math.PI * 2 - .8) * (id === 'rabbit' ? 4 : id === 'dog' ? 3 : .6) : 0;

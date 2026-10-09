@@ -58,6 +58,22 @@ test('rabbit torso and head preserve the painted proportions and cover all four 
   }
 });
 
+test('rabbit hind-leg landmarks lie in painted fur, including the knee, hock and toe pad', async () => {
+  const atlas = atlases.rabbit;
+  const { data, info } = await sharp('public/characters/raster-v1/rabbit.webp').ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  for (const [part, landmarks] of [
+    ['hindUpper', rabbitAnatomy.hindArtwork.upper],
+    ['hindLower', rabbitAnatomy.hindArtwork.lower],
+    ['hindPaw', { pivot: rabbitAnatomy.hindArtwork.paw.pivot, tip: rabbitAnatomy.hindArtwork.paw.sole }],
+  ] as const) {
+    const [left, top] = atlas.parts[part];
+    for (const [name, point] of Object.entries(landmarks)) for (const dx of [-2, 0, 2]) for (const dy of [-2, 0, 2]) {
+      const pixel = ((top + point.y + dy) * info.width + left + point.x + dx) * 4;
+      assert.ok(data[pixel + 3] >= 160, `${part}/${name} is outside painted fur`);
+    }
+  }
+});
+
 test('painted journey gait equals its motion study and is stable on pause or restoration', () => {
   for (const id of animalIds) {
     const gait = locomotionTime(32_400, 600_000), profile = motionProfile(id);

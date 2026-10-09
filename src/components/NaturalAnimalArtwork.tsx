@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { animalPose, animalProfiles, type AnimalId, type PawName } from '@/lib/animalMotion';
+import { rabbitHindContact } from '@/lib/rabbitAnatomy';
 
 function Paw({ id, name, far, fur }: { id: AnimalId; name: PawName; far?: boolean; fur: string }) {
   const profile = animalProfiles[id];
@@ -10,6 +11,7 @@ function Paw({ id, name, far, fur }: { id: AnimalId; name: PawName; far?: boolea
   const width = (bird ? 1.8 : id === 'bear' ? 7.5 : id === 'cat' ? 4 : 5) * (far && !bird ? .88 : 1);
   const fill = bird ? '#d7974c' : far ? profile.shade : fur;
   const outline = bird ? 0 : 1.4;
+  const rabbitHind = id === 'rabbit' && name.includes('Hind');
   return <g transform={`translate(${rig.x} ${rig.y})`} data-paw={name}>
     <g data-animal-joint={`${name}Hip`} transform={`rotate(${resting[`${name}Hip`]})`}>
       {!bird ? <path d={`M0 -2V${rig.upper}`} stroke={profile.line} strokeWidth={width * 2 + outline} strokeLinecap="round" /> : null}
@@ -19,8 +21,9 @@ function Paw({ id, name, far, fur }: { id: AnimalId; name: PawName; far?: boolea
         <path data-paw-lower d={`M0 0V${rig.lower}`} stroke={fill} strokeWidth={width * (bird ? 1.6 : 1.7)} strokeLinecap="round" />
         <g transform={`translate(0 ${rig.lower})`}><g data-animal-joint={`${name}Ankle`} transform={`rotate(${resting[`${name}Ankle`]})`}>
           {bird ? <path data-paw-pad d="M-5 3H9M-2 2l10 2M1 1l8-1" stroke={fill} strokeWidth="2" strokeLinecap="round" />
-            : <><path data-paw-pad d={id === 'rabbit' && name.includes('Hind') ? 'M-7 0Q-6-7 2-6L17-3Q24 0 19 4H-7Z' : 'M-6 0Q-6-6 1-5L9-3Q15 0 10 4H-6Z'} fill={fill} stroke={profile.line} strokeWidth=".8" strokeLinejoin="round" />
-              <path d="M5 1v2m4-2v2" stroke={profile.line} strokeWidth=".7" /></>}
+            : <g transform={rabbitHind ? `translate(${rabbitHindContact.x - 14} ${rabbitHindContact.y - 4})` : undefined}>
+              <path data-paw-pad d={rabbitHind ? 'M-7 0Q-6-7 2-6L17-3Q24 0 19 4H-7Z' : 'M-6 0Q-6-6 1-5L9-3Q15 0 10 4H-6Z'} fill={fill} stroke={profile.line} strokeWidth=".8" strokeLinejoin="round" />
+              <path d="M5 1v2m4-2v2" stroke={profile.line} strokeWidth=".7" /></g>}
         </g></g>
       </g></g>
     </g>
