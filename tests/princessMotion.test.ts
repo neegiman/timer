@@ -28,8 +28,8 @@ test('princess source survives lossless conversion and its joints sit inside pai
   }
   for (const [part, landmarks] of [
     ['thigh', anatomy.thigh], ['shin', anatomy.shin],
-    ['upperArm', anatomy.arms.front.upperArt], ['foreArm', anatomy.arms.front.lowerArt],
-    ['backUpperArm', anatomy.arms.back.upperArt], ['backForeArm', anatomy.arms.back.lowerArt],
+    [anatomy.arms.front.upperPart, anatomy.arms.front.upperArt], [anatomy.arms.front.lowerPart, anatomy.arms.front.lowerArt],
+    [anatomy.arms.back.upperPart, anatomy.arms.back.upperArt], [anatomy.arms.back.lowerPart, anatomy.arms.back.lowerArt],
     ['shoe', { pivot: anatomy.shoe.pivot, tip: anatomy.shoe.sole }],
   ] as const) {
     const sheet = princessPart(part), [left, top] = sheet.region;
@@ -43,15 +43,39 @@ test('princess source survives lossless conversion and its joints sit inside pai
     assert.ok(Math.abs(anatomy[part].width / anatomy[part].height - region[2] / region[3]) < 1e-8);
   }
   assert.ok(anatomy.hair.y + anatomy.hair.height > anatomy.skirtPivot.y, 'Long hair must reach the waist');
-  const paintedAt = (part: 'head' | 'hair' | 'bodice', point: { x: number; y: number }) => {
+  const paintedAt = (part: 'head' | 'hair' | 'bodice' | 'skirt', point: { x: number; y: number }) => {
     const sheet = princessPart(part), [left, top, width, height] = sheet.region, placement = anatomy[part];
     const x = left + Math.floor((point.x - placement.x) / placement.width * width);
     const y = top + Math.floor((point.y - placement.y) / placement.height * height);
     return decoded.get(sheet.source)![(y * sheet.width + x) * 4 + 3];
   };
   for (const rig of Object.values(anatomy.arms)) assert.ok(paintedAt('bodice', rig) >= 160, 'Shoulder is outside the painted torso');
+  for (const rig of Object.values(anatomy.legs)) assert.ok(paintedAt('skirt', rig) >= 160, 'Hip is not covered by the dress');
   assert.ok(paintedAt('head', anatomy.headPivot) >= 160, 'Head rotates around transparent padding');
   assert.ok(paintedAt('hair', anatomy.hairPivot) >= 160 && paintedAt('head', anatomy.hairPivot) >= 160, 'Long hair floats away from the head');
+});
+
+test('near and far limbs attach to matching torso sides and hips sit at the pelvis, not the hem', () => {
+  const middle = anatomy.pelvis.x, hem = anatomy.skirt.y + anatomy.skirt.height;
+  for (const side of ['front', 'back'] as const) {
+    const arm = anatomy.arms[side], leg = anatomy.legs[side];
+    const direction = side === 'front' ? -1 : 1;
+    assert.ok((arm.x - middle) * direction > 0, 'Shoulder is on the wrong side of the torso');
+    assert.ok((leg.x - middle) * direction > 0, 'Hip and shoulder sides are reversed');
+    assert.ok(leg.y >= anatomy.skirt.y && leg.y < anatomy.skirt.y + anatomy.skirt.height / 3, 'Leg starts at the hem instead of inside the pelvis');
+    assert.ok(Math.abs(leg.y - anatomy.pelvis.y) < 1, 'Hip root detached from pelvis');
+    for (let sample = 0; sample < 400; sample++) {
+      const pose = princessPose('walk', sample / 400 * PRINCESS_GAIT.cycleMs);
+      const angle = (pose[`${side}-thigh`] + 90) * Math.PI / 180;
+      const knee = { x: leg.x + leg.upper * Math.cos(angle), y: leg.y + leg.upper * Math.sin(angle) };
+      assert.ok(knee.y < hem, 'False knee appears below the dress because thigh starts too low');
+    }
+  }
+  const wave = princessPose('celebrate', 1000), arm = anatomy.arms.front;
+  const shoulder = wave['front-arm'] * Math.PI / 180, elbow = wave['front-elbow'] * Math.PI / 180;
+  const elbowX = arm.x - arm.upper * Math.sin(shoulder);
+  const wristX = elbowX - arm.lower * Math.sin(shoulder + elbow);
+  assert.ok(elbowX < anatomy.head.x && wristX < anatomy.head.x, 'Celebrating arm disappears behind the head');
 });
 
 test('two alternating princess feet stay planted and travel at exactly the scenery speed', () => {

@@ -15,17 +15,22 @@ export const princessAnatomy = {
   hair: fitted('hair', 28, 29, 66), hairPivot: { x: 60, y: 38 },
   bodice: fitted('bodice', 60, 72, 40),
   skirt: fitted('skirt', 44, 111, 72), skirtPivot: { x: 80, y: 116 },
-  legs: { front: { x: 76, y: 147, upper: 24, lower: 25, bend: 1 }, back: { x: 84, y: 147, upper: 24, lower: 25, bend: 1 } },
+  // `front` is the viewer-near (left) side of this three-quarter painting,
+  // not the forward/right edge of the screen. Hips are hidden inside the dress.
+  pelvis: { x: 80, y: 121 },
+  legs: { front: { x: 73, y: 121, upper: 40, lower: 35, bend: 1 }, back: { x: 85, y: 121, upper: 40, lower: 35, bend: 1 } },
   thigh: { pivot: { x: 64, y: 28 }, tip: { x: 65, y: 264 } },
   shin: { pivot: { x: 50, y: 24 }, tip: { x: 50, y: 257 } },
   shoe: { pivot: { x: 55, y: 40 }, sole: { x: 155, y: 144 }, width: 22 },
   arms: {
-    front: { x: 94, y: 81, upper: 25, lower: 18,
-      upperArt: { pivot: { x: 86, y: 35 }, tip: { x: 115, y: 292 } },
-      lowerArt: { pivot: { x: 50, y: 35 }, tip: { x: 82, y: 225 } } },
-    back: { x: 64, y: 81, upper: 25, lower: 18,
+    front: { x: 66, y: 83, upper: 25, lower: 18,
+      upperPart: 'backUpperArm', lowerPart: 'backForeArm',
       upperArt: { pivot: { x: 83, y: 35 }, tip: { x: 57, y: 297 } },
       lowerArt: { pivot: { x: 57, y: 35 }, tip: { x: 55, y: 225 } } },
+    back: { x: 94, y: 83, upper: 25, lower: 18,
+      upperPart: 'upperArm', lowerPart: 'foreArm',
+      upperArt: { pivot: { x: 86, y: 35 }, tip: { x: 115, y: 292 } },
+      lowerArt: { pivot: { x: 50, y: 35 }, tip: { x: 82, y: 225 } } },
   },
 } as const;
 export const PRINCESS_GAIT = { cycleMs: 1250, support: .62, travel: 36, lift: 7, groundY: 205 };
@@ -68,13 +73,14 @@ export function princessPose(action: CharacterAction, elapsed: number, reduced =
   pose.skirt = walking ? Math.sin(cycle * Math.PI * 2 - .3) * 1.2 : 0;
   if (!reduced && (action === 'jump' || action === 'land')) {
     const amount = Math.sin(Math.PI * Math.min(1, Math.max(0, elapsed) / (action === 'jump' ? 600 : 400)));
-    pose['front-arm'] = 4 - amount * 140; pose['back-arm'] = 4 + amount * 132;
-    pose['front-elbow'] = -18 - amount * 16; pose['back-elbow'] = -18 + amount * 36;
+    pose['front-arm'] = 4 + amount * 120; pose['back-arm'] = 4 - amount * 132;
+    pose['front-elbow'] = -18 + amount * 50; pose['back-elbow'] = -18 - amount * 16;
   }
   if (!reduced && action === 'celebrate') {
     const raise = smoothstep(elapsed / 500);
-    pose['front-arm'] = 4 + (-140 + Math.sin(elapsed / 260) * 2) * raise;
-    pose['front-elbow'] = -18 + (-30 + Math.sin(elapsed / 170) * 9) * raise;
+    // Lift the viewer-near arm OUTSIDE the left shoulder, clear of the face.
+    pose['front-arm'] = 4 + (120 + Math.sin(elapsed / 260) * 2) * raise;
+    pose['front-elbow'] = -18 + (50 + Math.sin(elapsed / 170) * 9) * raise;
     pose['back-arm'] = 4 + raise * 7;
     pose.head = Math.sin(elapsed / 430) * 1.3 * raise;
     pose.hair = Math.sin(elapsed / 520 - .6) * .8 * raise;

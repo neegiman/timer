@@ -52,9 +52,9 @@ function Arm({ side }: { side: 'front' | 'back' }) {
   const rig = anatomy.arms[side];
   return <g data-arm={side} transform={`translate(${rig.x} ${rig.y})`}>
     <g data-joint={`${side}-arm`} transform={`rotate(${rest[`${side}-arm`]})`}>
-      <Bone part={side === 'front' ? 'upperArm' : 'backUpperArm'} length={rig.upper} landmarks={rig.upperArt} />
+      <Bone part={rig.upperPart} length={rig.upper} landmarks={rig.upperArt} />
       <g transform={`translate(0 ${rig.upper})`}><g data-joint={`${side}-elbow`} transform={`rotate(${rest[`${side}-elbow`]})`}>
-        <Bone part={side === 'front' ? 'foreArm' : 'backForeArm'} length={rig.lower} landmarks={rig.lowerArt} blendRoot />
+        <Bone part={rig.lowerPart} length={rig.lower} landmarks={rig.lowerArt} blendRoot />
       </g></g>
     </g>
   </g>;
@@ -76,8 +76,8 @@ export function PaintedPrincessArtwork() {
       </g></g>
     </g></g>
     <Leg side="front" />
-    <Part part="bodice" {...anatomy.bodice} />
     <g filter={`url(#${prefix}-far-limb)`}><Arm side="back" /></g>
+    <Part part="bodice" {...anatomy.bodice} />
     <g transform={`translate(${anatomy.skirtPivot.x} ${anatomy.skirtPivot.y})`}><g data-joint="skirt">
       <Part part="skirt" x={anatomy.skirt.x - anatomy.skirtPivot.x} y={anatomy.skirt.y - anatomy.skirtPivot.y} width={anatomy.skirt.width} height={anatomy.skirt.height} />
     </g></g>

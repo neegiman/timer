@@ -42,8 +42,8 @@ test('painted princess stays connected and grounded through selection, walking, 
         for (const [joint, partName, pivot] of [
           [`${side}-thigh`, 'thigh', anatomy.thigh.pivot], [`${side}-shin`, 'shin', anatomy.shin.pivot],
           [`${side}-foot`, 'shoe', anatomy.shoe.pivot],
-          [`${side}-arm`, side === 'front' ? 'upperArm' : 'backUpperArm', anatomy.arms[side].upperArt.pivot],
-          [`${side}-elbow`, side === 'front' ? 'foreArm' : 'backForeArm', anatomy.arms[side].lowerArt.pivot],
+          [`${side}-arm`, anatomy.arms[side].upperPart, anatomy.arms[side].upperArt.pivot],
+          [`${side}-elbow`, anatomy.arms[side].lowerPart, anatomy.arms[side].lowerArt.pivot],
         ] as const) {
           const group = svg.querySelector<SVGGElement>(`[data-joint="${joint}"]`)!;
           const root = new DOMPoint(0, 0).matrixTransform(group.getScreenCTM()!);
@@ -105,28 +105,52 @@ test('painted princess stays connected and grounded through selection, walking, 
     expect(art.y).toBeGreaterThanOrEqual(scene.y); expect(art.x).toBeGreaterThanOrEqual(scene.x);
     expect(art.x + art.width).toBeLessThanOrEqual(scene.x + scene.width);
   }
-  // Check actual painted shoe pixels, not just a mathematically correct ankle.
-  const bottoms = await page.evaluate(async (frames) => {
-    const blob = await (await fetch('/timer/characters/raster-v1/princess.webp')).blob();
-    const asset = await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(blob); });
+  // Check the actual painted silhouette AND shoes, not just self-consistent joint matrices.
+  const painted = await page.evaluate(async (frames) => {
+    const assets: Record<string, string> = {};
+    for (const source of ['/timer/characters/raster-v1/princess.webp', '/timer/characters/raster-v1/princess-upper-v2.webp']) {
+      const blob = await (await fetch(source)).blob();
+      assets[source] = await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(blob); });
+    }
     const canvas = document.createElement('canvas'); canvas.width = 640; canvas.height = 840;
-    const context = canvas.getContext('2d')!, results: number[] = [];
-    for (const frame of frames) for (const side of frame.planted) {
+    const context = canvas.getContext('2d')!, bottoms: number[] = [], components: number[][] = [];
+    for (const frame of frames) for (const side of ['all', ...frame.planted]) {
       const svg = new DOMParser().parseFromString(frame.html.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '), 'image/svg+xml').documentElement;
       svg.setAttribute('width', '160'); svg.setAttribute('height', '210');
-      for (const leg of svg.querySelectorAll('[data-leg]')) if (leg.getAttribute('data-leg') !== side) leg.remove();
-      for (const part of svg.querySelectorAll('[data-painted-part]')) if (part.getAttribute('data-painted-part') !== 'shoe') part.remove();
-      for (const image of svg.querySelectorAll('image')) image.setAttribute('href', asset);
+      if (side !== 'all') {
+        for (const leg of svg.querySelectorAll('[data-leg]')) if (leg.getAttribute('data-leg') !== side) leg.remove();
+        for (const part of svg.querySelectorAll('[data-painted-part]')) if (part.getAttribute('data-painted-part') !== 'shoe') part.remove();
+      }
+      for (const image of svg.querySelectorAll('image')) image.setAttribute('href', assets[image.getAttribute('href')!]);
       const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' }));
       try {
         const image = new Image(); image.src = url; await image.decode(); context.clearRect(0, 0, 640, 840); context.drawImage(image, 0, 0, 640, 840);
-        const pixels = context.getImageData(0, 0, 640, 840).data; let bottom = -1;
-        for (let y = 0; y < 840; y++) for (let x = 0; x < 640; x++) if (pixels[(y * 640 + x) * 4 + 3] >= 160) bottom = y;
-        results.push((bottom + 1) / 4);
+        const pixels = context.getImageData(0, 0, 640, 840).data;
+        if (side === 'all') {
+          const seen = new Uint8Array(640 * 840), queue = new Int32Array(seen.length), areas: number[] = [];
+          for (let start = 0; start < seen.length; start++) {
+            if (seen[start] || pixels[start * 4 + 3] < 128) continue;
+            let read = 0, write = 1; seen[start] = 1; queue[0] = start;
+            while (read < write) {
+              const index = queue[read++], x = index % 640, y = Math.floor(index / 640);
+              for (const next of [x > 0 ? index - 1 : -1, x < 639 ? index + 1 : -1, y > 0 ? index - 640 : -1, y < 839 ? index + 640 : -1]) {
+                if (next < 0 || seen[next] || pixels[next * 4 + 3] < 128) continue;
+                seen[next] = 1; queue[write++] = next;
+              }
+            }
+            if (write >= 144) areas.push(write); // Ignore sub-nine-art-pixel paint speckles.
+          }
+          components.push(areas.sort((a, b) => b - a));
+        } else {
+          let bottom = -1;
+          for (let y = 0; y < 840; y++) for (let x = 0; x < 640; x++) if (pixels[(y * 640 + x) * 4 + 3] >= 160) bottom = y;
+          bottoms.push((bottom + 1) / 4);
+        }
       } finally { URL.revokeObjectURL(url); }
     }
-    return results;
+    return { bottoms, components };
   }, frames);
-  for (const bottom of bottoms) expect(Math.abs(bottom - 205), 'Painted shoe misses ground').toBeLessThan(.8);
+  for (const bottom of painted.bottoms) expect(Math.abs(bottom - 205), 'Painted shoe misses ground').toBeLessThan(.8);
+  for (const areas of painted.components) expect(areas, 'A painted limb is visibly detached from the body').toHaveLength(1);
   expect(errors).toEqual([]); expect(failed).toEqual([]);
 });
