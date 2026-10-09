@@ -123,7 +123,7 @@ export function TimerApp() {
             </button>)}
           </nav>
           <h1 tabIndex={-1} ref={stepHeading}>
-            {['무엇을 할까요?', '얼마나 놀까요?', '친구를 골라요!'][setupStep]}
+            {['무엇을 할까요?', '얼마나 필요해?', '친구를 골라요!'][setupStep]}
           </h1>
           {setupStep === 0 ? <PromiseSelector selected={promise} onSelect={setPromise} customMode={customPromise}
             custom={customPromise ? promise.name : ''} onCustom={(name) => setPromise({ id: 'custom', icon: '🎨', name, activity: name })}
