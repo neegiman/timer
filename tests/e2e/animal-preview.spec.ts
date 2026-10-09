@@ -39,7 +39,8 @@ test('animal studies articulate paws with the ground, keep a fixed body and paus
   await page.getByRole('button', { name: '이어 보기', exact: false }).click();
   const elapsedBefore = Number((await read())[0].time);
   await page.clock.runFor(1000);
-  expect(Number((await read())[0].time) - elapsedBefore).toBeCloseTo(500, -1);
+  // The DOM records the most recent rAF, which can lag the clock by one 60Hz frame.
+  expect(Math.abs(Number((await read())[0].time) - elapsedBefore - 500)).toBeLessThan(1000 / 60 * .5 + 1);
   await page.getByRole('button', { name: '다시 보기', exact: false }).click();
   await page.clock.runFor(32);
   expect(Number((await read())[0].time)).toBeLessThan(32);

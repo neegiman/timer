@@ -41,6 +41,8 @@
 
 2026-10-09: TypeScript·lint·프로덕션 정적 빌드 통과, 단위 검사 28개 통과. Chromium·모바일 WebKit에서 동물 시안 4개와 기존 타이머의 도착·완료음·보상·새로고침·일시정지 시나리오 4개, 총 8개 통과. 320px·390px·1440px 렌더링을 캡처하고 가로 넘침이 없음을 확인했습니다. `verify-export`와 `verify-live`에는 시안 HTML·전용 이미지·시안 Next.js 파일·새로고침 검증을 추가했습니다.
 
+GitHub Actions 빌드·Pages 배포 성공 후 실제 게시 주소의 자산·새로고침 검사 통과. 게시된 페이지의 동물 시안과 10분 씻기·도착음·보상 저장 흐름을 Chromium·모바일 WebKit에서 재검사하여 6개 통과했습니다. 0.5배속 검사는 화면에 마지막으로 반영된 rAF 시각의 한 프레임 지연을 허용합니다.
+
 ## 생성 프롬프트
 
 사용 방식: 내장 `image_gen`. CLI/API 모델 전환 없이 기본 도구를 사용했습니다. 출력 파일을 프로젝트의 `public/images/animal-design/natural-concepts-v2.png`에 복사했으며 런타임 경로는 `assetPath()`로 `/timer`를 적용합니다.
