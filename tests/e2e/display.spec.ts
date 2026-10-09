@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { finishPhaseStart } from '../../src/lib/animation';
 
 async function start(page: Page) {
   await page.getByRole('button', { name: '씻기', exact: true }).click();
@@ -104,8 +105,8 @@ test('unsupported fullscreen uses a large page view, including landscape finish 
   await page.getByRole('button', { name: '큰 화면 보기', exact: true }).click();
   await page.clock.setSystemTime(new Date(deadline + 1));
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
-  await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'SETTLE');
-  await page.clock.runFor(650);
+  await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'CROSS_FINISH');
+  await page.clock.runFor(finishPhaseStart('JUMP') + 150);
   await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'JUMP');
   await assertInsideTrack(page);
   await page.clock.fastForward(6000);
@@ -142,7 +143,8 @@ test('fixed character, separate progress and destination stay aligned after resi
   await page.clock.install();
   await page.goto('./');
   await start(page);
-  for (const elapsed of [150_000, 300_000, 590_000]) {
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+  for (const elapsed of [150_000, 300_000, 570_000]) {
     const now = await page.evaluate(() => Date.now() - JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).startTimestamp);
     await page.clock.fastForward(elapsed - now);
     for (const [width, height] of [[320, 740], [390, 844], [844, 390], [1440, 900]]) {
@@ -159,7 +161,7 @@ test('fixed character, separate progress and destination stay aligned after resi
         const goal = document.querySelector<HTMLElement>('.journey-goal');
         return { error: Math.hypot(box.x - scenery.x - scenery.width * .42, box.y - scenery.y - scenery.height * .78),
           progress, markerError: Math.abs(marker.x - track.x - track.width * progress),
-          goalError: goal ? Math.hypot(goal.getBoundingClientRect().x - scenery.right + 56, goal.getBoundingClientRect().y - scenery.y - scenery.height * .78) : null };
+          goalError: goal ? Math.hypot(goal.getBoundingClientRect().x - scenery.x - Number(actor.dataset.finishLineX), goal.getBoundingClientRect().y - scenery.y - scenery.height * .78) : null };
       });
       await expect.poll(async () => { await page.clock.runFor(32); return (await readGeometry()).error; }, { message: `actor leaves its anchor at ${width}px` }).toBeLessThan(1);
       const geometry = await readGeometry();

@@ -46,7 +46,7 @@ export const princessSole = {
 export function princessPose(action: CharacterAction, elapsed: number, reduced = false): CharacterPose {
   const pose: CharacterPose = {
     'front-thigh': 0, 'front-shin': 0, 'front-foot': 0, 'back-thigh': 0, 'back-shin': 0, 'back-foot': 0,
-    'front-arm': 4, 'front-elbow': -18, 'back-arm': 4, 'back-elbow': -18,
+    'front-arm': 4, 'front-elbow': -18, 'back-arm': -20, 'back-elbow': -10,
     head: 0, hair: 0, skirt: 0, 'ear-front': 0, 'ear-back': 0, tail: 0, 'wheel-front': 0, 'wheel-back': 0, 'wheel-middle': 0,
   };
   const walking = !reduced && ['walk', 'fastWalk', 'run', 'sprint'].includes(action);
@@ -76,15 +76,17 @@ export function princessPose(action: CharacterAction, elapsed: number, reduced =
   pose.skirt = 0;
   if (!reduced && (action === 'jump' || action === 'land')) {
     const amount = Math.sin(Math.PI * Math.min(1, Math.max(0, elapsed) / (action === 'jump' ? 600 : 400)));
-    pose['front-arm'] = 4 + amount * 100; pose['back-arm'] = 4 - amount * 112;
-    pose['front-elbow'] = -18 + amount * 70; pose['back-elbow'] = -18 - amount * 16;
+    pose['front-arm'] = 4 + amount * 100; pose['back-arm'] = -20 - amount * 88;
+    pose['front-elbow'] = -18 + amount * 70; pose['back-elbow'] = -10 - amount * 24;
   }
   if (!reduced && action === 'celebrate') {
     const raise = smoothstep(elapsed / 500);
     // Lift the viewer-near arm OUTSIDE the left shoulder, clear of the face.
     pose['front-arm'] = 4 + (100 + Math.sin(elapsed / 260) * 2) * raise;
     pose['front-elbow'] = -18 + (70 + Math.sin(elapsed / 170) * 9) * raise;
-    pose['back-arm'] = 4 + raise * 7;
+    // Keep the far forearm and hand outside the right edge of the dress.
+    pose['back-arm'] = -20 - raise * 8;
+    pose['back-elbow'] = -10 + raise * 8;
     pose.head = Math.sin(elapsed / 430) * 1.3 * raise;
     pose.hair = Math.sin(elapsed / 520 - .6) * .8 * raise;
   }

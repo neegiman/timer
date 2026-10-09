@@ -1,4 +1,4 @@
-export type AnimationPhase = 'READY' | 'WALK' | 'SETTLE' | 'JUMP' | 'LAND' | 'CELEBRATE';
+export type AnimationPhase = 'READY' | 'WALK' | 'CROSS_FINISH' | 'BRAKE' | 'SETTLE' | 'JUMP' | 'LAND' | 'CELEBRATE';
 export type JourneyStage = 'beginning' | 'halfway' | 'near' | 'arrived';
 export type CharacterAction = 'idle' | 'appear' | 'start' | 'walk' | 'fastWalk' | 'look' | 'hop' | 'run' | 'sprint' | 'brake' | 'turn' | 'jump' | 'land' | 'celebrate';
 export type AnimationSound = 'start' | 'almost' | 'finish' | 'success' | 'midpoint' | 'sparkle' | 'tick' | 'strong-tick' | 'whoosh' | 'pop' | 'land';

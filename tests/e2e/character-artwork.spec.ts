@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { walkingPawContact } from '../../src/lib/walkingAnatomy';
+import { finishPhaseStart } from '../../src/lib/animation';
 
 async function begin(page: Page, name = '토끼') {
   await page.goto('./');
@@ -88,7 +89,7 @@ test('all nine friends share their full artwork in selection and journey, includ
     const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
     for (const [width, height] of [[320, 740], [844, 390]]) {
       await page.setViewportSize({ width, height });
-      await page.clock.setSystemTime(arrival + 650);
+      await page.clock.setSystemTime(arrival + finishPhaseStart('JUMP') + 300);
       await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
       await page.clock.runFor(32);
       const scene = (await page.locator('.journey-scene').boundingBox())!;

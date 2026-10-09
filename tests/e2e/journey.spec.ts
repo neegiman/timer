@@ -182,7 +182,8 @@ test('320px, phone, tablet and landscape have no horizontal overflow', async ({ 
     const traveler = await page.getByTestId('traveler').boundingBox();
     expect(traveler!.y).toBeGreaterThanOrEqual(scene!.y);
     expect(traveler!.x + traveler!.width).toBeLessThanOrEqual(scene!.x + scene!.width);
-    expect(Math.abs(traveler!.x + traveler!.width / 2 - (scene!.x + scene!.width * .42))).toBeLessThan(.25);
+    const line = (await page.getByTestId('journey-goal').boundingBox())!;
+    expect(traveler!.x).toBeGreaterThan(line.x);
     if (testInfo.project.name === 'chromium' && width === 390) await page.screenshot({ path: 'artifacts/arrival-mobile.png', fullPage: true });
   }
 });

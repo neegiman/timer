@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { instrumentAudio } from './audio';
+import { FINISH_SEQUENCE, finishPhaseStart } from '../../src/lib/animation';
 
 async function begin(page: Page) {
   await page.goto('./');
@@ -61,7 +62,9 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   for (const elapsed of [550_000, 570_000, 590_000, 599_900]) {
     await seek(page, elapsed);
     await expect(scene).toHaveAttribute('data-phase', 'WALK');
-    expect(await main.evaluate((element) => element.getBoundingClientRect().x)).toBeCloseTo(fixedX, 4);
+    const actorX = await main.evaluate((element) => element.getBoundingClientRect().x);
+    if (elapsed < 590_001) expect(actorX).toBeCloseTo(fixedX, 4);
+    else expect(actorX).toBeGreaterThan(fixedX);
     expect(await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x)).toBeCloseTo(goalX, 4);
     const ground = Number(await scene.getAttribute('data-ground-distance'));
     expect(ground).toBeGreaterThan(previousGround);
@@ -69,12 +72,13 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
     if (testInfo.project.name === 'chromium' && elapsed === 590_000) await page.screenshot({ path: 'artifacts/fixed-finish-near-390.png', fullPage: true });
   }
   await seek(page, 600_000);
-  await expect(scene).toHaveAttribute('data-phase', 'SETTLE');
+  await expect(scene).toHaveAttribute('data-phase', 'CROSS_FINISH');
   await expect(message).toHaveText('도착! 약속 시간이 됐어! 참 잘했어! 🎉');
   expect(await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x)).toBeCloseTo(goalX, 4);
   const stopped = await page.locator('[data-layer="ground"]').getAttribute('style');
   const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
-  for (const [offset, phase] of [[450, 'JUMP'], [1000, 'LAND'], [1400, 'CELEBRATE']] as const) {
+  for (const { phase } of FINISH_SEQUENCE.slice(1)) {
+    const offset = finishPhaseStart(phase) + 50;
     await page.clock.setSystemTime(arrival + offset);
     await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
     await page.clock.runFor(32);

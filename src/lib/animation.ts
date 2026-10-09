@@ -7,12 +7,20 @@ export const JOURNEY_MESSAGES: Record<JourneyStage, string> = {
   arrived: '도착! 약속 시간이 됐어! 참 잘했어! 🎉',
 };
 export const FINISH_SEQUENCE = [
+  { phase: 'CROSS_FINISH', duration: 1600, action: 'walk' },
+  { phase: 'BRAKE', duration: 400, action: 'walk' },
   { phase: 'SETTLE', duration: 350, action: 'idle' },
   { phase: 'JUMP', duration: 600, action: 'jump' },
   { phase: 'LAND', duration: 400, action: 'land' },
-  { phase: 'CELEBRATE', duration: 1600, action: 'celebrate' },
+  { phase: 'CELEBRATE', duration: 1400, action: 'celebrate' },
 ] as const;
 export const FINISH_DURATION_MS = FINISH_SEQUENCE.reduce((total, step) => total + step.duration, 0);
+export const CROSSING_DURATION_MS = FINISH_SEQUENCE[0].duration + FINISH_SEQUENCE[1].duration;
+export function finishPhaseStart(phase: typeof FINISH_SEQUENCE[number]['phase']) {
+  let elapsed = 0;
+  for (const step of FINISH_SEQUENCE) { if (step.phase === phase) return elapsed; elapsed += step.duration; }
+  return elapsed;
+}
 export const journeyStage = (progress: number): JourneyStage => progress >= 1 ? 'arrived' : progress >= .9 ? 'near' : progress >= .5 ? 'halfway' : 'beginning';
 
 export function getFinishAnimationState(elapsed: number): AnimationState {

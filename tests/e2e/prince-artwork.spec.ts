@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { finishPhaseStart } from '../../src/lib/animation';
 import { princeViewBox } from '../../src/lib/princeMotion';
 import { instrumentAudio } from './audio';
 
@@ -59,7 +60,7 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
   await expect(page.locator('[data-layer="ground"]')).toHaveAttribute('data-scroll-offset', '0.000000');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const target = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).targetTimestamp);
-  await seek(target); await page.clock.runFor(1500);
+  await seek(target); await page.clock.runFor(finishPhaseStart('CELEBRATE') + 150);
   await expect(page.locator('.sprite-motion')).toHaveAttribute('data-action', 'celebrate');
   expect(Number(await sprite.getAttribute('data-frame'))).toBeGreaterThanOrEqual(15);
   await page.clock.runFor(4000); await expect(page.locator('[data-status="completed"]')).toBeVisible();

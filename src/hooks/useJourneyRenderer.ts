@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { getAnimationState } from '@/lib/animation';
-import { clamp, finishOpacity, groundDistance, locomotionTime, loopOffset, smoothstep, TILE_WIDTH } from '@/lib/journey';
+import { clamp, finishOpacity, groundDistance, loopOffset, smoothstep, TILE_WIDTH } from '@/lib/journey';
+import { arrivalMotion, finishGeometry } from '@/lib/arrivalMotion';
 import { getCharacterPose, type JointName } from '@/lib/characterPose';
 import { motionProfile } from '@/lib/motionProfiles';
 import type { AnimationInput, AnimationState } from '@/types/animation';
@@ -60,6 +61,8 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     let height = element.clientHeight;
     let actorWidth = actor.getBoundingClientRect().width;
     let progressWidth = track.current?.clientWidth ?? 0;
+    let geometry = finishGeometry(width, actorWidth);
+    element.style.setProperty('--finish-x', `${geometry.lineX}px`);
 
     const draw = () => {
       const sample = snapshot.current;
@@ -71,19 +74,21 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       };
       const pose = getAnimationState(next);
       const elapsed = clamp(next.totalDuration - next.remainingTime, 0, next.totalDuration);
-      const gait = locomotionTime(elapsed, next.totalDuration);
       const scale = actorWidth / 160;
-      const distance = (animalId ? gait / profile.cycleMs * animalProfiles[animalId].travel
-        : characterId === 'princess' ? gait / profile.cycleMs * PRINCESS_GAIT.travel
-        : characterId === 'prince' ? gait / profile.cycleMs * PRINCE_GAIT.travel : groundDistance(gait, profile.cycleMs)) * scale;
-      const x = width * .42;
+      const speed = (animalId ? animalProfiles[animalId].travel / profile.cycleMs
+        : characterId === 'princess' ? PRINCESS_GAIT.travel / profile.cycleMs
+        : characterId === 'prince' ? PRINCE_GAIT.travel / profile.cycleMs : groundDistance(1, profile.cycleMs)) * scale;
+      const motion = arrivalMotion(elapsed, next.totalDuration, next.finishElapsedMs, geometry, speed);
+      const gait = motion.gait, distance = motion.backgroundDistance, x = motion.x;
       const groundY = height * .78;
       const reduced = preference.matches;
-      const walking = pose.phase === 'WALK';
+      const walking = pose.characterAction === 'walk';
       const bob = 0;
 
       actor.style.transform = `translate3d(${x}px, ${groundY}px, 0)`;
-      actor.dataset.position = '.42';
+      actor.dataset.position = x === geometry.startX ? '.42' : (x / width).toFixed(6);
+      actor.dataset.finishLineX = geometry.lineX.toFixed(6);
+      actor.dataset.finishStopX = geometry.stopX.toFixed(6);
       actor.dataset.gaitTime = gait.toFixed(4);
       element.dataset.groundDistance = distance.toFixed(6);
       element.dataset.groundY = groundY.toFixed(4);
@@ -164,6 +169,8 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       element.style.setProperty('--actor-limit', `${Math.min(168, (height * .78 - 20) * 160 / profile.groundY)}px`);
       actorWidth = actor.getBoundingClientRect().width;
       progressWidth = track.current?.clientWidth ?? 0;
+      geometry = finishGeometry(width, actorWidth);
+      element.style.setProperty('--finish-x', `${geometry.lineX}px`);
       draw();
     });
     resize.observe(element); resize.observe(actor);

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { finishPhaseStart } from '../../src/lib/animation';
 import { PIXEL_VEHICLES, vehicleMotion, vehicleViewBox, vehicleAsset } from '../../src/lib/pixelVehicles';
 import { instrumentAudio } from './audio';
 
@@ -67,10 +68,14 @@ for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and prese
   await seek(latest.targetTimestamp - total / 10); await expect(page.locator('.journey-scene')).toHaveAttribute('data-stage', 'near');
   // The anchor intentionally has no box: its flag/finish marker are positioned children.
   await expect(page.getByTestId('journey-goal').locator('.finish-flag')).toBeVisible();
-  expect(Number(await page.getByTestId('journey-goal').evaluate((node) => getComputedStyle(node).opacity))).toBeGreaterThan(0);
+  // React may mount the goal after the mocked rAF; let its first paint run too.
+  await expect.poll(async () => {
+    await page.clock.runFor(32);
+    return Number(await page.getByTestId('journey-goal').evaluate((node) => getComputedStyle(node).opacity));
+  }).toBeGreaterThan(0);
   await seek(latest.targetTimestamp);
   const stopped = await page.locator('.journey-scene').getAttribute('data-ground-distance');
-  await page.clock.runFor(500); await expect(sprite).toHaveAttribute('data-frame', '9');
+  await page.clock.runFor(finishPhaseStart('JUMP') + 150); await expect(sprite).toHaveAttribute('data-frame', '9');
   await page.clock.runFor(600); await expect(sprite).toHaveAttribute('data-frame', '10');
   await page.clock.runFor(400); expect(Number(await sprite.getAttribute('data-frame'))).toBeGreaterThanOrEqual(11);
   await page.clock.runFor(4000); await expect(page.locator('[data-status="completed"]')).toBeVisible();

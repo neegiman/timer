@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { princessAnatomy as anatomy, princessSole, PRINCESS_GAIT } from '../../src/lib/princessMotion';
 import { animalFoot } from '../../src/lib/animalMotion';
 import { instrumentAudio } from './audio';
+import { finishPhaseStart } from '../../src/lib/animation';
 
 test('painted princess stays connected and grounded through selection, walking, pause, refresh and arrival', async ({ page }, testInfo) => {
   const errors: string[] = [], failed: string[] = [];
@@ -60,7 +61,8 @@ test('painted princess stays connected and grounded through selection, walking, 
         ground: scene.getBoundingClientRect().y + Number(scene.dataset.groundY), distance: Number(scene.dataset.groundDistance) };
     }, { anatomy, sole: princessSole, planted });
     for (const error of frame.jointErrors) expect(error, 'Painted limb is detached from its joint').toBeLessThan(.01);
-    expect(frame.x).toBe(.42); expect(frame.feet.length).toBeGreaterThanOrEqual(1);
+    if (!idle) expect(frame.x).toBe(.42);
+    expect(frame.feet.length).toBeGreaterThanOrEqual(1);
     for (const foot of frame.feet) expect(Math.abs(foot.y - frame.ground)).toBeLessThan(.25);
     frames.push({ html: frame.html, planted }); return frame;
   };
@@ -88,7 +90,7 @@ test('painted princess stays connected and grounded through selection, walking, 
   const reduced = await joints(); await page.clock.runFor(200); expect(await joints()).toEqual(reduced);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const target = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).targetTimestamp);
-  await seek(target); await page.clock.runFor(1500); // settle, jump and land, then a planted happy wave
+  await seek(target); await page.clock.runFor(finishPhaseStart('CELEBRATE') + 150);
   await expect(page.locator('.sprite-motion')).toHaveAttribute('data-action', 'celebrate');
   await check(true);
   await page.clock.runFor(4000);

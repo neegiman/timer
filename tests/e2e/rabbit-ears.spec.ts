@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { finishPhaseStart } from '../../src/lib/animation';
 
 test('rabbit ears stay joined to the head while walking, jumping, landing and reducing motion', async ({ page }, testInfo) => {
   await page.clock.install();
@@ -26,7 +27,7 @@ test('rabbit ears stay joined to the head while walking, jumping, landing and re
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await seek(session.targetTimestamp);
   const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
-  for (const elapsed of [650, 1150, 1750]) { await seek(arrival + elapsed); await capture(); }
+  for (const phase of ['JUMP', 'LAND', 'CELEBRATE'] as const) { await seek(arrival + finishPhaseStart(phase) + 300); await capture(); }
   const overlaps = await page.evaluate(async (frames) => {
     const blob = await (await fetch('/timer/characters/raster-v1/rabbit.webp')).blob();
     const asset = await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(blob); });

@@ -34,7 +34,7 @@ test('message events do not restart gait, pause walking or trigger running', () 
   assert.equal(at(590_000).sound, 'sparkle');
 });
 
-test('finish settles, jumps, lands and celebrates with the progress held at the endpoint', () => {
+test('finish crosses, brakes, settles, jumps, lands and celebrates with progress held at the endpoint', () => {
   let elapsed = 0;
   for (const step of FINISH_SEQUENCE) {
     const state = getFinishAnimationState(elapsed);
@@ -47,7 +47,7 @@ test('finish settles, jumps, lands and celebrates with the progress held at the 
   }
   assert.equal(elapsed, FINISH_DURATION_MS);
   assert.equal(getFinishAnimationState(elapsed + 60_000).phase, 'CELEBRATE');
-  assert.equal(at(600_000).phase, 'SETTLE');
+  assert.equal(at(600_000).phase, 'CROSS_FINISH');
 });
 
 test('pause and refreshed inputs preserve phase, gait and miniature position', () => {
