@@ -1,12 +1,17 @@
 import atlases from './animalAtlases.json';
 
+function fittedEar(part: 'earNear' | 'earFar', anchorX: number, anchorY: number, sourceRoot: { x: number; y: number }, height: number) {
+  const [, , width, sourceHeight] = atlases.rabbit.parts[part], scale = height / sourceHeight;
+  return { anchorX, anchorY, sourceRoot, x: -sourceRoot.x * scale, y: -sourceRoot.y * scale, width: width * scale, height };
+}
+
 /** Rabbit atlas proportions and skeleton share the same 160 × 210 art space. */
 export const rabbitAnatomy = {
   torso: { x: 21, y: 128, width: 105, height: 64.28 },
   head: { x: 99, y: 122, width: 47, height: 38.14 },
   headPivot: { x: 111, y: 148 },
-  earNear: { anchorX: 108, anchorY: 128, x: -20, y: -47, width: 27, height: 46.61 },
-  earFar: { anchorX: 117, anchorY: 127, x: -8, y: -47, width: 21.79, height: 47 },
+  earNear: fittedEar('earNear', 111, 131, { x: 103, y: 246 }, 46.61),
+  earFar: fittedEar('earFar', 120, 129, { x: 48, y: 249 }, 47),
   paws: {
     nearHind: { x: 40, y: 157, upper: 34, lower: 29, bend: 1 },
     farHind: { x: 47, y: 155, upper: 34, lower: 29, bend: 1 },

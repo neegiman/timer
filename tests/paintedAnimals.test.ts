@@ -74,6 +74,23 @@ test('rabbit hind-leg landmarks lie in painted fur, including the knee, hock and
   }
 });
 
+test('rabbit ear roots are buried inside opaque head fur and use painted root pivots', async () => {
+  const atlas = atlases.rabbit, head = rabbitAnatomy.head;
+  const { data, info } = await sharp('public/characters/raster-v1/rabbit.webp').ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  for (const part of ['earNear', 'earFar'] as const) {
+    const ear = rabbitAnatomy[part], [left, top, width, height] = atlas.parts[part];
+    assert.ok(Math.abs(ear.x + ear.sourceRoot.x / width * ear.width) < .001);
+    assert.ok(Math.abs(ear.y + ear.sourceRoot.y / height * ear.height) < .001);
+    for (const dx of [-2, 0, 2]) for (const dy of [-2, 0, 2]) {
+      assert.ok(data[((top + ear.sourceRoot.y + dy) * info.width + left + ear.sourceRoot.x + dx) * 4 + 3] >= 240, `${part} pivot misses painted ear fur`);
+      const [hx, hy, hw, hh] = atlas.parts.head;
+      const x = hx + Math.round((ear.anchorX + dx - head.x) / head.width * hw);
+      const y = hy + Math.round((ear.anchorY + dy - head.y) / head.height * hh);
+      assert.ok(data[(y * info.width + x) * 4 + 3] >= 240, `${part} root misses opaque head at ${dx},${dy}`);
+    }
+  }
+});
+
 test('painted journey gait equals its motion study and is stable on pause or restoration', () => {
   for (const id of animalIds) {
     const gait = locomotionTime(32_400, 600_000), profile = motionProfile(id);

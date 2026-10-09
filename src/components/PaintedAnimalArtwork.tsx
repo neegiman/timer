@@ -40,6 +40,15 @@ function RabbitHindBone({ part, length }: { part: 'hindUpper' | 'hindLower'; len
   </g>;
 }
 
+function PaintedEar({ id, part, placement }: {
+  id: AnimalId; part: 'earNear' | 'earFar';
+  placement: { anchorX: number; anchorY: number; x: number; y: number; width: number; height: number };
+}) {
+  return <g transform={`translate(${placement.anchorX} ${placement.anchorY})`}><g data-animal-joint={part}>
+    <Part id={id} part={part} {...placement} />
+  </g></g>;
+}
+
 function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; far?: boolean; filter: string }) {
   const prefix = useId().replace(/:/g, '');
   const rig = animalProfiles[id].paws[name];
@@ -89,6 +98,7 @@ export function PaintedAnimalArtwork({ id, label }: { id: AnimalId; label?: stri
   const pivot = rabbit ? rabbitAnatomy.headPivot : { x: bird ? 96 : 111, y: bird ? 151 : 147 };
   const earNear = rabbit ? rabbitAnatomy.earNear : { anchorX: 106, anchorY: 128, x: -9, y: dog ? -4 : -18, width: dog ? 23 : 20, height: dog ? 36 : 23 };
   const earFar = rabbit ? rabbitAnatomy.earFar : { anchorX: 113, anchorY: 126, x: -7, y: dog ? -3 : -17, width: dog ? 18 : 17, height: dog ? 32 : 20 };
+  const nearEar = !bird ? <PaintedEar id={id} part="earNear" placement={earNear} /> : null;
   return <svg viewBox="0 0 160 210" className="character-artwork natural-animal-artwork painted-animal-artwork" data-character={id} data-animal={id}
     data-artwork="imagegen" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} focusable="false">
       <defs><filter id={`${prefix}-far-fur`} colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse" x="-65" y="-25" width="140" height="105">
@@ -102,13 +112,10 @@ export function PaintedAnimalArtwork({ id, label }: { id: AnimalId; label?: stri
         {/* Far limbs stay behind the torso; near limb roots blend into its fur. */}
         <Part id={id} part="torso" {...torso} />
         <g transform={`translate(${pivot.x} ${pivot.y})`}><g data-animal-joint="head"><g transform={`translate(${-pivot.x} ${-pivot.y})`}>
-          {!bird ? <g transform={`translate(${earFar.anchorX} ${earFar.anchorY})`}><g data-animal-joint="earFar">
-            <Part id={id} part="earFar" {...earFar} />
-          </g></g> : null}
+          {!bird ? <PaintedEar id={id} part="earFar" placement={earFar} /> : null}
+          {rabbit ? nearEar : null}
           <Part id={id} part="head" {...head} />
-          {!bird ? <g transform={`translate(${earNear.anchorX} ${earNear.anchorY})`}><g data-animal-joint="earNear">
-            <Part id={id} part="earNear" {...earNear} />
-          </g></g> : null}
+          {!rabbit ? nearEar : null}
         </g></g></g>
         {bird ? <g transform="translate(67 154)"><g data-animal-joint="wing"><Part id={id} part="earNear" x={-5} y={-9} width={37} height={29} /></g></g> : null}
         <PaintedPaw id={id} name="nearHind" filter={filter} /><PaintedPaw id={id} name="nearFore" filter={filter} />
