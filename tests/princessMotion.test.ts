@@ -78,6 +78,43 @@ test('near and far limbs attach to matching torso sides and hips sit at the pelv
   assert.ok(elbowX < anatomy.head.x && wristX < anatomy.head.x, 'Celebrating arm disappears behind the head');
 });
 
+test('painted elbow, knee and ankle seams have matching widths and centered rotation axes', async () => {
+  const assets = new Map<string, { data: Buffer; width: number }>();
+  for (const file of ['princess', 'princess-upper-v2']) {
+    const { data, info } = await sharp(`public/characters/raster-v1/${file}.webp`).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    assets.set(`/characters/raster-v1/${file}.webp`, { data, width: info.width });
+  }
+  const section = (part: Parameters<typeof princessPart>[0], landmarks: { pivot: { x: number; y: number }; tip: { x: number; y: number } },
+    length: number, end: boolean, crossScale = 1) => {
+    const sheet = princessPart(part), { data, width } = assets.get(sheet.source)!;
+    const { pivot, tip } = landmarks, dx = tip.x - pivot.x, dy = tip.y - pivot.y, distance = Math.hypot(dx, dy);
+    const point = end ? tip : pivot, nx = dy / distance, ny = -dx / distance;
+    const opaque = (offset: number) => {
+      const x = sheet.region[0] + Math.round(point.x + nx * offset), y = sheet.region[1] + Math.round(point.y + ny * offset);
+      return data[(y * width + x) * 4 + 3] >= 160;
+    };
+    let left = 0, right = 0;
+    while (left > -200 && opaque(left - 1)) left--;
+    while (right < 200 && opaque(right + 1)) right++;
+    const scale = length / distance * crossScale;
+    return { width: (right - left) * scale, offset: (left + right) / 2 * scale };
+  };
+  const match = (name: string, a: { width: number; offset: number }, b: { width: number; offset: number }) => {
+    assert.ok(Math.abs(a.width - b.width) / Math.max(a.width, b.width) < .06, `${name}: painted thickness steps at the seam`);
+    assert.ok(Math.abs(a.offset) < .2 && Math.abs(b.offset) < .2, `${name}: joint axis is off the painted centerline`);
+  };
+  for (const side of ['front', 'back'] as const) {
+    const rig = anatomy.arms[side];
+    match(`${side} elbow`, section(rig.upperPart, rig.upperArt, rig.upper, true), section(rig.lowerPart, rig.lowerArt, rig.lower, false, rig.forearmCrossScale));
+  }
+  const knee = section('thigh', anatomy.thigh, anatomy.legs.front.upper, true);
+  const calf = section('shin', anatomy.shin, anatomy.legs.front.lower, false, anatomy.shinCrossScale);
+  const ankle = section('shin', anatomy.shin, anatomy.legs.front.lower, true, anatomy.shinCrossScale);
+  const shoe = section('shoe', { pivot: anatomy.shoe.pivot, tip: { x: anatomy.shoe.pivot.x, y: anatomy.shoe.pivot.y + 100 } }, 100 * anatomy.shoe.width / atlas.parts.shoe[2], false);
+  match('knee', knee, calf); match('ankle', ankle, shoe);
+  for (let i = 0; i < 400; i++) assert.equal(princessPose('walk', i / 400 * PRINCESS_GAIT.cycleMs).skirt, 0, 'Waistband moves away from the torso');
+});
+
 test('two alternating princess feet stay planted and travel at exactly the scenery speed', () => {
   const radians = Math.PI / 180;
   for (let sample = 0; sample < 400; sample++) {

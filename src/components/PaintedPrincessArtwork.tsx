@@ -16,18 +16,24 @@ function Part({ part, x, y, width, height }: { part: PartName; x: number; y: num
   </svg>;
 }
 
-function Bone({ part, length, landmarks, blendRoot = false }: { part: PartName; length: number; landmarks: Landmark; blendRoot?: boolean }) {
+function Bone({ part, length, landmarks, blendRoot = false, blendTip = false, crossScale = 1, endOverlap }: {
+  part: PartName; length: number; landmarks: Landmark; blendRoot?: boolean; blendTip?: boolean; crossScale?: number; endOverlap?: number;
+}) {
   const prefix = useId().replace(/:/g, '');
   const dx = landmarks.tip.x - landmarks.pivot.x, dy = landmarks.tip.y - landmarks.pivot.y;
   const scale = length / Math.hypot(dx, dy), [, , width, height] = princessPart(part).region;
   return <g>
-    {blendRoot ? <defs>
-      <linearGradient id={`${prefix}-elbow-fade`} gradientUnits="userSpaceOnUse" x1="0" y1="-3" x2="0" y2="3"><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
-      <mask id={`${prefix}-elbow-mask`} maskUnits="userSpaceOnUse" x="-30" y="-12" width="60" height="90"><rect x="-30" y="-12" width="60" height="90" fill={`url(#${prefix}-elbow-fade)`} /></mask>
-    </defs> : null}
-    <g mask={blendRoot ? `url(#${prefix}-elbow-mask)` : undefined}><g transform={`rotate(${90 - Math.atan2(dy, dx) * 180 / Math.PI})`}>
+    <defs>
+      {blendRoot ? <><linearGradient id={`${prefix}-elbow-fade`} gradientUnits="userSpaceOnUse" x1="0" y1="-4" x2="0" y2="1.5"><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
+        <mask id={`${prefix}-elbow-mask`} maskUnits="userSpaceOnUse" x="-30" y="-12" width="60" height="90"><rect x="-30" y="-12" width="60" height="90" fill={`url(#${prefix}-elbow-fade)`} /></mask></> : null}
+      {blendTip ? <><linearGradient id={`${prefix}-tip-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={length + (endOverlap !== undefined ? endOverlap - 1 : 1)} x2="0" y2={length + (endOverlap ?? 5)}><stop stopColor="white" /><stop offset="1" stopColor="black" /></linearGradient>
+        <mask id={`${prefix}-tip-mask`} maskUnits="userSpaceOnUse" x="-30" y="-12" width="60" height="100"><rect x="-30" y="-12" width="60" height="100" fill={`url(#${prefix}-tip-fade)`} /></mask></> : null}
+      {endOverlap !== undefined ? <clipPath id={`${prefix}-bone-end`}><rect x="-30" y="-12" width="60" height={length + endOverlap + 12} /></clipPath> : null}
+    </defs>
+    <g clipPath={endOverlap !== undefined ? `url(#${prefix}-bone-end)` : undefined} mask={blendRoot ? `url(#${prefix}-elbow-mask)` : undefined}>
+      <g mask={blendTip ? `url(#${prefix}-tip-mask)` : undefined}><g transform={`scale(${crossScale} 1)`}><g transform={`rotate(${90 - Math.atan2(dy, dx) * 180 / Math.PI})`}>
       <Part part={part} x={-landmarks.pivot.x * scale} y={-landmarks.pivot.y * scale} width={width * scale} height={height * scale} />
-    </g></g>
+    </g></g></g></g>
   </g>;
 }
 
@@ -36,14 +42,14 @@ function Leg({ side }: { side: 'front' | 'back' }) {
   const rig = anatomy.legs[side], scale = anatomy.shoe.width / atlas.parts.shoe[2];
   return <g data-leg={side} transform={`translate(${rig.x} ${rig.y})`}>
     <g data-joint={`${side}-thigh`} transform={`rotate(${rest[`${side}-thigh`]})`}>
-      <Bone part="thigh" length={rig.upper} landmarks={anatomy.thigh} />
       <g transform={`translate(0 ${rig.upper})`}><g data-joint={`${side}-shin`} transform={`rotate(${rest[`${side}-shin`]})`}>
-        <Bone part="shin" length={rig.lower} landmarks={anatomy.shin} />
         <g transform={`translate(0 ${rig.lower})`}><g data-joint={`${side}-foot`} transform={`rotate(${rest[`${side}-foot`]})`}>
           <Part part="shoe" x={-anatomy.shoe.pivot.x * scale} y={-anatomy.shoe.pivot.y * scale}
             width={anatomy.shoe.width} height={atlas.parts.shoe[3] * scale} />
         </g></g>
+        <Bone part="shin" length={rig.lower} landmarks={anatomy.shin} crossScale={anatomy.shinCrossScale} endOverlap={anatomy.shinEndOverlap} blendRoot blendTip />
       </g></g>
+      <Bone part="thigh" length={rig.upper} landmarks={anatomy.thigh} blendTip />
     </g>
   </g>;
 }
@@ -52,10 +58,10 @@ function Arm({ side }: { side: 'front' | 'back' }) {
   const rig = anatomy.arms[side];
   return <g data-arm={side} transform={`translate(${rig.x} ${rig.y})`}>
     <g data-joint={`${side}-arm`} transform={`rotate(${rest[`${side}-arm`]})`}>
-      <Bone part={rig.upperPart} length={rig.upper} landmarks={rig.upperArt} />
       <g transform={`translate(0 ${rig.upper})`}><g data-joint={`${side}-elbow`} transform={`rotate(${rest[`${side}-elbow`]})`}>
-        <Bone part={rig.lowerPart} length={rig.lower} landmarks={rig.lowerArt} blendRoot />
+        <Bone part={rig.lowerPart} length={rig.lower} landmarks={rig.lowerArt} crossScale={rig.forearmCrossScale} blendRoot />
       </g></g>
+      <Bone part={rig.upperPart} length={rig.upper} landmarks={rig.upperArt} blendTip />
     </g>
   </g>;
 }
@@ -66,6 +72,7 @@ export function PaintedPrincessArtwork() {
   return <svg viewBox="0 0 160 210" className="character-artwork painted-princess-artwork"
     data-character="princess" data-artwork="imagegen" aria-hidden="true" focusable="false">
     <defs>
+      <clipPath id={`${prefix}-waist`}><rect x="40" y="60" width="80" height={anatomy.waistY - 60} /></clipPath>
       <filter id={`${prefix}-far-limb`} colorInterpolationFilters="sRGB" x="-100%" y="-100%" width="300%" height="300%">
       <feComponentTransfer><feFuncR type="linear" slope=".88" /><feFuncG type="linear" slope=".88" /><feFuncB type="linear" slope=".88" /></feComponentTransfer>
     </filter></defs>
@@ -77,7 +84,7 @@ export function PaintedPrincessArtwork() {
     </g></g>
     <Leg side="front" />
     <g filter={`url(#${prefix}-far-limb)`}><Arm side="back" /></g>
-    <Part part="bodice" {...anatomy.bodice} />
+    <g clipPath={`url(#${prefix}-waist)`}><Part part="bodice" {...anatomy.bodice} /></g>
     <g transform={`translate(${anatomy.skirtPivot.x} ${anatomy.skirtPivot.y})`}><g data-joint="skirt">
       <Part part="skirt" x={anatomy.skirt.x - anatomy.skirtPivot.x} y={anatomy.skirt.y - anatomy.skirtPivot.y} width={anatomy.skirt.width} height={anatomy.skirt.height} />
     </g></g>
