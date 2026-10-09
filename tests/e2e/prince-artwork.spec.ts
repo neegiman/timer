@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { finishPhaseStart } from '../../src/lib/animation';
-import { princeViewBox } from '../../src/lib/princeMotion';
+import { PRINCE_ASSET, princeViewBox } from '../../src/lib/princeMotion';
 import { instrumentAudio } from './audio';
 
 test('pixel prince stays visible, walks with the ground, pauses, restores and celebrates once', async ({ page }, testInfo) => {
@@ -19,7 +19,7 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
     await expect(choice.locator('[data-prince-sprite]')).toBeVisible();
     await expect(choice.locator('[data-prince-sprite]')).toHaveCSS('overflow', 'hidden');
   }
-  await expect(choice.locator('image')).toHaveAttribute('href', '/timer/characters/pixel-v1/prince.svg');
+  await expect(choice.locator('image')).toHaveAttribute('href', `/timer${PRINCE_ASSET}`);
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/prince-selection-320.png', fullPage: true });
   await page.getByRole('button', { name: '출발!' }).click();
   await expect(page.locator('[data-status="running"]')).toBeVisible();
@@ -63,6 +63,13 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
   await seek(target); await page.clock.runFor(finishPhaseStart('CELEBRATE') + 150);
   await expect(page.locator('.sprite-motion')).toHaveAttribute('data-action', 'celebrate');
   expect(Number(await sprite.getAttribute('data-frame'))).toBeGreaterThanOrEqual(15);
+  const raisedFrames: string[] = [];
+  for (const frame of [15, 16, 17]) {
+    await expect(sprite).toHaveAttribute('data-frame', String(frame));
+    raisedFrames.push(await sprite.evaluate((node) => node.outerHTML));
+    if (testInfo.project.name === 'chromium') await page.locator('.journey-scene').screenshot({ path: `artifacts/prince-celebrate-${frame}-320.png` });
+    await page.clock.runFor(300);
+  }
   await page.clock.runFor(4000); await expect(page.locator('[data-status="completed"]')).toBeVisible();
   if (await page.evaluate(() => typeof AudioContext !== 'undefined')) {
     await expect.poll(() => page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/finish.mp3')).length)).toBe(1);
@@ -77,11 +84,11 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
     expect(art.x + art.width).toBeLessThanOrEqual(scene.x + scene.width);
   }
   // Decode the real exported SVG in each browser: a visible element can still contain a blank sprite.
-  const raster = await page.evaluate(async (frames) => {
-    const blob = await (await fetch('/timer/characters/pixel-v1/prince.svg')).blob();
+  const raster = await page.evaluate(async ({ frames, sourcePath }) => {
+    const blob = await (await fetch(sourcePath)).blob();
     const source = await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(blob); });
     const canvas = document.createElement('canvas'); canvas.width = 160; canvas.height = 210;
-    const context = canvas.getContext('2d')!, result: { area: number; bottom: number; parts: number }[] = [];
+    const context = canvas.getContext('2d')!, result: { area: number; bottom: number; parts: number; hands: number[] }[] = [];
     for (const markup of frames) {
       const svg = new DOMParser().parseFromString(markup.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '), 'image/svg+xml').documentElement;
       svg.setAttribute('width', '160'); svg.setAttribute('height', '210'); svg.querySelector('image')!.setAttribute('href', source);
@@ -90,9 +97,13 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
         const image = new Image(); image.src = url; await image.decode(); context.clearRect(0, 0, 160, 210); context.drawImage(image, 0, 0);
         const pixels = context.getImageData(0, 0, 160, 210).data, seen = new Uint8Array(160 * 210);
         let area = 0, bottom = -1, parts = 0;
+        const hands = [0, 0];
         for (let p = 0; p < seen.length; p++) {
           if (pixels[p * 4 + 3] < 128) continue;
           area++; bottom = Math.max(bottom, Math.floor(p / 160));
+          const x = p % 160, y = Math.floor(p / 160);
+          if (y < 101 && x < 52 && pixels[p * 4] === 246 && pixels[p * 4 + 1] === 201 && pixels[p * 4 + 2] === 156) hands[0]++;
+          if (y < 101 && x >= 124 && pixels[p * 4] === 220 && pixels[p * 4 + 1] === 160 && pixels[p * 4 + 2] === 120) hands[1]++;
           if (seen[p]) continue;
           parts++; const queue = [p]; seen[p] = 1;
           for (let i = 0; i < queue.length; i++) {
@@ -102,13 +113,17 @@ test('pixel prince stays visible, walks with the ground, pauses, restores and ce
             }
           }
         }
-        result.push({ area, bottom: bottom + 1, parts });
+        result.push({ area, bottom: bottom + 1, parts, hands });
       } finally { URL.revokeObjectURL(url); }
     }
     return result;
-  }, frames);
+  }, { frames: [...frames, ...raisedFrames], sourcePath: `/timer${PRINCE_ASSET}` });
   for (const frame of raster) {
     expect(frame.area).toBeGreaterThan(6400); expect(frame.bottom).toBe(205); expect(frame.parts).toBe(1);
+  }
+  for (const frame of raster.slice(-3)) {
+    expect(frame.hands[0], 'Near raised hand is missing from the actual sprite').toBeGreaterThanOrEqual(64);
+    expect(frame.hands[1], 'Far raised hand is missing from the actual sprite').toBeGreaterThanOrEqual(64);
   }
   expect(errors).toEqual([]); expect(failed).toEqual([]);
 });

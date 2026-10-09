@@ -44,6 +44,20 @@ test('every pixel frame has one connected silhouette, without detached hands, bo
   }
 });
 
+test('jump and all three celebration frames paint both hands outside the face', () => {
+  for (const frame of [13, 15, 16, 17]) {
+    const { pixels } = buildPrinceFrame(frame);
+    let nearHand = 0, farHand = 0;
+    pixels.forEach((row, y) => row.forEach((color, x) => {
+      if (y > 21) return;
+      if (x < 9 && color === 'S') nearHand++;
+      if (x >= 27 && color === 's') farHand++;
+    }));
+    assert.ok(nearHand >= 4, `Frame ${frame}: near hand is hidden by the face`);
+    assert.ok(farHand >= 4, `Frame ${frame}: far hand is hidden by the face or tunic`);
+  }
+});
+
 test('pixel boots stay grounded and match scenery travel within one native pixel', () => {
   const samples = Array.from({ length: 12 }, (_, i) => buildPrinceFrame(i + 1));
   for (const frame of samples) {

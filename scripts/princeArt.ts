@@ -46,12 +46,15 @@ export function buildPrinceFrame(index: number) {
   rect(8 + flutter, 34, 6, 1, 'G');
 
   const arm = (near: boolean) => {
-    const root = { x: near ? 12 : 21, y: 23 }, length = 5;
+    // The far shoulder opens outward when raised so its sleeve and hand stay
+    // outside the oversized head, even though that arm is behind the tunic.
+    const root = { x: near ? 12 : raised ? 22 : 21, y: 23 }, length = 5;
     const foot = walk ? animalFoot(phase + (near ? 0 : .5), PRINCE_GAIT) : { x: 0 };
-    const angle = raised && near ? (wave === 1 ? 104 : 115) : index === 13 ? -100 : 8 + foot.x * 1.7;
+    const direction = near ? 1 : -1;
+    const angle = raised ? direction * (wave === 1 ? 104 : 115) : 8 + foot.x * 1.7;
     const radians = angle * Math.PI / 180;
     const elbow = { x: root.x - Math.sin(radians) * length, y: root.y + Math.cos(radians) * length };
-    const foreAngle = radians + (raised && near ? (wave === 2 ? .8 : .5) : -.25);
+    const foreAngle = radians + (raised ? direction * (wave === 2 ? .8 : .5) : -.25);
     const hand = { x: elbow.x - Math.sin(foreAngle) * 4, y: elbow.y + Math.cos(foreAngle) * 4 };
     stroke(elbow, hand, 4, 'O'); stroke(elbow, hand, 2, near ? 'S' : 's');
     stroke(root, elbow, 5, 'O'); stroke(root, elbow, 3, near ? 'B' : 'D');
