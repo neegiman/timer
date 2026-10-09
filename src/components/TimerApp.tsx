@@ -9,6 +9,7 @@ import { VisualTimer } from './timer/VisualTimer';
 import { StarReward } from './reward/StarReward';
 import { Modal } from './Modal';
 import { SceneSettings } from './SceneSettings';
+import { PromiseIcon, StoryIcon, type StoryIconName } from './StoryIcon';
 import { useVisualTimer } from '@/hooks/useVisualTimer';
 import { useAnimationController } from '@/hooks/useAnimationController';
 import { useAudio } from '@/hooks/useAudio';
@@ -21,6 +22,7 @@ import { awardStar, localDate } from '@/lib/timer';
 import type { PromiseActivity, TodayStars } from '@/types/timer';
 
 const EMPTY_STARS: TodayStars = { date: '', count: 0, awardedSessions: [] };
+const STEP_ICONS: readonly StoryIconName[] = ['bath', 'clock', 'rabbit'];
 function isStars(value: unknown): value is TodayStars {
   if (!value || typeof value !== 'object') return false;
   const stars = value as Partial<TodayStars>;
@@ -100,8 +102,8 @@ export function TimerApp() {
 
   return <div ref={appShell} className="app-shell" data-status={timer.status} data-display={display.mode} data-theme={appearance.theme}>
     <header className="site-header">
-      <div className="brand"><span aria-hidden="true">🌱</span><span>약속 여행</span></div>
-      <div className="header-actions"><span className="stars-pill" aria-label={`오늘의 별 ${todayCount}개`}><Star size={24} fill="currentColor" /><strong data-testid="star-count">{todayCount}</strong></span>
+      <div className="brand"><StoryIcon name="handshake" size={44} priority /><span>약속 여행</span></div>
+      <div className="header-actions"><span className="stars-pill" aria-label={`오늘의 별 ${todayCount}개`}><StoryIcon name="star" size={28} /><strong data-testid="star-count">{todayCount}</strong></span>
         <button type="button" className="parent-menu-button" onClick={() => setModal('settings')}><Settings2 size={19} /><span>부모 메뉴</span></button>
       </div>
     </header>
@@ -119,7 +121,7 @@ export function TimerApp() {
           <nav className="setup-steps" aria-label="준비 단계">
             {['약속', '시간', '친구'].map((label, step) => <button key={label} type="button" className={setupStep === step ? 'current' : ''}
               aria-current={setupStep === step ? 'step' : undefined} disabled={step > setupStep && !ready} onClick={() => changeStep(step)}>
-              <span aria-hidden="true">{['🛁', '⏰', '🐰'][step]}</span><span>{label}</span>
+              <StoryIcon name={STEP_ICONS[step]} size={38} /><span>{label}</span>
             </button>)}
           </nav>
           <h1 tabIndex={-1} ref={stepHeading}>
@@ -129,7 +131,7 @@ export function TimerApp() {
             custom={customPromise ? promise.name : ''} onCustom={(name) => setPromise({ id: 'custom', icon: '🎨', name, activity: name })}
             onCustomMode={() => setPromise({ id: 'custom', icon: '🎨', name: '', activity: '' })} /> : null}
           {setupStep === 1 ? <><TimeSelector minutes={minutes} onChange={setMinutes} customMode={durationIsCustom} onCustomMode={setCustomDuration} /><p className="parent-hint">시간은 어른이 골라 주세요.</p></> : null}
-          {setupStep === 2 ? <><CharacterSelector selectedId={selectedCharacter} onSelect={setCharacter} /><p className="setup-summary"><span aria-hidden="true">{promise.icon}</span> {promise.name} · {minutes}분</p></> : null}
+          {setupStep === 2 ? <><CharacterSelector selectedId={selectedCharacter} onSelect={setCharacter} /><p className="setup-summary"><PromiseIcon id={promise.id} size={36} /> {promise.name} · {minutes}분</p></> : null}
           <div className="setup-actions">
             {setupStep > 0 ? <button className="back-button" aria-label="뒤로" onClick={() => changeStep(setupStep - 1)}><ArrowLeft size={24} /></button> : null}
             <button className="primary-button" onClick={setupStep === 2 ? startJourney : () => changeStep(setupStep + 1)} disabled={!ready}>

@@ -1,6 +1,7 @@
 import { JourneyPath } from './JourneyPath';
 import { JourneyProgress } from './JourneyProgress';
 import { JourneyMessage } from './JourneyMessage';
+import { PromiseIcon } from '../StoryIcon';
 import { useJourneyRenderer } from '@/hooks/useJourneyRenderer';
 import { formatRemaining } from '@/lib/timer';
 import { completionMessage } from '@/lib/promises';
@@ -25,8 +26,8 @@ export function VisualTimer({ character, promise, progress, remaining, minutes, 
     </div>
     <JourneyPath character={character} promise={promise} animation={animation} input={input} theme={theme} season={season} sceneRef={scene} wrapperRef={wrapper} bodyRef={body} goalRef={goal} />
     <div className="journey-message">
-      {arrived ? <p className="completion-promise"><span aria-hidden="true">{promise.icon}</span> {completionMessage(promise)}</p>
-        : <p className="promise-reminder"><span aria-hidden="true">{promise.icon}</span> 도착하면 {promise.name}</p>}
+      {arrived ? <p className="completion-promise"><PromiseIcon id={promise.id} size={42} /> {completionMessage(promise)}</p>
+        : <p className="promise-reminder"><PromiseIcon id={promise.id} size={42} /> 도착하면 {promise.name}</p>}
     </div>
   </section>;
 }

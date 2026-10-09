@@ -32,16 +32,22 @@ for (const file of files) {
   inspected++;
 }
 const soundFiles = (await readdir(path.join(root, 'sounds'))).filter((name) => name.endsWith('.mp3'));
+const storyIcons = ['handshake', 'bath', 'sleep', 'meal', 'tidy', 'outside', 'video', 'clock', 'rabbit'].map((id) => `images/story-v1/${id}.webp`);
+storyIcons.push(...['custom', 'home', 'flag', 'star'].map((id) => `images/story-v1/${id}.svg`));
+const appIcons = ['favicon-handshake-v1', 'promise-handshake-v1', 'apple-touch-handshake-v1'].map((id) => `images/${id}.png`);
 assert.equal(soundFiles.length, 11, 'Missing animation sound assets');
 for (const animal of ['rabbit', 'dog', 'cat', 'chick', 'princess', 'princess-upper-v2']) {
   const file = await stat(path.join(root, 'characters', 'raster-v1', `${animal}.webp`));
   assert.ok(file.size > 100_000, `Missing painted ${animal} atlas`);
 }
-for (const file of [...soundFiles.map((name) => `sounds/${name}`), ...['prince', 'car', 'train', 'rocket-horizontal-v3'].map((id) => `characters/pixel-v1/${id}.svg`), 'images/meadow.svg', 'images/meadow-night.svg', 'images/icon.svg', 'images/apple-touch-icon.png', '.nojekyll']) {
+for (const file of [...soundFiles.map((name) => `sounds/${name}`), ...['prince', 'car', 'train', 'rocket-horizontal-v3'].map((id) => `characters/pixel-v1/${id}.svg`), ...storyIcons, ...appIcons, 'images/meadow.svg', 'images/meadow-night.svg', 'images/icon.svg', 'images/apple-touch-icon.png', '.nojekyll']) {
   const info = await stat(path.join(root, file));
   assert.ok(info.isFile(), `Missing ${file}`);
   if (file.endsWith('.mp3')) assert.ok(info.size > 1000, `Empty audio: ${file}`);
   if (file.startsWith('characters/pixel-v1/')) assert.ok(info.size > 1000, `Empty pixel atlas: ${file}`);
+  if (storyIcons.includes(file) || appIcons.includes(file)) assert.ok(info.size > 500, `Empty story icon: ${file}`);
 }
+assert.ok(html.includes('/timer/images/favicon-handshake-v1.png'), 'Missing handshake favicon');
+assert.ok(html.includes('/timer/images/apple-touch-handshake-v1.png'), 'Missing handshake home screen icon');
 console.log(`Static export verified: ${inspected} content files, /timer/_next assets, images and ${soundFiles.length} MP3 files.`);
 console.log('Target: https://neegiman.github.io/timer/ — no Next.js runtime required.');

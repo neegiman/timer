@@ -5,6 +5,7 @@ import { motionProfile } from '@/lib/motionProfiles';
 import { CharacterSprite } from './CharacterSprite';
 import { ScrollingScenery } from './ScrollingScenery';
 import { SeasonalAtmosphere } from './SeasonalAtmosphere';
+import { PromiseIcon } from '../StoryIcon';
 import type { Character, PromiseActivity } from '@/types/timer';
 import type { AnimationInput, AnimationState } from '@/types/animation';
 import type { SceneTheme } from '@/lib/dayNight';
@@ -32,7 +33,7 @@ export function JourneyPath({ character, promise, animation, input, theme, seaso
         <path d="M2 47V3" fill="none" stroke="#876f4d" strokeWidth="3" strokeLinecap="round" />
         <g className={`flag-cloth ${!arrived ? 'flag-wave' : ''}`}><path d="M3 6C12 1 23 11 33 7L31 24C20 28 12 16 3 22Z" fill="#e87957" stroke="#bc6548" strokeWidth="1" /></g>
       </svg>
-      <div className="finish-point"><span className="destination-icon">{promise.icon}</span><span className="endpoint-label">도착</span></div>
+      <div className="finish-point"><PromiseIcon id={promise.id} size={32} className="destination-icon" /><span className="endpoint-label">도착</span></div>
     </div> : null}
     <div ref={wrapperRef} className="character-wrapper" style={variables} data-position=".42" data-profile={profile.kind}>
       <div className="character-anchor" data-testid="traveler" data-progress={animation.position}>
