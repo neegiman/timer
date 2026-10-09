@@ -4,6 +4,7 @@ import { animalPose, animalProfiles, type AnimalId, type PawName } from '@/lib/a
 import { assetPath } from '@/lib/assetPath';
 import { rabbitAnatomy } from '@/lib/rabbitAnatomy';
 import { walkingAnatomy, type LimbArtwork } from '@/lib/walkingAnatomy';
+import { chickAnatomy } from '@/lib/chickAnatomy';
 
 type PartName = keyof typeof atlases.rabbit.parts;
 /** A bounded CSS image crop avoids nested SVG repainting when a choice is tapped on mobile. */
@@ -63,7 +64,7 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
   const upperWidth = rabbit ? upperHeight * parts[upperPart][2] / parts[upperPart][3]
     : (bird ? 7 : id === 'cat' ? 13 : 17) * (far ? .88 : 1);
   const lowerWidth = rabbit ? lowerHeight * parts[lowerPart][2] / parts[lowerPart][3] : bird ? 3.5 : upperWidth * .72;
-  const artwork = rabbit && hind ? rabbitAnatomy.hindArtwork : id === 'dog' || id === 'cat' ? walkingAnatomy[id][hind ? 'hindArtwork' : 'foreArtwork'] : null;
+  const artwork = rabbit && hind ? rabbitAnatomy.hindArtwork : id === 'dog' || id === 'cat' ? walkingAnatomy[id][hind ? 'hindArtwork' : 'foreArtwork'] : bird ? chickAnatomy.legArtwork : null;
   const pawWidth = artwork?.paw.width ?? (bird ? 19 : 17);
   const pawHeight = artwork || rabbit ? pawWidth * parts[pawPart][3] / parts[pawPart][2] : 13;
   const pawScale = pawWidth / parts[pawPart][2];
@@ -117,7 +118,9 @@ export function PaintedAnimalArtwork({ id, label }: { id: AnimalId; label?: stri
           <Part id={id} part="head" {...head} />
           {dog ? nearEar : null}
         </g></g></g>
-        {bird ? <g transform="translate(67 154)"><g data-animal-joint="wing"><Part id={id} part="earNear" x={-5} y={-9} width={37} height={29} /></g></g> : null}
+        {bird ? <g transform={`translate(${chickAnatomy.wing.anchorX} ${chickAnatomy.wing.anchorY})`}><g data-animal-joint="wing">
+          <Part id={id} {...chickAnatomy.wing} />
+        </g></g> : null}
         <PaintedPaw id={id} name="nearHind" filter={filter} /><PaintedPaw id={id} name="nearFore" filter={filter} />
       </g>
   </svg>;

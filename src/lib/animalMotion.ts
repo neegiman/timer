@@ -1,5 +1,6 @@
 import { rabbitAnatomy, rabbitHindContact } from './rabbitAnatomy';
 import { walkingAnatomy, walkingPawContact } from './walkingAnatomy';
+import { chickAnatomy, chickPawContact } from './chickAnatomy';
 
 /** Animal-specific motion studies. Illustrative gait rigs, not measured motion-capture data. */
 export type AnimalId = 'rabbit' | 'dog' | 'cat' | 'chick';
@@ -31,7 +32,7 @@ export const animalProfiles: Record<AnimalId, AnimalProfile> = {
     fur: '#a7aea0', light: '#d8dbcd', shade: '#808e7e', line: '#727e6b' },
   chick: { name: '병아리', cycleMs: 780, support: .65, travel: 18, lift: 5,
     phases: { nearHind: 0, farHind: .5, nearFore: 0, farFore: 0 },
-    paws: { nearHind: { x: 76, y: 176, upper: 13, lower: 17, bend: -1 }, farHind: { x: 91, y: 176, upper: 13, lower: 17, bend: -1 } },
+    paws: chickAnatomy.paws,
     description: '작은 두 발로 종종 걸어요. 날개는 몸 곁에 두고 머리는 살짝 움직여요.',
     fur: '#efd174', light: '#fff2b5', shade: '#d7b254', line: '#c0a052' },
 };
@@ -114,5 +115,5 @@ export function animalPose(id: AnimalId, elapsedMs: number, moving = true) {
 /** The painted toe pad, shared by IK, the vector study and browser contact checks. */
 export function pawContact(id: AnimalId, hind: boolean) {
   return id === 'rabbit' ? hind ? rabbitHindContact : { x: 7, y: 4 }
-    : id === 'dog' || id === 'cat' ? walkingPawContact(id, hind) : { x: 0, y: 4 };
+    : id === 'dog' || id === 'cat' ? walkingPawContact(id, hind) : chickPawContact;
 }

@@ -135,6 +135,7 @@ h1:focus { outline: none; }
 .sprite-motion[data-action="jump"] { animation: jumpBody .6s linear both; }
 .sprite-motion[data-action="land"] { animation: landBody .4s ease-out both; }
 .sprite-motion[data-action="celebrate"] { animation: happyBody 2.6s ease-in-out infinite; }
+.sprite-motion[data-character="chick"][data-action="celebrate"] { animation: none; }
 .character-eyes { transform-box: fill-box; transform-origin: center; animation: eyeBlink 4.2s linear infinite; }
 .sprite-motion .rocket-flame { transform-box: fill-box; transform-origin: 50% 0; animation: flamePulse .4s ease-in-out infinite; }
 .parallax-layer { position: absolute; inset: 0; pointer-events: none; }

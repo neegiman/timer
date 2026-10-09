@@ -20,7 +20,7 @@ function Paw({ id, name, far, fur }: { id: AnimalId; name: PawName; far?: boolea
         {!bird ? <path d={`M0 0V${rig.lower}`} stroke={profile.line} strokeWidth={width * 1.7 + outline} strokeLinecap="round" /> : null}
         <path data-paw-lower d={`M0 0V${rig.lower}`} stroke={fill} strokeWidth={width * (bird ? 1.6 : 1.7)} strokeLinecap="round" />
         <g transform={`translate(0 ${rig.lower})`}><g data-animal-joint={`${name}Ankle`} transform={`rotate(${resting[`${name}Ankle`]})`}>
-          {bird ? <path data-paw-pad d="M-5 3H9M-2 2l10 2M1 1l8-1" stroke={fill} strokeWidth="2" strokeLinecap="round" />
+          {bird ? <g transform={`translate(${contact.x} ${contact.y - 4})`}><path data-paw-pad d="M-5 3H9M-2 2l10 2M1 1l8-1" stroke={fill} strokeWidth="2" strokeLinecap="round" /></g>
             : <g transform={`translate(${contact.x - (rabbitHind ? 14 : 7)} ${contact.y - 4})`}>
               <path data-paw-pad d={rabbitHind ? 'M-7 0Q-6-7 2-6L17-3Q24 0 19 4H-7Z' : 'M-6 0Q-6-6 1-5L9-3Q15 0 10 4H-6Z'} fill={fill} stroke={profile.line} strokeWidth=".8" strokeLinejoin="round" />
               <path d="M5 1v2m4-2v2" stroke={profile.line} strokeWidth=".7" /></g>}
@@ -82,7 +82,7 @@ export function NaturalAnimalArtwork({ id }: { id: AnimalId }) {
           <path d="m125 140 15 6-14 6Z" fill="#df9951" stroke="#be843e" strokeWidth=".7" />
         </>}
       </g></g></g>
-      {bird ? <g transform="translate(67 155)"><g data-animal-joint="wing"><path d="M-8-5Q14-14 28 2Q23 19 7 18L8 13 2 15 1 10Q-10 9-8-5Z" fill={profile.light} stroke={profile.shade} strokeWidth=".6" /></g></g> : null}
+      {bird ? <g transform="translate(88 155)"><g data-animal-joint="wing"><g transform="scale(-1 1)"><path d="M-8-5Q14-14 28 2Q23 19 7 18L8 13 2 15 1 10Q-10 9-8-5Z" fill={profile.light} stroke={profile.shade} strokeWidth=".6" /></g></g></g> : null}
       <Paw id={id} name="nearHind" fur={legFur} /><Paw id={id} name="nearFore" fur={legFur} />
     </g>
   </svg>;

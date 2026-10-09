@@ -32,7 +32,7 @@ export function JourneyPath({ character, promise, animation, input, theme, scene
     </div> : null}
     <div ref={wrapperRef} className="character-wrapper" style={variables} data-position=".42" data-profile={profile.kind}>
       <div className="character-anchor" data-testid="traveler" data-progress={animation.position}>
-        <div ref={bodyRef} className="traveler-body sprite-motion" data-action={animation.characterAction} data-phase-key={animation.phaseKey}>
+        <div ref={bodyRef} className="traveler-body sprite-motion" data-character={character.id} data-action={animation.characterAction} data-phase-key={animation.phaseKey}>
           <CharacterSprite character={character} />
         </div><span className="character-shadow" />
       </div>
