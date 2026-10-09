@@ -7,16 +7,19 @@ function Paw({ id, name, far, fur }: { id: AnimalId; name: PawName; far?: boolea
   if (!rig) return null;
   const resting = animalPose(id, 0, false).joints;
   const bird = id === 'chick';
-  const width = bird ? 1.8 : id === 'bear' ? 7.5 : id === 'cat' ? 4 : 5;
+  const width = (bird ? 1.8 : id === 'bear' ? 7.5 : id === 'cat' ? 4 : 5) * (far && !bird ? .88 : 1);
   const fill = bird ? '#d7974c' : far ? profile.shade : fur;
+  const outline = bird ? 0 : 1.4;
   return <g transform={`translate(${rig.x} ${rig.y})`} data-paw={name}>
     <g data-animal-joint={`${name}Hip`} transform={`rotate(${resting[`${name}Hip`]})`}>
-      <path d={`M0 -2V${rig.upper}`} stroke={fill} strokeWidth={width * 2} strokeLinecap="round" />
+      {!bird ? <path d={`M0 -2V${rig.upper}`} stroke={profile.line} strokeWidth={width * 2 + outline} strokeLinecap="round" /> : null}
+      <path data-paw-upper d={`M0 -2V${rig.upper}`} stroke={fill} strokeWidth={width * 2} strokeLinecap="round" />
       <g transform={`translate(0 ${rig.upper})`}><g data-animal-joint={`${name}Knee`} transform={`rotate(${resting[`${name}Knee`]})`}>
-        <path d={`M0 0V${rig.lower}`} stroke={fill} strokeWidth={width * (bird ? 1.6 : 1.7)} strokeLinecap="round" />
+        {!bird ? <path d={`M0 0V${rig.lower}`} stroke={profile.line} strokeWidth={width * 1.7 + outline} strokeLinecap="round" /> : null}
+        <path data-paw-lower d={`M0 0V${rig.lower}`} stroke={fill} strokeWidth={width * (bird ? 1.6 : 1.7)} strokeLinecap="round" />
         <g transform={`translate(0 ${rig.lower})`}><g data-animal-joint={`${name}Ankle`} transform={`rotate(${resting[`${name}Ankle`]})`}>
           {bird ? <path data-paw-pad d="M-5 3H9M-2 2l10 2M1 1l8-1" stroke={fill} strokeWidth="2" strokeLinecap="round" />
-            : <><path data-paw-pad d={id === 'rabbit' && name.includes('Hind') ? 'M-7 0Q-6-7 2-6L17-3Q24 0 19 4H-7Z' : 'M-6 0Q-6-6 1-5L9-3Q15 0 10 4H-6Z'} fill={fill} />
+            : <><path data-paw-pad d={id === 'rabbit' && name.includes('Hind') ? 'M-7 0Q-6-7 2-6L17-3Q24 0 19 4H-7Z' : 'M-6 0Q-6-6 1-5L9-3Q15 0 10 4H-6Z'} fill={fill} stroke={profile.line} strokeWidth=".8" strokeLinejoin="round" />
               <path d="M5 1v2m4-2v2" stroke={profile.line} strokeWidth=".7" /></>}
         </g></g>
       </g></g>
@@ -28,9 +31,14 @@ export function NaturalAnimalArtwork({ id }: { id: AnimalId }) {
   const prefix = useId().replace(/:/g, '');
   const profile = animalProfiles[id];
   const fur = `url(#${prefix}-natural-fur)`;
+  const legFur = `url(#${prefix}-natural-leg)`;
   const rabbit = id === 'rabbit', bear = id === 'bear', cat = id === 'cat', bird = id === 'chick';
   return <svg viewBox="0 0 160 210" className="natural-animal-artwork" data-animal={id} aria-hidden="true" focusable="false">
-    <defs><linearGradient id={`${prefix}-natural-fur`} x2=".3" y2="1"><stop stopColor={profile.light} /><stop offset="1" stopColor={profile.fur} /></linearGradient></defs>
+    <defs>
+      <linearGradient id={`${prefix}-natural-fur`} x2=".3" y2="1"><stop stopColor={profile.light} /><stop offset="1" stopColor={profile.fur} /></linearGradient>
+      {/* Vertical limb strokes have a zero-width bounding box: use explicit local coordinates. */}
+      <linearGradient id={`${prefix}-natural-leg`} gradientUnits="userSpaceOnUse" x1="0" y1="-2" x2="4" y2="53"><stop stopColor={profile.fur} /><stop offset="1" stopColor={profile.light} /></linearGradient>
+    </defs>
     <g data-animal-body>
       <g transform={`translate(${bird ? 61 : 30} ${bird ? 167 : 157})`}><g data-animal-joint="tail">
         {rabbit || bear ? <circle cx="-3" cy="-2" r={rabbit ? 9 : 5} fill={rabbit ? profile.light : profile.shade} />
@@ -38,11 +46,11 @@ export function NaturalAnimalArtwork({ id }: { id: AnimalId }) {
           : bird ? <path d="m4 1-19-12 9 18 8 7" fill={profile.shade} />
           : <path d="M6 7C-18 7-24-6-19-23Q-17-27-15-21C-12-9-3-6 11-7" fill={profile.shade} />}
       </g></g>
-      <Paw id={id} name="farHind" far fur={fur} /><Paw id={id} name="farFore" far fur={fur} />
+      <Paw id={id} name="farHind" far fur={legFur} /><Paw id={id} name="farFore" far fur={legFur} />
       {bird ? <ellipse cx="81" cy="161" rx="35" ry="32" fill={fur} />
-        : <path d={rabbit ? 'M28 160Q27 132 55 133Q74 136 90 147Q108 134 119 150Q132 169 114 184Q78 192 43 183Q26 178 28 160Z'
-          : bear ? 'M27 152Q33 117 67 125Q91 124 109 141Q131 147 129 173Q115 184 93 183L42 185Q21 177 27 152Z'
-          : 'M30 149Q49 136 72 144Q96 139 113 150Q131 161 119 179Q95 185 79 178Q59 181 35 176Q24 165 30 149Z'} fill={fur} />}
+        : <path d={rabbit ? 'M28 160Q27 132 55 133Q74 136 90 147Q108 134 119 150Q132 169 114 176Q78 182 43 177Q26 174 28 160Z'
+          : bear ? 'M27 152Q33 117 67 125Q91 124 109 141Q131 147 129 166Q115 176 93 174L42 176Q21 171 27 152Z'
+          : 'M30 149Q49 136 72 144Q96 139 113 150Q131 161 119 172Q95 176 79 172Q59 174 35 171Q24 165 30 149Z'} fill={fur} />}
       {rabbit ? <ellipse cx="49" cy="162" rx="26" ry="24" fill={fur} stroke={profile.line} strokeWidth=".7" /> : null}
       {cat ? <g stroke={profile.shade} strokeWidth="3.5" strokeLinecap="round"><path d="m53 144 3 12m10-12 2 9m12-10 2 10m13-9 1 11M39 156l-2 9" /></g> : null}
       <g transform={`translate(${bird ? 90 : 111} ${bird ? 158 : 154})`}><g data-animal-joint="head"><g transform={`translate(${bird ? -90 : -111} ${bird ? -158 : -154})`}>
@@ -76,7 +84,7 @@ export function NaturalAnimalArtwork({ id }: { id: AnimalId }) {
         </>}
       </g></g></g>
       {bird ? <g transform="translate(67 155)"><g data-animal-joint="wing"><path d="M-8-5Q14-14 28 2Q23 19 7 18L8 13 2 15 1 10Q-10 9-8-5Z" fill={profile.light} stroke={profile.shade} strokeWidth=".6" /></g></g> : null}
-      <Paw id={id} name="nearHind" fur={fur} /><Paw id={id} name="nearFore" fur={fur} />
+      <Paw id={id} name="nearHind" fur={legFur} /><Paw id={id} name="nearFore" fur={legFur} />
     </g>
   </svg>;
 }
