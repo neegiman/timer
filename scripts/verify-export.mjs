@@ -37,7 +37,7 @@ for (const animal of ['rabbit', 'dog', 'cat', 'chick', 'princess', 'princess-upp
   const file = await stat(path.join(root, 'characters', 'raster-v1', `${animal}.webp`));
   assert.ok(file.size > 100_000, `Missing painted ${animal} atlas`);
 }
-for (const file of [...soundFiles.map((name) => `sounds/${name}`), ...['prince', 'car', 'train', 'rocket'].map((id) => `characters/pixel-v1/${id}.svg`), 'images/meadow.svg', 'images/meadow-night.svg', 'images/icon.svg', 'images/apple-touch-icon.png', '.nojekyll']) {
+for (const file of [...soundFiles.map((name) => `sounds/${name}`), ...['prince', 'car', 'train', 'rocket-upright-v2'].map((id) => `characters/pixel-v1/${id}.svg`), 'images/meadow.svg', 'images/meadow-night.svg', 'images/icon.svg', 'images/apple-touch-icon.png', '.nojekyll']) {
   const info = await stat(path.join(root, file));
   assert.ok(info.isFile(), `Missing ${file}`);
   if (file.endsWith('.mp3')) assert.ok(info.size > 1000, `Empty audio: ${file}`);

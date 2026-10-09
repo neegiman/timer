@@ -56,25 +56,30 @@ export function buildVehicleFrame(id: PixelVehicleId, frame: number) {
       rect(23 - puff, 11 - puff, 4, 2, 'w'); rect(22 - puff, 12 - puff, 6, 2, 'W');
     }
   } else {
-    // Stepped diagonal silhouette points forward; exhaust stays in its own lower-left pocket.
+    // One upright axis at x=20 aligns the nose, window, paired fins, nozzle and exhaust.
     if (moving) {
       const pulse = [0, 1, 2, 1, 0, 2, 1, 2][phase];
-      polygon([[10, 32], [17, 37], [11, 42], [6 - pulse, 46], [7, 39], [3, 41], [7, 34]], 'F');
-      polygon([[11, 34], [14, 37], [10, 41], [8, 42], [9, 37]], 'f');
-      polygon([[11, 35], [13, 37], [10, 39]], 'g');
+      polygon([[16, 37], [24, 37], [25, 40], [23, 43], [23, 41], [21, 45 + pulse], [19, 45 + pulse], [17, 41], [17, 43], [15, 40]], 'F');
+      polygon([[17, 37], [23, 37], [23, 40], [21, 43 + pulse], [19, 43 + pulse], [17, 40]], 'f');
+      polygon([[18, 37], [22, 37], [21, 40 + pulse], [19, 40 + pulse]], 'g');
     }
-    polygon([[13, 25], [6, 29], [4, 37], [12, 34], [19, 37], [19, 42], [26, 37], [28, 29]], 'O');
-    polygon([[13, 27], [8, 30], [7, 34], [13, 32]], 'R'); polygon([[21, 29], [25, 30], [24, 36], [21, 38]], 'R');
-    polygon([[28, 4], [32, 12], [31, 20], [27, 29], [18, 38], [9, 31], [14, 17], [21, 9]], 'O');
-    polygon([[28, 7], [30, 13], [29, 20], [25, 28], [18, 35], [12, 30], [16, 18], [23, 11]], 'W');
-    polygon([[28, 6], [31, 13], [30, 17], [23, 11]], 'R'); polygon([[28, 8], [29, 12], [27, 12]], 'P');
-    polygon([[26, 28], [19, 35], [16, 33], [24, 26]], 'w');
-    polygon([[10, 31], [17, 37], [15, 39], [8, 33]], 'O'); line(10, 33, 15, 37, 'G');
-    disc(22, 22, 6, 'O'); disc(22, 22, 5, 'G'); disc(22, 22, 4, 'B');
-    rect(20, 19, 2, 1, 'b'); rect(19, 20, 1, 2, 'W');
-    rect(21, 22, 1, wink ? 1 : 2, 'O'); rect(24, 22, 1, wink ? 1 : 2, 'O');
-    line(21, 25, 22, 26, 'O'); line(22, 26, 24, 25, 'O');
-    if (moving && phase % 3 === 0) rect(25, 15, 1, 2, 'g');
+    polygon([[12, 23], [7, 28], [5, 39], [13, 36], [16, 30]], 'O');
+    polygon([[28, 23], [33, 28], [35, 39], [27, 36], [24, 30]], 'O');
+    polygon([[12, 26], [9, 29], [8, 36], [12, 34], [14, 29]], 'R');
+    polygon([[28, 26], [31, 29], [32, 36], [28, 34], [26, 29]], 'R');
+    polygon([[20, 2], [24, 6], [27, 12], [29, 20], [29, 31], [25, 36], [15, 36], [11, 31], [11, 20], [13, 12], [16, 6]], 'O');
+    polygon([[20, 4], [23, 7], [25, 13], [27, 20], [27, 30], [24, 34], [16, 34], [13, 30], [13, 20], [15, 13], [17, 7]], 'W');
+    polygon([[20, 4], [23, 7], [25, 13], [15, 13], [17, 7]], 'R');
+    rect(13, 30, 14, 2, 'G'); rect(19, 28, 2, 1, 'G');
+    rect(14, 34, 12, 4, 'O'); rect(16, 35, 8, 1, 'G'); rect(16, 37, 8, 1, 'T');
+    // Mirror on the native grid so polygon boundary ties cannot offset the tip or exhaust by half a pixel.
+    for (const row of canvas.pixels) for (let x = 0; x < 20; x++) row[39 - x] = row[x];
+    rect(18, 8, 2, 3, 'P'); rect(24, 15, 2, 15, 'w');
+    disc(20, 21, 6, 'O'); disc(20, 21, 5, 'G'); disc(20, 21, 4, 'B');
+    rect(18, 18, 2, 1, 'b'); rect(17, 19, 1, 2, 'W');
+    rect(17, 21, 1, wink ? 1 : 2, 'O'); rect(22, 21, 1, wink ? 1 : 2, 'O');
+    line(18, 24, 19, 25, 'O'); line(19, 25, 20, 25, 'O'); line(20, 25, 21, 24, 'O');
+    if (moving && phase % 3 === 0) rect(19, 14, 2, 1, 'g');
   }
   return { pixels: canvas.pixels, paths: canvas.paths() };
 }

@@ -71,3 +71,18 @@ test('driving frames change wheels/exhaust without shifting the body, and stoppe
   }
   for (const frame of [0, 9, 10, 11, 12, 13]) assert.ok(!buildVehicleFrame('rocket', frame).pixels.flat().includes('F'));
 });
+
+test('rocket nose, body, paired fins, nozzle and flame share an upright center in every frame', () => {
+  for (let frame = 0; frame < VEHICLE_SHEET.frames; frame++) {
+    const { pixels } = buildVehicleFrame('rocket', frame);
+    for (const [y, row] of pixels.entries()) {
+      for (let x = 0; x < 20; x++) assert.equal(Boolean(row[x]), Boolean(row[39 - x]), `Frame ${frame} row ${y} leans off center`);
+      const occupied = row.flatMap((color, x) => color ? [x] : []);
+      if (occupied.length) assert.equal(occupied[0] + occupied.at(-1)!, 39, `Frame ${frame} row ${y} has a shifted axis`);
+      if (y >= 38) for (let x = 0; x < 20; x++) {
+        const flame = (color: typeof row[number]) => color === 'F' || color === 'f' || color === 'g';
+        assert.equal(flame(row[x]), flame(row[39 - x]), `Frame ${frame} exhaust points sideways`);
+      }
+    }
+  }
+});

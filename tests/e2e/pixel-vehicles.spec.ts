@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { PIXEL_VEHICLES, vehicleMotion, vehicleViewBox } from '../../src/lib/pixelVehicles';
+import { PIXEL_VEHICLES, vehicleMotion, vehicleViewBox, vehicleAsset } from '../../src/lib/pixelVehicles';
 import { instrumentAudio } from './audio';
 
 for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and preserves motion, pause, refresh and arrival`, async ({ page }, testInfo) => {
@@ -14,9 +14,10 @@ for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and prese
     if (testInfo.project.name === 'webkit-mobile') await choice.tap(); else await choice.click();
     await expect(choice).toHaveAttribute('aria-pressed', 'true');
     await expect(choice.locator('[data-vehicle-sprite]')).toHaveCSS('overflow', 'hidden');
-    await expect(choice.locator('image')).toHaveAttribute('href', `/timer/characters/pixel-v1/${id}.svg`);
+    await expect(choice.locator('image')).toHaveAttribute('href', `/timer${vehicleAsset(id)}`);
   }
   if (testInfo.project.name === 'chromium' && id === 'car') await page.screenshot({ path: 'artifacts/pixel-vehicles-selection-320.png', fullPage: true });
+  if (testInfo.project.name === 'chromium' && id === 'rocket') await page.screenshot({ path: 'artifacts/pixel-rocket-selection-320.png', fullPage: true });
   await page.getByRole('button', { name: '출발!' }).click();
   await expect(page.locator('[data-status="running"]')).toBeVisible();
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
@@ -85,8 +86,8 @@ for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and prese
     expect(art.x).toBeGreaterThanOrEqual(scene.x); expect(art.y).toBeGreaterThanOrEqual(scene.y);
     expect(art.x + art.width).toBeLessThanOrEqual(scene.x + scene.width);
   }
-  const painted = await page.evaluate(async ({ markup, id }) => {
-    const blob = await (await fetch(`/timer/characters/pixel-v1/${id}.svg`)).blob();
+  const painted = await page.evaluate(async ({ markup, sourcePath }) => {
+    const blob = await (await fetch(sourcePath)).blob();
     const source = await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(blob); });
     const svg = new DOMParser().parseFromString(markup.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '), 'image/svg+xml').documentElement;
     svg.setAttribute('width', '160'); svg.setAttribute('height', '210'); svg.querySelector('image')!.setAttribute('href', source);
@@ -100,7 +101,7 @@ for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and prese
       for (let p = 0; p < pixels.length / 4; p++) if (pixels[p * 4 + 3] > 128) { area++; bottom = Math.floor(p / 160); }
       return { area, bottom: bottom + 1 };
     } finally { URL.revokeObjectURL(url); }
-  }, { markup: walkingMarkup, id });
+  }, { markup: walkingMarkup, sourcePath: `/timer${vehicleAsset(id)}` });
   expect(painted.area).toBeGreaterThan(4300); expect(painted.bottom).toBeLessThan(210);
   if (id !== 'rocket') expect(painted.bottom).toBe(197);
   expect(errors).toEqual([]); expect(failed).toEqual([]);

@@ -10,7 +10,10 @@ export const vehicleMotion = {
   rocket: { cycleMs: 1200, groundY: 210, name: '로켓' },
 } as const;
 export function isPixelVehicle(id: string): id is PixelVehicleId { return PIXEL_VEHICLES.some((vehicle) => vehicle === id); }
-export function vehicleAsset(id: PixelVehicleId) { return `/characters/pixel-v1/${id}.svg`; }
+export function vehicleAsset(id: PixelVehicleId) {
+  // A new filename also refreshes previously cached diagonal rocket artwork.
+  return `/characters/pixel-v1/${id === 'rocket' ? 'rocket-upright-v2' : id}.svg`;
+}
 
 /** Wheel circumference and scenery share one elapsed clock; rocket exhaust uses its flight cycle. */
 export function vehicleFrame(id: PixelVehicleId, action: CharacterAction, elapsed: number, reduced = false) {

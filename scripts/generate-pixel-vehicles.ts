@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { buildVehicleFrame, vehiclePalette } from './vehicleArt';
-import { PIXEL_VEHICLES, VEHICLE_SHEET, vehicleMotion } from '../src/lib/pixelVehicles';
+import { PIXEL_VEHICLES, VEHICLE_SHEET, vehicleMotion, vehicleAsset } from '../src/lib/pixelVehicles';
 
 async function main() {
   const { columns, rows, frameWidth, frameHeight, frames } = VEHICLE_SHEET;
@@ -12,8 +12,8 @@ async function main() {
       return `<g transform="translate(${frame % columns * frameWidth} ${Math.floor(frame / columns) * frameHeight + 5}) scale(4)">${paint}</g>`;
     }).join('');
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${columns * frameWidth}" height="${rows * frameHeight}" viewBox="0 0 ${columns * frameWidth} ${rows * frameHeight}" shape-rendering="crispEdges"><title>${vehicleMotion[id].name} — 오리지널 8비트 픽셀 캐릭터</title>${art}</svg>\n`;
-    await writeFile(`public/characters/pixel-v1/${id}.svg`, svg);
-    console.log(`${id}: ${frames} complete pixel frames, /timer/characters/pixel-v1/${id}.svg`);
+    await writeFile(`public${vehicleAsset(id)}`, svg);
+    console.log(`${id}: ${frames} complete pixel frames, /timer${vehicleAsset(id)}`);
   }
 }
 void main();
