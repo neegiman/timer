@@ -20,7 +20,7 @@ export function VisualTimer({ character, promise, progress, remaining, minutes, 
   const { scene, wrapper, body, goal, track, fill, marker } = useJourneyRenderer(input, animation, sampledAt, character.id, season, theme);
   return <section className={`journey-card ${status === 'paused' ? 'is-paused' : ''}`} aria-label={`${minutes}분 약속 여행`}>
     <div className="journey-overview">
-      <JourneyMessage notice={notice} />
+      <JourneyMessage notice={notice} promiseId={promise.id} />
       {showNumericTime ? <p className="numeric-time" aria-label={`남은 시간 ${formatRemaining(remaining)}`} data-testid="countdown">{formatRemaining(remaining)}<span>남은 시간</span></p> : null}
       <JourneyProgress character={character} progress={progress} trackRef={track} fillRef={fill} markerRef={marker} />
     </div>
