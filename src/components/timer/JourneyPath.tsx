@@ -4,12 +4,14 @@ import { assetPath } from '@/lib/assetPath';
 import { motionProfile } from '@/lib/motionProfiles';
 import { CharacterSprite } from './CharacterSprite';
 import { ScrollingScenery } from './ScrollingScenery';
+import { SeasonalAtmosphere } from './SeasonalAtmosphere';
 import type { Character, PromiseActivity } from '@/types/timer';
 import type { AnimationInput, AnimationState } from '@/types/animation';
 import type { SceneTheme } from '@/lib/dayNight';
+import { SEASONS, type Season } from '@/lib/seasons';
 
-export function JourneyPath({ character, promise, animation, input, theme, sceneRef, goalRef, wrapperRef, bodyRef }: {
-  character: Character; promise: PromiseActivity; animation: AnimationState; input: AnimationInput; theme: SceneTheme;
+export function JourneyPath({ character, promise, animation, input, theme, season, sceneRef, goalRef, wrapperRef, bodyRef }: {
+  character: Character; promise: PromiseActivity; animation: AnimationState; input: AnimationInput; theme: SceneTheme; season: Season;
   sceneRef: RefObject<HTMLDivElement | null>; goalRef: RefObject<HTMLDivElement | null>;
   wrapperRef: RefObject<HTMLDivElement | null>; bodyRef: RefObject<HTMLDivElement | null>;
 }) {
@@ -17,11 +19,13 @@ export function JourneyPath({ character, promise, animation, input, theme, scene
   const arrived = animation.messageStage === 'arrived';
   const celebration = animation.phase === 'LAND' || animation.phase === 'CELEBRATE';
   const variables = { '--cycle': `${profile.cycleMs}ms`, '--foot-origin': `${profile.groundY / 210 * 100}%` } as CSSProperties;
-  return <div ref={sceneRef} className={`journey-scene ${input.isPaused ? 'is-paused' : ''}`} data-phase={animation.phase} data-stage={animation.messageStage} data-theme={theme}
-    role="img" aria-label={`${theme === 'day' ? '낮' : '밤'} 풍경에서 ${character.name}와 함께 ${promise.name}까지 즐겁게 걸어요`}>
+  return <div ref={sceneRef} className={`journey-scene ${input.isPaused ? 'is-paused' : ''}`} data-phase={animation.phase} data-stage={animation.messageStage} data-theme={theme} data-season={season}
+    role="img" aria-label={`${SEASONS[season].name} ${theme === 'day' ? '낮' : '밤'} 풍경에서 ${character.name}와 함께 ${promise.name}까지 즐겁게 걸어요`}>
     <Image className="scene-backdrop scene-day" src={assetPath('/images/meadow.svg')} alt="" width={800} height={600} priority />
     <Image className="scene-backdrop scene-night" src={assetPath('/images/meadow-night.svg')} alt="" width={800} height={600} loading="eager" />
-    <ScrollingScenery />
+    <div className="season-sky-tint" aria-hidden="true" />
+    <ScrollingScenery season={season} />
+    <SeasonalAtmosphere season={season} />
     {animation.position >= .9 ? <div ref={goalRef} className={`journey-goal ${arrived ? 'goal-arrived' : ''}`} data-testid="journey-goal" aria-hidden="true">
       <span className="goal-line" />
       <svg className="finish-flag" viewBox="0 0 36 48">

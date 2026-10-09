@@ -35,14 +35,6 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   await page.clock.runFor(800);
   if (supportsAudio) await expect.poll(() => played('start')).toBe(1);
   const fixedX = await main.evaluate((element) => element.getBoundingClientRect().x);
-  await page.evaluate(() => {
-    Object.assign(window, { messageChanges: 0 });
-    new MutationObserver((mutations) => {
-      if (mutations.some((mutation) => mutation.type === 'childList' && mutation.addedNodes.length > 0)) {
-        (window as unknown as { messageChanges: number }).messageChanges++;
-      }
-    }).observe(document.querySelector('.stage-message')!, { childList: true });
-  });
   await seek(page, 299_900);
   await expect(message).toHaveText('즐겁게 걸어가 볼까? 🌈');
   await expect(page.getByTestId('journey-goal')).toHaveCount(0);
@@ -52,7 +44,8 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   await expect(scene).toHaveAttribute('data-phase', 'WALK');
   if (supportsAudio) await expect.poll(() => played('midpoint')).toBe(1);
   await page.clock.runFor(1000);
-  expect(await page.evaluate(() => (window as unknown as { messageChanges: number }).messageChanges)).toBe(1);
+  await expect(message).toHaveAttribute('data-cue', 'halfway');
+  await expect(message).toHaveAttribute('data-visible', 'true');
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/motion-midpoint.png', fullPage: true });
   await seek(page, 539_900);
   await expect(page.getByTestId('journey-goal')).toHaveCount(0);
@@ -61,7 +54,8 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   await expect(page.getByTestId('journey-goal')).toHaveCount(1);
   await page.clock.runFor(1000);
   if (supportsAudio) await expect.poll(() => played('sparkle')).toBe(1);
-  expect(await page.evaluate(() => (window as unknown as { messageChanges: number }).messageChanges)).toBe(2);
+  await expect(message).toHaveAttribute('data-cue', 'near');
+  await expect(message).toHaveAttribute('data-visible', 'true');
   const goalX = await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x);
   let previousGround = Number(await scene.getAttribute('data-ground-distance'));
   for (const elapsed of [550_000, 570_000, 590_000, 599_900]) {

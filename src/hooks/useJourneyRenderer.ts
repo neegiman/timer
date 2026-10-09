@@ -9,9 +9,12 @@ import { animalProfiles, type AnimalJoint } from '@/lib/animalMotion';
 import { PRINCESS_GAIT, princessPose, settlePrincessPose } from '@/lib/princessMotion';
 import { PRINCE_GAIT, princeFrame, princeViewBox } from '@/lib/princeMotion';
 import { isPixelVehicle, vehicleFrame, vehicleViewBox } from '@/lib/pixelVehicles';
+import { sceneryEvent, sceneryParticle } from '@/lib/sceneryEvents';
+import type { Season } from '@/lib/seasons';
+import type { SceneTheme } from '@/lib/dayNight';
 
 /** A shared elapsed-time clock drives feet, ground and scenery. Frame updates never enter React state. */
-export function useJourneyRenderer(input: AnimationInput, state: AnimationState, sampledAt: number, characterId: string) {
+export function useJourneyRenderer(input: AnimationInput, state: AnimationState, sampledAt: number, characterId: string, season: Season, theme: SceneTheme) {
   const scene = useRef<HTMLDivElement>(null);
   const wrapper = useRef<HTMLDivElement>(null);
   const body = useRef<HTMLDivElement>(null);
@@ -49,6 +52,8 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     const animalId = isAnimalId(characterId) ? characterId : null;
     const vehicleId = isPixelVehicle(characterId) ? characterId : null;
     const layers = Array.from(element.querySelectorAll<HTMLElement>('[data-layer]'));
+    const visitor = element.querySelector<HTMLElement>('[data-scenery-visitor]');
+    const particles = Array.from(element.querySelectorAll<HTMLElement>('[data-scenery-particle]'));
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     let width = element.clientWidth;
@@ -135,6 +140,20 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         layer.style.transform = `translate3d(${-offset}px, 0, 0)`;
         layer.dataset.scrollOffset = offset.toFixed(6);
       }
+      if (visitor && !reduced) {
+        const event = sceneryEvent(elapsed, season, theme);
+        if (visitor.dataset.event !== event.kind) visitor.dataset.event = event.kind;
+        visitor.style.opacity = String(event.opacity);
+        const eventY = event.kind === 'shooting-star' ? height * (.08 + event.progress * .2) : height * (.22 + .05 * Math.sin(event.progress * Math.PI * 3));
+        visitor.style.transform = `translate3d(${width * (1.05 - event.progress * 1.35)}px, ${eventY}px, 0)`;
+        visitor.style.setProperty('--wing', event.flutter.toFixed(3));
+      }
+      for (const [index, particle] of particles.entries()) {
+        if (reduced) continue;
+        const pose = sceneryParticle(elapsed, index);
+        particle.style.transform = `translate3d(${pose.x * width}px, ${pose.y * height}px, 0) rotate(${pose.rotation}deg)`;
+        particle.style.opacity = String(pose.opacity);
+      }
       if (goal.current) goal.current.style.opacity = String(finishOpacity(pose.position));
       fill.current?.style.setProperty('transform', `scaleX(${pose.position})`);
       marker.current?.style.setProperty('transform', `translate3d(${pose.position * progressWidth}px, 0, 0)`);
@@ -158,6 +177,6 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     document.addEventListener('visibilitychange', visibility);
     preference.addEventListener('change', draw);
     return () => { cancelAnimationFrame(frame); resize.disconnect(); document.removeEventListener('visibilitychange', visibility); preference.removeEventListener('change', draw); };
-  }, [input.isPaused, characterId]);
+  }, [input.isPaused, characterId, season, theme]);
   return { scene, wrapper, body, goal, track, fill, marker };
 }

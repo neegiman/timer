@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { isBoolean, useLocalStorage } from './useLocalStorage';
 import { isBackgroundMode, isCoordinates, sceneTheme, type BackgroundMode, type SceneCoordinates } from '@/lib/dayNight';
+import { koreanSeason } from '@/lib/seasons';
 
 export type LocationStatus = 'idle' | 'pending' | 'ready' | 'denied' | 'unavailable' | 'timeout';
 
@@ -71,5 +72,5 @@ export function useDayNight(now: number) {
   const source = mode !== 'auto' ? 'manual' : activeCoordinates ? 'location' : 'clock';
   const enableLocation = () => { setStatus('pending'); setLocationEnabled(true); setRequest((value) => value + 1); };
   const disableLocation = () => { setLocationEnabled(false); setCoordinates(null); setStatus('idle'); };
-  return { mode, setMode, theme, source, status, locationEnabled, enableLocation, disableLocation };
+  return { mode, setMode, theme, season: koreanSeason(minute), source, status, locationEnabled, enableLocation, disableLocation };
 }

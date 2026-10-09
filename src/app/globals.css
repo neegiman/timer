@@ -105,6 +105,81 @@ h1:focus { outline: none; }
   --scene-ground-mark: #929b96;
 }
 .parallax-layer :is(path, rect, g, circle, ellipse) { transition: fill 1.2s ease-in-out, stroke 1.2s ease-in-out; }
+/* KST calendar seasons share the existing sky and scrolling scenery. */
+.journey-scene[data-season="spring"] {
+  --season-sky: linear-gradient(#f5e6ed80, transparent 65%);
+  --scene-leaf: #dba7b8; --scene-leaf-light: #efcbd5;
+  --scene-hill-far: #e0edce; --scene-hill-middle: #d1e4ba; --scene-hill-near: #bed7a4;
+  --scene-flower: #f1bfd0; --scene-flower-center: #dbb45b;
+}
+.journey-scene[data-season="summer"] {
+  --season-sky: linear-gradient(#bce7ef70, transparent 65%);
+  --scene-leaf: #72a87c; --scene-leaf-light: #9fc898; --scene-trunk: #85946a;
+  --scene-hill-far: #cde3c0; --scene-hill-middle: #b2d3a5; --scene-hill-near: #9ac18f;
+  --scene-ground: #ead4ae; --scene-verge: #87b575; --scene-grass: #82aa6c;
+  --scene-flower: #f5dda0;
+}
+.journey-scene[data-season="autumn"] {
+  --season-sky: linear-gradient(#f4dbad80, transparent 65%);
+  --scene-leaf: #c78c59; --scene-leaf-light: #e0ae6f; --scene-trunk: #a18a64;
+  --scene-hill-far: #e4dbb5; --scene-hill-middle: #d3c99c; --scene-hill-near: #b9bb8b;
+  --scene-ground: #e6cba4; --scene-verge: #c4b27f; --scene-grass: #afa36e;
+  --scene-flower: #edd4a0; --scene-stone: #c7ad8b;
+}
+.journey-scene[data-season="winter"] {
+  --season-sky: linear-gradient(#dce9f080, transparent 65%);
+  --scene-leaf: #b5cacc; --scene-leaf-light: #d7e4e5; --scene-trunk: #8c9fa4;
+  --scene-hill-far: #e3edf0; --scene-hill-middle: #d2e0e4; --scene-hill-near: #bdd1d7;
+  --scene-ground: #e6edf0; --scene-verge: #f4f7f6; --scene-grass: #b1c6c9;
+  --scene-flower: #edf3f3; --scene-flower-center: #c4d2d3; --scene-stone: #bdcdd2;
+  --scene-ground-mark: #cfdbde; --scene-snow: #f6f9f8;
+}
+.journey-scene[data-season="spring"][data-theme="night"] {
+  --season-sky: linear-gradient(#82758e30, transparent 65%);
+  --scene-leaf: #8a7e96; --scene-leaf-light: #ad98ae;
+  --scene-hill-far: #58687e; --scene-hill-middle: #526b75; --scene-hill-near: #49696b;
+  --scene-flower: #cfadbf; --scene-flower-center: #bca56f;
+}
+.journey-scene[data-season="summer"][data-theme="night"] {
+  --season-sky: linear-gradient(#306b7025, transparent 65%);
+  --scene-leaf: #4f7b72; --scene-leaf-light: #77998a; --scene-trunk: #5a706e;
+  --scene-hill-far: #506a7b; --scene-hill-middle: #446e70; --scene-hill-near: #3b6b63;
+  --scene-ground: #aaa99a; --scene-verge: #729787; --scene-grass: #739a86; --scene-flower: #d6c795;
+}
+.journey-scene[data-season="autumn"][data-theme="night"] {
+  --season-sky: linear-gradient(#886c5b25, transparent 65%);
+  --scene-leaf: #9c816e; --scene-leaf-light: #b39b80; --scene-trunk: #7b7c71;
+  --scene-hill-far: #646b7b; --scene-hill-middle: #676f70; --scene-hill-near: #5d726a;
+  --scene-ground: #b2a391; --scene-verge: #9a9a7c; --scene-grass: #98997a;
+  --scene-flower: #c8b794; --scene-stone: #968d81;
+}
+.journey-scene[data-season="winter"][data-theme="night"] {
+  --season-sky: linear-gradient(#8295af20, transparent 65%);
+  --scene-leaf: #79939f; --scene-leaf-light: #9eb3bd; --scene-trunk: #677e8b;
+  --scene-hill-far: #667d92; --scene-hill-middle: #7794a4; --scene-hill-near: #8aa4ae;
+  --scene-ground: #becdd3; --scene-verge: #d7e1e5; --scene-grass: #94aeb6;
+  --scene-flower: #d8e4e7; --scene-flower-center: #aebfc4; --scene-stone: #96abb4;
+  --scene-ground-mark: #a7bbc3; --scene-snow: #dbe6eb;
+}
+.season-sky-tint { position: absolute; inset: 0; background: var(--season-sky); pointer-events: none; }
+.season-setting-note { color: var(--muted); font-size: 14px; line-height: 1.7; }
+.seasonal-atmosphere { position: absolute; z-index: 2; inset: 0; pointer-events: none; overflow: hidden; }
+.scenery-visitor { position: absolute; top: 0; left: 0; width: clamp(64px, 15vw, 98px); opacity: 0; will-change: transform; }
+.scenery-visitor svg { display: none; width: 100%; height: auto; overflow: visible; }
+.scenery-visitor[data-event="butterfly"] [data-visitor-art="butterfly"],
+.scenery-visitor[data-event="dragonfly"] [data-visitor-art="dragonfly"],
+.scenery-visitor[data-event="birds"] [data-visitor-art="birds"],
+.scenery-visitor[data-event="leaves"] [data-visitor-art="leaves"],
+.scenery-visitor[data-event="snow"] [data-visitor-art="snow"],
+.scenery-visitor[data-event="fireflies"] [data-visitor-art="fireflies"],
+.scenery-visitor[data-event="shooting-star"] [data-visitor-art="shooting-star"] { display: block; }
+.visitor-wings { transform-box: view-box; transform-origin: 60px 45px; transform: scaleX(var(--wing, 1)); }
+.scenery-particle { position: absolute; left: 0; top: 0; width: 12px; height: 12px; opacity: 0; will-change: transform; }
+.scenery-particle:nth-of-type(even) { width: 9px; height: 9px; }
+.scenery-particle svg { display: block; width: 100%; height: 100%; }
+.journey-scene[data-theme="night"] .seasonal-atmosphere { --event-ink: #b8c6ce; --seed-color: #eee4b4; }
+.journey-scene[data-theme="night"] .scenery-particle { filter: brightness(.9); }
+@media (prefers-reduced-motion: reduce) { .seasonal-atmosphere { display: none; } }
 .scene-settings { min-width: 0; margin: 20px 0 0; padding: 18px 0; border: 0; border-bottom: 1px solid var(--border); }
 .scene-settings legend { padding: 0; font-size: 20px; font-weight: 800; }
 .background-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -254,8 +329,9 @@ h1:focus { outline: none; }
 .stage-message > span { grid-area: 1 / 1; }
 .message-reserve { visibility: hidden; pointer-events: none; user-select: none; }
 .stage-halfway, .stage-near, .stage-arrived { color: var(--green); }
-.message-past { animation: messageOut .22s ease-in both; }
-.message-entering { animation: messageIn .28s .18s ease-out both; }
+.message-current { transition: opacity .4s ease, transform .4s ease, visibility .4s; }
+.message-current[data-visible="true"] { animation: messageIn .4s ease-out both; }
+.message-current[data-visible="false"] { opacity: 0; visibility: hidden; transform: translateY(-3px); }
 .numeric-time { margin-top: 8px; font-size: 23px; }
 .journey-progress { max-width: 650px; margin: 14px auto 0; padding: 0 20px; }
 .progress-endpoints { display: flex; justify-content: space-between; gap: 12px; font-size: 18px; font-weight: 800; margin-bottom: 24px; }
@@ -295,7 +371,6 @@ h1:focus { outline: none; }
 .arrival-sparkles i:nth-of-type(4) { left: 63%; top: 15%; background: #a1bec0; animation-delay: .18s; }
 .arrival-sparkles i:nth-of-type(5) { left: 72%; top: 30%; background: #dba995; animation-delay: .3s; }
 .arrival-sparkles i:nth-of-type(6) { left: 17%; top: 38%; background: #a7bd88; animation-delay: .2s; }
-@keyframes messageOut { from { opacity: 1; } to { opacity: 0; } }
 @keyframes messageIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes confettiFall { 0% { opacity: 0; transform: translateY(-10px) rotate(0); } 20% { opacity: .8; } 100% { opacity: 0; transform: translateY(80px) rotate(120deg); } }
 .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { height: clamp(260px, calc(100dvh - 360px - var(--recovery-height)), 650px); }
@@ -319,8 +394,7 @@ h1:focus { outline: none; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-goal .destination-icon { font-size: 28px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .message-past, .arrival-sparkles i { display: none; }
-  .message-entering { opacity: 1; }
+  .arrival-sparkles i { display: none; }
 }
 
 /* Adult-facing character design and gait preview, sharing the timer's picture-book palette. */

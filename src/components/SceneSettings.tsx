@@ -1,7 +1,8 @@
 import type { useDayNight } from '@/hooks/useDayNight';
+import { SEASONS } from '@/lib/seasons';
 
 export function SceneSettings({ appearance }: { appearance: ReturnType<typeof useDayNight> }) {
-  const { mode, setMode, theme, source, status, locationEnabled, enableLocation, disableLocation } = appearance;
+  const { mode, setMode, theme, season, source, status, locationEnabled, enableLocation, disableLocation } = appearance;
   const description = source === 'manual' ? '고른 배경을 계속 보여요.'
     : source === 'location' ? '현재 위치의 일출·일몰에 맞추고 있어요.'
     : status === 'denied' ? '위치가 허용되지 않아 기기 시간으로 맞추고 있어요.'
@@ -17,8 +18,9 @@ export function SceneSettings({ appearance }: { appearance: ReturnType<typeof us
         </button>)}
     </div>
     <p className="scene-setting-status" data-testid="location-status" aria-live="polite">
-      <strong>{theme === 'day' ? '☀️ 낮 배경' : '🌙 밤 배경'}</strong><span>{description}</span>
+      <strong>{SEASONS[season].icon} {SEASONS[season].name} · {theme === 'day' ? '☀️ 낮 배경' : '🌙 밤 배경'}</strong><span>{description}</span>
     </p>
+    <p className="season-setting-note">대한민국 달력에 맞춰 봄(3~5월) · 여름(6~8월) · 가을(9~11월) · 겨울(12~2월) 풍경으로 바뀌어요.</p>
     {mode === 'auto' ? <div className="location-controls">
       {source !== 'location' ? <button type="button" className="location-button" disabled={locationEnabled && status === 'pending'} onClick={enableLocation}>
         {locationEnabled && status === 'pending' ? '위치 확인 중…' : locationEnabled ? '현재 위치 다시 확인' : '현재 위치로 맞추기'}
