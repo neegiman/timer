@@ -19,7 +19,7 @@ try {
   for (const match of previewHTML.matchAll(/(?:src|href)="(\/timer\/[^"?#]+\.(?:js|css))"/g)) assets.add(match[1]);
   const sounds = ['start', 'almost', 'finish', 'success', 'midpoint', 'sparkle', 'tick', 'strong-tick', 'whoosh', 'pop', 'land'];
   const animals = ['rabbit', 'dog', 'cat', 'chick', 'princess', 'princess-upper-v2'].map((id) => `/timer/characters/raster-v1/${id}.webp`);
-  const pixels = ['prince', 'car', 'train', 'rocket-upright-v2'].map((id) => `/timer/characters/pixel-v1/${id}.svg`);
+  const pixels = ['prince', 'car', 'train', 'rocket-horizontal-v3'].map((id) => `/timer/characters/pixel-v1/${id}.svg`);
   for (const path of [...sounds.map((sound) => `/timer/sounds/${sound}.mp3`), ...animals, ...pixels, '/timer/images/meadow.svg', '/timer/images/meadow-night.svg', '/timer/images/icon.svg', ...assets]) {
     const result = await fetch(`${origin}${path}`, { signal: AbortSignal.timeout(15_000) });
     assert.equal(result.status, 200, `${path}: HTTP ${result.status}`);

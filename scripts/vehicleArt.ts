@@ -56,30 +56,31 @@ export function buildVehicleFrame(id: PixelVehicleId, frame: number) {
       rect(23 - puff, 11 - puff, 4, 2, 'w'); rect(22 - puff, 12 - puff, 6, 2, 'W');
     }
   } else {
-    // One upright axis at x=20 aligns the nose, window, paired fins, nozzle and exhaust.
+    // Side-on flight: nose points right and exhaust trails left on the horizontal y=30 axis.
     if (moving) {
       const pulse = [0, 1, 2, 1, 0, 2, 1, 2][phase];
-      polygon([[16, 37], [24, 37], [25, 40], [23, 43], [23, 41], [21, 45 + pulse], [19, 45 + pulse], [17, 41], [17, 43], [15, 40]], 'F');
-      polygon([[17, 37], [23, 37], [23, 40], [21, 43 + pulse], [19, 43 + pulse], [17, 40]], 'f');
-      polygon([[18, 37], [22, 37], [21, 40 + pulse], [19, 40 + pulse]], 'g');
+      polygon([[10, 26], [6, 25], [7, 27], [3 - pulse, 29], [3 - pulse, 31], [7, 33], [6, 35], [10, 34]], 'F');
+      polygon([[10, 27], [7, 27], [5 - pulse, 29], [5 - pulse, 31], [7, 33], [10, 33]], 'f');
+      polygon([[10, 28], [8, 28], [6 - pulse, 30], [8, 32], [10, 32]], 'g');
     }
-    polygon([[12, 23], [7, 28], [5, 39], [13, 36], [16, 30]], 'O');
-    polygon([[28, 23], [33, 28], [35, 39], [27, 36], [24, 30]], 'O');
-    polygon([[12, 26], [9, 29], [8, 36], [12, 34], [14, 29]], 'R');
-    polygon([[28, 26], [31, 29], [32, 36], [28, 34], [26, 29]], 'R');
-    polygon([[20, 2], [24, 6], [27, 12], [29, 20], [29, 31], [25, 36], [15, 36], [11, 31], [11, 20], [13, 12], [16, 6]], 'O');
-    polygon([[20, 4], [23, 7], [25, 13], [27, 20], [27, 30], [24, 34], [16, 34], [13, 30], [13, 20], [15, 13], [17, 7]], 'W');
-    polygon([[20, 4], [23, 7], [25, 13], [15, 13], [17, 7]], 'R');
-    rect(13, 30, 14, 2, 'G'); rect(19, 28, 2, 1, 'G');
-    rect(14, 34, 12, 4, 'O'); rect(16, 35, 8, 1, 'G'); rect(16, 37, 8, 1, 'T');
-    // Mirror on the native grid so polygon boundary ties cannot offset the tip or exhaust by half a pixel.
-    for (const row of canvas.pixels) for (let x = 0; x < 20; x++) row[39 - x] = row[x];
-    rect(18, 8, 2, 3, 'P'); rect(24, 15, 2, 15, 'w');
-    disc(20, 21, 6, 'O'); disc(20, 21, 5, 'G'); disc(20, 21, 4, 'B');
-    rect(18, 18, 2, 1, 'b'); rect(17, 19, 1, 2, 'W');
-    rect(17, 21, 1, wink ? 1 : 2, 'O'); rect(22, 21, 1, wink ? 1 : 2, 'O');
-    line(18, 24, 19, 25, 'O'); line(19, 25, 20, 25, 'O'); line(20, 25, 21, 24, 'O');
-    if (moving && phase % 3 === 0) rect(19, 14, 2, 1, 'g');
+    polygon([[20, 25], [15, 21], [8, 18], [10, 26], [13, 28]], 'O');
+    polygon([[20, 35], [15, 39], [8, 42], [10, 34], [13, 32]], 'O');
+    polygon([[17, 25], [13, 23], [10, 21], [12, 26], [14, 27]], 'R');
+    polygon([[17, 35], [13, 37], [10, 39], [12, 34], [14, 33]], 'R');
+    polygon([[39, 30], [35, 26], [29, 23], [16, 22], [11, 25], [10, 27], [10, 33], [11, 35], [16, 38], [29, 37], [35, 34]], 'O');
+    polygon([[37, 30], [34, 27], [28, 25], [16, 24], [13, 26], [12, 28], [12, 32], [13, 34], [16, 36], [28, 35], [34, 33]], 'W');
+    polygon([[37, 30], [34, 27], [29, 25], [29, 35], [34, 33]], 'R');
+    pixel(38, 29, 'O');
+    rect(13, 26, 2, 8, 'G');
+    rect(9, 26, 4, 8, 'O'); rect(10, 27, 1, 6, 'G'); rect(9, 28, 1, 4, 'T');
+    // Mirror the outline and flame before adding upright facial features and lighting.
+    for (let y = 12; y < 30; y++) canvas.pixels[59 - y] = [...canvas.pixels[y]];
+    rect(31, 27, 3, 1, 'P'); rect(16, 35, 12, 1, 'w');
+    disc(23, 30, 6, 'O'); disc(23, 30, 5, 'G'); disc(23, 30, 4, 'B');
+    rect(21, 27, 2, 1, 'b'); rect(20, 28, 1, 2, 'W');
+    rect(20, 30, 1, wink ? 1 : 2, 'O'); rect(25, 30, 1, wink ? 1 : 2, 'O');
+    line(21, 33, 22, 34, 'O'); line(22, 34, 23, 34, 'O'); line(23, 34, 24, 33, 'O');
+    if (moving && phase % 3 === 0) rect(16, 29, 1, 2, 'g');
   }
   return { pixels: canvas.pixels, paths: canvas.paths() };
 }

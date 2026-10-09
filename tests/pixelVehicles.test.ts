@@ -72,17 +72,17 @@ test('driving frames change wheels/exhaust without shifting the body, and stoppe
   for (const frame of [0, 9, 10, 11, 12, 13]) assert.ok(!buildVehicleFrame('rocket', frame).pixels.flat().includes('F'));
 });
 
-test('rocket nose, body, paired fins, nozzle and flame share an upright center in every frame', () => {
+test('rocket points right on a horizontal axis with its exhaust behind it in every frame', () => {
   for (let frame = 0; frame < VEHICLE_SHEET.frames; frame++) {
     const { pixels } = buildVehicleFrame('rocket', frame);
-    for (const [y, row] of pixels.entries()) {
-      for (let x = 0; x < 20; x++) assert.equal(Boolean(row[x]), Boolean(row[39 - x]), `Frame ${frame} row ${y} leans off center`);
-      const occupied = row.flatMap((color, x) => color ? [x] : []);
-      if (occupied.length) assert.equal(occupied[0] + occupied.at(-1)!, 39, `Frame ${frame} row ${y} has a shifted axis`);
-      if (y >= 38) for (let x = 0; x < 20; x++) {
-        const flame = (color: typeof row[number]) => color === 'F' || color === 'f' || color === 'g';
-        assert.equal(flame(row[x]), flame(row[39 - x]), `Frame ${frame} exhaust points sideways`);
-      }
+    for (let x = 0; x < 40; x++) {
+      const column = pixels.map((row) => row[x]);
+      const occupied = column.flatMap((color, y) => color ? [y] : []);
+      if (occupied.length) assert.equal(occupied[0] + occupied.at(-1)!, 59, `Frame ${frame} column ${x} tilts off the horizontal axis`);
+      for (let y = 12; y < 30; y++) assert.equal(Boolean(column[y]), Boolean(column[59 - y]), `Frame ${frame} column ${x} has an uneven outline`);
     }
+    assert.equal(pixels[29][38], 'O', 'Nose must face the destination on the right');
+    assert.equal(pixels[30][38], 'O');
+    for (const row of pixels) for (const [x, color] of row.entries()) if (color === 'F' || color === 'f') assert.ok(x < 9, 'Exhaust must trail behind the nozzle on the left');
   }
 });
