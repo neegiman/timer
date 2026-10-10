@@ -197,7 +197,6 @@ h1:focus { outline: none; }
 .destination-icon { font-size: 64px; line-height: 1.12; }
 .endpoint-label { padding: 3px 10px; border-radius: 12px; font-size: 19px; font-weight: 800; background: #fffdf0e6; white-space: nowrap; }
 .finish-flag { position: absolute; z-index: 3; left: -2px; top: -47px; width: 36px; height: 48px; overflow: visible; pointer-events: none; }
-.flag-cloth { transform-box: view-box; transform-origin: 2px 6px; }
 .character-wrapper { position: absolute; left: 0; top: 0; z-index: 4; width: min(clamp(104px, 27vw, 124px), var(--actor-limit, 124px)); --jump-height: 24px; }
 .character-anchor { position: relative; width: 100%; transform: translate(-50%, -94%); }
 .traveler-body { position: relative; z-index: 1; width: 100%; aspect-ratio: 160 / 210; transform-origin: 50% 95%; }
@@ -218,7 +217,6 @@ h1:focus { outline: none; }
 .parallax-layer svg { display: block; width: 100%; height: 100%; }
 .tree-layer { z-index: 1; }
 .is-paused *, [data-suspended="true"] * { animation-play-state: paused !important; }
-.flag-wave { animation: flag-wave .7s ease-in-out infinite; }
 .arrival-sparkles { position: absolute; inset: 0; z-index: 5; pointer-events: none; color: #ce922d; }
 .arrival-sparkles span { position: absolute; font-size: 32px; animation: celebrateStar .8s ease-out 2 both; }
 .arrival-sparkles span:nth-child(1) { left: 62%; top: 8%; }
@@ -268,7 +266,6 @@ h1:focus { outline: none; }
 @keyframes happyBody { 0%, 100% { transform: rotate(-1deg); } 50% { transform: translateY(-2px) rotate(1deg); } }
 @keyframes eyeBlink { 0%, 44%, 48%, 100% { transform: scaleY(1); } 46% { transform: scaleY(.1); } }
 @keyframes celebrateStar { 0% { opacity: 0; transform: scale(.5) translateY(6px); } 30% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: translateY(-15px) scale(.8); } }
-@keyframes flag-wave { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(12deg); } }
 @media (max-width: 440px) {
   .site-header { margin-bottom: 18px; }
   .brand { font-size: 19px; gap: 4px; }
@@ -308,7 +305,7 @@ h1:focus { outline: none; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .site-header { margin-bottom: 12px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-card { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 12px; align-items: center; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .stage-message { grid-column: 1 / -1; margin: 0; font-size: 28px; line-height: 1.25; }
-  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { grid-column: 1; grid-row: 2; height: max(180px, calc(100dvh - 135px)); }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { grid-column: 1; grid-row: 2; height: max(180px, calc(100svh - 135px)); }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-message { grid-column: 2; grid-row: 2; padding: 0 6px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) { flex-direction: column; gap: 6px; font-size: 22px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .destination-icon { font-size: 44px; }
@@ -386,15 +383,16 @@ h1:focus { outline: none; }
 .arrival-sparkles i:nth-of-type(6) { left: 17%; top: 38%; background: #a7bd88; animation-delay: .2s; }
 @keyframes messageIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes confettiFall { 0% { opacity: 0; transform: translateY(-10px) rotate(0); } 20% { opacity: .8; } 100% { opacity: 0; transform: translateY(80px) rotate(120deg); } }
-/* Keep the ground and finish line in the same place through arrival and rewards. */
-.app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { height: clamp(260px, calc(100dvh - 360px), 650px); }
+/* The stable viewport keeps the ground and destination still as mobile browser
+   toolbars open/close, as well as through arrival and rewards. */
+.app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { height: clamp(260px, calc(100svh - 360px), 650px); }
 @media (max-height: 500px) and (orientation: landscape) {
   .character-wrapper { width: min(100px, var(--actor-limit, 100px)); }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .audio-recovery { min-height: 44px; padding: 8px 14px; margin-bottom: 8px; font-size: 18px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-card { grid-template-columns: minmax(0, 1fr) minmax(220px, 30%); gap: 8px 12px; align-items: center; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-overview { grid-column: 2; grid-row: 1; align-self: center; margin-bottom: 0; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .stage-message { min-height: 2.7em; font-size: 20px; }
-  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { grid-column: 1; grid-row: 1 / span 2; height: max(190px, calc(100dvh - 110px)); }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { grid-column: 1; grid-row: 1 / span 2; height: max(190px, calc(100svh - 110px)); }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-message { grid-column: 2; grid-row: 2; padding: 0; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) { flex-direction: row; gap: 6px; font-size: 18px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) span { font-size: 28px; }

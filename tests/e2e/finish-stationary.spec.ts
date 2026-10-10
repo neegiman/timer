@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { FINISH_DURATION_MS, finishPhaseStart } from '../../src/lib/animation';
 
-async function start(page: Page, display: 'window' | 'expanded', sound = false) {
+async function start(page: Page, display: 'window' | 'expanded', sound = false, character?: string) {
   await page.addInitScript((sound) => {
     Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: false });
     Object.defineProperty(document, 'webkitFullscreenEnabled', { configurable: true, value: false });
@@ -10,6 +10,7 @@ async function start(page: Page, display: 'window' | 'expanded', sound = false) 
   await page.clock.install();
   await page.goto('./');
   await page.getByRole('button', { name: '친구', exact: true }).click();
+  if (character) await page.getByRole('button', { name: character, exact: true }).click();
   await page.getByRole('button', { name: '출발!', exact: true }).click();
   if (display === 'expanded') {
     await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
@@ -36,16 +37,28 @@ async function landmarks(page: Page) {
     // layout coordinates so scrolling isn't mistaken for a moving finish line.
     const shell = document.querySelector<HTMLElement>('.app-shell')!;
     const scrollY = window.scrollY + (shell.dataset.display === 'expanded' ? shell.scrollTop : 0);
-    return ['.journey-scene', '.goal-line', '.finish-flag > path', '.finish-point'].map((selector) => {
+    return ['.journey-scene', '.goal-line', '.finish-flag > path', '.flag-cloth', '.finish-point', '.progress-endpoints > span:last-child'].map((selector) => {
       const box = document.querySelector(selector)!.getBoundingClientRect();
       return { selector, x: box.x + window.scrollX, y: box.y + scrollY, width: box.width, height: box.height };
     });
   });
 }
 
+async function expectFixed(page: Page, fixed: Awaited<ReturnType<typeof landmarks>>) {
+  const current = await landmarks(page);
+  expect(current.map((point) => point.selector)).toEqual(fixed.map((point) => point.selector));
+  // SVG bounds can vary by a few floating-point bits after a page scroll.
+  // A hundredth of a CSS pixel still catches the flag's previous visible sway.
+  for (const [index, point] of current.entries()) {
+    for (const axis of ['x', 'y', 'width', 'height'] as const) {
+      expect(Math.abs(point[axis] - fixed[index][axis]), `${point.selector} ${axis}`).toBeLessThan(.01);
+    }
+  }
+}
+
 for (const display of ['window', 'expanded'] as const) {
   for (const [width, height] of [[390, 844], [844, 390]]) {
-    test(`finish line and pole stay fixed through scrolling, crossing and rewards: ${display} ${width}`, async ({ page }, testInfo) => {
+    test(`entire destination stays fixed through scrolling, crossing and rewards: ${display} ${width}`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width, height });
       const session = await start(page, display);
       await seek(page, session.targetTimestamp - 30_000);
@@ -53,15 +66,15 @@ for (const display of ['window', 'expanded'] as const) {
       const ground = await page.locator('.ground-layer').getAttribute('style');
       await seek(page, session.targetTimestamp - 20_000);
       expect(await page.locator('.ground-layer').getAttribute('style')).not.toBe(ground);
-      expect(await landmarks(page)).toEqual(fixed);
+      await expectFixed(page, fixed);
       await seek(page, session.targetTimestamp - 1000);
-      expect(await landmarks(page)).toEqual(fixed);
+      await expectFixed(page, fixed);
       await seek(page, session.targetTimestamp);
       const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
       const stopped = await page.locator('.ground-layer').getAttribute('style');
       for (const offset of [1800, finishPhaseStart('CELEBRATE') + 200, FINISH_DURATION_MS + 500]) {
         await seek(page, arrival + offset);
-        expect(await landmarks(page)).toEqual(fixed);
+        await expectFixed(page, fixed);
         expect(await page.locator('.ground-layer').getAttribute('style')).toBe(stopped);
       }
       await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'completed');
@@ -74,6 +87,45 @@ for (const display of ['window', 'expanded'] as const) {
     });
   }
 }
+
+test('prince walks independently of both fixed destinations, including pause and restoration', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const session = await start(page, 'expanded', false, '왕자');
+  await seek(page, session.targetTimestamp - 30_000);
+  const fixed = await landmarks(page);
+  const moving = async () => ({
+    ground: await page.locator('.ground-layer').getAttribute('style'),
+    miniature: await page.locator('.progress-marker').getAttribute('style'),
+    frame: await page.locator('.traveler-body [data-prince-sprite]').getAttribute('data-frame'),
+  });
+  const walking = await moving();
+  await page.clock.runFor(350);
+  const next = await moving();
+  expect(next.ground).not.toBe(walking.ground);
+  expect(next.miniature).not.toBe(walking.miniature);
+  expect(next.frame).not.toBe(walking.frame);
+  await expectFixed(page, fixed);
+
+  await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
+  await page.getByRole('button', { name: '일시정지', exact: true }).click();
+  const stopped = await moving();
+  await page.clock.runFor(5000);
+  expect(await moving()).toEqual(stopped);
+  await expectFixed(page, fixed);
+
+  await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
+  await page.getByRole('button', { name: '계속', exact: true }).click();
+  await page.clock.runFor(350);
+  expect((await moving()).ground).not.toBe(stopped.ground);
+  await expectFixed(page, fixed);
+
+  await page.reload();
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'running');
+  await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
+  await page.getByRole('button', { name: '큰 화면 보기', exact: true }).click();
+  await page.clock.runFor(128);
+  await expectFixed(page, fixed);
+});
 
 test('audio recovery at arrival cannot move the finish line or resize the scene', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -90,8 +142,8 @@ test('audio recovery at arrival cannot move the finish line or resize the scene'
   const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
   await seek(page, arrival + finishPhaseStart('CELEBRATE') + 100);
   await expect(page.getByRole('button', { name: '소리 켜기', exact: true })).toBeVisible();
-  expect(await landmarks(page)).toEqual(fixed);
+  await expectFixed(page, fixed);
   await page.clock.fastForward(FINISH_DURATION_MS + 1000);
-  expect(await landmarks(page)).toEqual(fixed);
+  await expectFixed(page, fixed);
   await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'completed');
 });

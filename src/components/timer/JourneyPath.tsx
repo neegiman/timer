@@ -31,7 +31,7 @@ export function JourneyPath({ character, promise, animation, input, theme, seaso
       <span className="goal-line" />
       <svg className="finish-flag" viewBox="0 0 36 48">
         <path d="M2 47V3" fill="none" stroke="#876f4d" strokeWidth="3" strokeLinecap="round" />
-        <g className={`flag-cloth ${!arrived ? 'flag-wave' : ''}`}><path d="M3 6C12 1 23 11 33 7L31 24C20 28 12 16 3 22Z" fill="#e87957" stroke="#bc6548" strokeWidth="1" /></g>
+        <g className="flag-cloth"><path d="M3 6C12 1 23 11 33 7L31 24C20 28 12 16 3 22Z" fill="#e87957" stroke="#bc6548" strokeWidth="1" /></g>
       </svg>
       <div className="finish-point"><PromiseIcon id={promise.id} size={32} className="destination-icon" /><span className="endpoint-label">도착</span></div>
     </div> : null}
