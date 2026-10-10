@@ -59,12 +59,14 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   await expect(message).toHaveAttribute('data-visible', 'true');
   const goalX = await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x);
   let previousGround = Number(await scene.getAttribute('data-ground-distance'));
+  let previousActor = fixedX;
   for (const elapsed of [550_000, 570_000, 590_000, 599_900]) {
     await seek(page, elapsed);
     await expect(scene).toHaveAttribute('data-phase', 'WALK');
     const actorX = await main.evaluate((element) => element.getBoundingClientRect().x);
-    if (elapsed < 590_001) expect(actorX).toBeCloseTo(fixedX, 4);
-    else expect(actorX).toBeGreaterThan(fixedX);
+    expect(actorX).toBeGreaterThan(previousActor);
+    expect(actorX).toBeLessThan(goalX);
+    previousActor = actorX;
     expect(await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x)).toBeCloseTo(goalX, 4);
     const ground = Number(await scene.getAttribute('data-ground-distance'));
     expect(ground).toBeGreaterThan(previousGround);
@@ -109,6 +111,7 @@ test('pause freezes joints, scroll, miniature and time; finish stays fixed throu
     const scene = document.querySelector('.journey-scene')!.getBoundingClientRect();
     return {
       gait: document.querySelector('.character-wrapper')!.getAttribute('data-gait-time'),
+      actor: document.querySelector('.character-wrapper')!.getAttribute('style'),
       body: document.querySelector('.traveler-body')!.getAttribute('style'),
       joints: [...document.querySelectorAll('.traveler-body [data-joint], .traveler-body [data-animal-joint]')].map((element) => element.getAttribute('transform')),
       layers: [...document.querySelectorAll('[data-layer]')].map((element) => element.getAttribute('style')),

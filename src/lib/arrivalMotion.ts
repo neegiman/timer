@@ -1,6 +1,11 @@
 import { CROSSING_DURATION_MS } from './animation';
 import { clamp, locomotionTime, MOTION_RAMP_MS } from './journey';
 
+const rampDistance = (time: number, duration: number) => {
+  const t = clamp(time / duration);
+  return duration * (t ** 3 - t ** 4 / 2);
+};
+
 /** Leave room for the entire character beyond a fixed, responsive finish line. */
 export function finishGeometry(width: number, actorWidth: number) {
   const startX = width * .42;
@@ -8,19 +13,22 @@ export function finishGeometry(width: number, actorWidth: number) {
   return { startX, lineX, stopX: lineX + actorWidth / 2 + 8 };
 }
 
-/** A constant world gait is split between the camera and the character's approach.
- * After zero, the camera stops and feet follow the integrated crossing distance.
- * Frame rate never owns time or position. */
+/** Spread the approach over the final tenth instead of waiting until the last
+ * few seconds. A short closing ramp transfers the camera's remaining velocity
+ * to the character, preserving planted feet and a continuous crossing at zero. */
 export function arrivalMotion(elapsed: number, total: number, finishElapsed: number,
   geometry: ReturnType<typeof finishGeometry>, pixelsPerGaitMs: number) {
   const speed = Math.max(.0001, pixelsPerGaitMs);
   const approachLength = geometry.lineX - geometry.startX;
-  const ramp = Math.min(MOTION_RAMP_MS, 2 * approachLength / speed);
-  const approachDuration = approachLength / speed + ramp / 2;
+  // A wide, short journey may need an earlier approach to keep its normal gait.
+  const approachDuration = Math.max(total * .1, approachLength / speed + MOTION_RAMP_MS);
   const time = clamp(elapsed - (total - approachDuration), 0, approachDuration);
-  const fraction = clamp(time / ramp);
-  const integrated = time < ramp ? ramp * (fraction ** 3 - fraction ** 4 / 2) : time - ramp / 2;
-  const approach = clamp(speed * integrated, 0, approachLength);
+  const openingRamp = Math.min(MOTION_RAMP_MS, approachDuration / 4);
+  const closingRamp = Math.min(MOTION_RAMP_MS, approachLength / speed, approachDuration / 4);
+  const cruiseSpeed = (approachLength - speed * closingRamp / 2) / (approachDuration - (openingRamp + closingRamp) / 2);
+  const opening = time < openingRamp ? rampDistance(time, openingRamp) : time - openingRamp / 2;
+  const closing = rampDistance(time - (approachDuration - closingRamp), closingRamp);
+  const approach = clamp(cruiseSpeed * opening + (speed - cruiseSpeed) * closing, 0, approachLength);
   // The walking clock keeps its velocity through zero; camera motion has already
   // eased to a stop as the character approaches the line.
   const baseGait = locomotionTime(clamp(elapsed, 0, total), total + MOTION_RAMP_MS);

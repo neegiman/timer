@@ -1,12 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
 import { FINISH_DURATION_MS, finishPhaseStart } from '../../src/lib/animation';
 
-async function start(page: Page, display: 'window' | 'expanded', sound = false, character?: string) {
-  await page.addInitScript((sound) => {
+async function start(page: Page, display: 'window' | 'expanded', sound = false, character?: string, minutes = 10) {
+  await page.addInitScript(({ sound, minutes }) => {
     Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: false });
     Object.defineProperty(document, 'webkitFullscreenEnabled', { configurable: true, value: false });
     localStorage.setItem('promise-journey:v1:soundEnabled', JSON.stringify(sound));
-  }, sound);
+    localStorage.setItem('promise-journey:v1:selectedDuration', JSON.stringify(minutes));
+  }, { sound, minutes });
   await page.clock.install();
   await page.goto('./');
   await page.getByRole('button', { name: '친구', exact: true }).click();
@@ -86,6 +87,35 @@ for (const display of ['window', 'expanded'] as const) {
       }
     });
   }
+}
+
+for (const [minutes, width, height] of [[1, 320, 740], [10, 390, 844], [120, 1440, 900]]) {
+  test(`distance to the fixed destination decreases across 90–100%: ${minutes}min ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height });
+    const session = await start(page, 'window', false, '왕자', minutes);
+    let fixed: Awaited<ReturnType<typeof landmarks>> | undefined;
+    let previousGap = Infinity;
+    for (const progress of [.9, .92, .94, .96, .98, .99]) {
+      await seek(page, session.startTimestamp + minutes * 60_000 * progress);
+      const actor = (await page.locator('.character-wrapper').boundingBox())!;
+      const goal = (await page.getByTestId('journey-goal').boundingBox())!;
+      const gap = goal.x - actor.x;
+      expect(gap, `No visible approach at ${progress * 100}%`).toBeLessThan(previousGap - 1);
+      expect(gap).toBeGreaterThan(0);
+      if (fixed) await expectFixed(page, fixed);
+      else fixed = await landmarks(page);
+      previousGap = gap;
+      if (minutes === 10 && testInfo.project.name === 'chromium' && [.9, .94, .99].includes(progress)) {
+        await page.locator('.journey-scene').screenshot({ path: `artifacts/approach-prince-${progress * 100}.png` });
+      }
+    }
+    await seek(page, session.targetTimestamp);
+    await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'CROSS_FINISH');
+    await expectFixed(page, fixed!);
+    const actor = (await page.locator('.character-wrapper').boundingBox())!;
+    const goal = (await page.getByTestId('journey-goal').boundingBox())!;
+    expect(actor.x).toBeGreaterThanOrEqual(goal.x);
+  });
 }
 
 test('prince walks independently of both fixed destinations, including pause and restoration', async ({ page }) => {

@@ -66,7 +66,10 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     let frame = 0;
     let width = element.clientWidth;
     let height = element.clientHeight;
-    let actorWidth = actor.getBoundingClientRect().width;
+    // WebKit can round transformed bounds differently at each X position.
+    // Read the layout width so moving/pausing the actor cannot move its goal.
+    const measureActorWidth = () => Number.parseFloat(getComputedStyle(actor).width);
+    let actorWidth = measureActorWidth();
     let progressWidth = track.current?.clientWidth ?? 0;
     let geometry = finishGeometry(width, actorWidth);
     element.style.setProperty('--finish-x', `${geometry.lineX}px`);
@@ -174,7 +177,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     const resize = new ResizeObserver(() => {
       width = element.clientWidth; height = element.clientHeight;
       element.style.setProperty('--actor-limit', `${Math.min(168, (height * .78 - 20) * 160 / profile.groundY)}px`);
-      actorWidth = actor.getBoundingClientRect().width;
+      actorWidth = measureActorWidth();
       progressWidth = track.current?.clientWidth ?? 0;
       geometry = finishGeometry(width, actorWidth);
       element.style.setProperty('--finish-x', `${geometry.lineX}px`);
