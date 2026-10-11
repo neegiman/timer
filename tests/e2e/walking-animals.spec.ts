@@ -106,7 +106,10 @@ for (const [id, name, cycle] of [['dog', '강아지', 1440], ['cat', '고양이'
     await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
     await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
     const paused = await pose(); await page.clock.runFor(3000); expect(await pose()).toEqual(paused);
-    await page.reload(); await page.clock.runFor(32); expect(await pose()).toEqual(paused);
+    await page.reload();
+    // A production refresh may load the saved journey after the document itself.
+    await expect(page.locator('.traveler-body [data-character]')).toHaveAttribute('data-character', id);
+    await page.clock.runFor(32); expect(await pose()).toEqual(paused);
     if (testInfo.project.name === 'chromium') await page.screenshot({ path: `artifacts/${id}-journey-320.png`, fullPage: true });
     await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
     await page.getByRole('button', { name: '계속', exact: true }).click(); await page.clock.runFor(200);
