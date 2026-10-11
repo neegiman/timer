@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { FINISH_DURATION_MS, finishPhaseStart } from '../../src/lib/animation';
+import { destinationLandmarks } from './destination';
 
 async function start(page: Page, display: 'window' | 'expanded', sound = false, character?: string, minutes = 10) {
   await page.addInitScript(({ sound, minutes }) => {
@@ -33,23 +34,13 @@ async function seek(page: Page, time: number) {
 }
 
 async function landmarks(page: Page) {
-  return page.evaluate(() => {
-    // Page scrolling can finish after the start button's smooth scroll. Compare
-    // layout coordinates so scrolling isn't mistaken for a moving finish line.
-    const shell = document.querySelector<HTMLElement>('.app-shell')!;
-    const scrollY = window.scrollY + (shell.dataset.display === 'expanded' ? shell.scrollTop : 0);
-    return ['.journey-scene', '.goal-line', '.finish-flag > path', '.flag-cloth', '.finish-point', '.progress-endpoints > span:last-child'].map((selector) => {
-      const box = document.querySelector(selector)!.getBoundingClientRect();
-      return { selector, x: box.x + window.scrollX, y: box.y + scrollY, width: box.width, height: box.height };
-    });
-  });
+  return page.evaluate(destinationLandmarks, { layout: true });
 }
 
 async function expectFixed(page: Page, fixed: Awaited<ReturnType<typeof landmarks>>) {
   const current = await landmarks(page);
   expect(current.map((point) => point.selector)).toEqual(fixed.map((point) => point.selector));
-  // SVG bounds can vary by a few floating-point bits after a page scroll.
-  // A hundredth of a CSS pixel still catches the flag's previous visible sway.
+  // A hundredth of a CSS pixel catches visible movement of the painted sign.
   for (const [index, point] of current.entries()) {
     for (const axis of ['x', 'y', 'width', 'height'] as const) {
       expect(Math.abs(point[axis] - fixed[index][axis]), `${point.selector} ${axis}`).toBeLessThan(.01);
@@ -71,24 +62,7 @@ for (const display of ['window', 'expanded'] as const) {
       await page.clock.runFor(128);
       // Record actual viewport coordinates on every frame. Adding scrollY here
       // would hide the browser moving the whole scene after a layout collapse.
-      await page.evaluate(() => {
-        const selectors = ['.journey-scene', '.goal-line', '.finish-flag > path', '.flag-cloth', '.finish-point', '.progress-endpoints > span:last-child'];
-        const ranges = selectors.map((selector) => {
-          const bounds = document.querySelector(selector)!.getBoundingClientRect();
-          return { selector, x: bounds.x, y: bounds.y, minX: bounds.x, maxX: bounds.x, minY: bounds.y, maxY: bounds.y };
-        });
-        const monitor = { ranges, frame: 0 };
-        (window as typeof window & { destinationMonitor?: typeof monitor }).destinationMonitor = monitor;
-        const sample = () => {
-          for (const range of ranges) {
-            const bounds = document.querySelector(range.selector)!.getBoundingClientRect();
-            range.minX = Math.min(range.minX, bounds.x); range.maxX = Math.max(range.maxX, bounds.x);
-            range.minY = Math.min(range.minY, bounds.y); range.maxY = Math.max(range.maxY, bounds.y);
-          }
-          monitor.frame = requestAnimationFrame(sample);
-        };
-        sample();
-      });
+      await page.evaluate(destinationLandmarks, { monitor: true });
       for (const remaining of [20_000, 1000, 0]) await seek(page, session.targetTimestamp - remaining);
       await page.clock.runFor(FINISH_DURATION_MS + 500);
       await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'completed');
@@ -130,7 +104,7 @@ for (const display of ['window', 'expanded'] as const) {
         expect(await page.locator('.ground-layer').getAttribute('style')).toBe(stopped);
       }
       await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'completed');
-      const line = (await page.locator('.goal-line').boundingBox())!;
+      const line = (await page.evaluate(destinationLandmarks, {})).find((point) => point.selector === 'painted landmark')!;
       const actor = (await page.locator('.traveler-body .character-artwork').boundingBox())!;
       expect(actor.x).toBeGreaterThan(line.x + line.width);
       if (display === 'expanded' && width === 390) {

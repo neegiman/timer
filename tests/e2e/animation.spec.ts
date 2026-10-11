@@ -107,7 +107,7 @@ test('pause freezes joints, scroll, miniature and time; finish stays fixed throu
   await page.getByRole('button', { name: '일시정지', exact: true }).click();
   await page.clock.runFor(64);
   const pose = () => page.evaluate(() => {
-    const goal = document.querySelector('.journey-goal')!.getBoundingClientRect();
+    const goal = document.querySelector('.destination-background')!.getBoundingClientRect();
     const scene = document.querySelector('.journey-scene')!.getBoundingClientRect();
     return {
       gait: document.querySelector('.character-wrapper')!.getAttribute('data-gait-time'),
@@ -182,14 +182,14 @@ test('1 and 120 minute journeys stay calm in their last ten seconds and stop at 
       await page.clock.runFor(16);
       await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'WALK');
       if (remaining <= duration * .1) {
-        await expect(page.getByTestId('journey-goal').locator('.finish-flag')).toBeVisible();
+        await expect(page.getByTestId('journey-goal').locator('.destination-paint')).toBeVisible();
       } else {
         // In a one-minute journey, ten seconds remaining is still before 90%.
         await expect(page.getByTestId('journey-goal')).toHaveCount(0);
       }
     }
     await seek(page, duration);
-    await expect(page.getByTestId('journey-goal').locator('.finish-flag')).toBeVisible();
+    await expect(page.getByTestId('journey-goal').locator('.destination-paint')).toBeVisible();
     await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', '남은 시간 00:00');
   }
 });

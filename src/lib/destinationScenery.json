@@ -1,0 +1,154 @@
+{
+  "spring": {
+    "day": {
+      "src": "/images/destination-v1/spring-day.webp",
+      "width": 2048,
+      "height": 383,
+      "anchor": {
+        "x": 1331,
+        "y": 383
+      },
+      "paintBounds": {
+        "x": 1274,
+        "y": 214,
+        "width": 113,
+        "height": 169
+      },
+      "kind": "nature"
+    },
+    "night": {
+      "src": "/images/destination-v1/spring-night.webp",
+      "width": 2048,
+      "height": 383,
+      "anchor": {
+        "x": 1331,
+        "y": 383
+      },
+      "paintBounds": {
+        "x": 1274,
+        "y": 214,
+        "width": 113,
+        "height": 169
+      },
+      "kind": "nature"
+    }
+  },
+  "summer": {
+    "day": {
+      "src": "/images/destination-v1/summer-day.webp",
+      "width": 2048,
+      "height": 401,
+      "anchor": {
+        "x": 1331,
+        "y": 401
+      },
+      "paintBounds": {
+        "x": 1272,
+        "y": 225,
+        "width": 118,
+        "height": 176
+      },
+      "kind": "nature"
+    },
+    "night": {
+      "src": "/images/destination-v1/summer-night.webp",
+      "width": 2048,
+      "height": 401,
+      "anchor": {
+        "x": 1331,
+        "y": 401
+      },
+      "paintBounds": {
+        "x": 1272,
+        "y": 225,
+        "width": 118,
+        "height": 176
+      },
+      "kind": "nature"
+    }
+  },
+  "autumn": {
+    "day": {
+      "src": "/images/destination-v1/autumn-day.webp",
+      "width": 2048,
+      "height": 387,
+      "anchor": {
+        "x": 1331,
+        "y": 387
+      },
+      "paintBounds": {
+        "x": 1274,
+        "y": 217,
+        "width": 114,
+        "height": 170
+      },
+      "kind": "nature"
+    },
+    "night": {
+      "src": "/images/destination-v1/autumn-night.webp",
+      "width": 2048,
+      "height": 387,
+      "anchor": {
+        "x": 1331,
+        "y": 387
+      },
+      "paintBounds": {
+        "x": 1274,
+        "y": 217,
+        "width": 114,
+        "height": 170
+      },
+      "kind": "nature"
+    }
+  },
+  "winter": {
+    "day": {
+      "src": "/images/destination-v1/winter-day.webp",
+      "width": 2048,
+      "height": 387,
+      "anchor": {
+        "x": 1331,
+        "y": 387
+      },
+      "paintBounds": {
+        "x": 1274,
+        "y": 217,
+        "width": 114,
+        "height": 170
+      },
+      "kind": "nature"
+    },
+    "night": {
+      "src": "/images/destination-v1/winter-night.webp",
+      "width": 2048,
+      "height": 387,
+      "anchor": {
+        "x": 1331,
+        "y": 387
+      },
+      "paintBounds": {
+        "x": 1274,
+        "y": 217,
+        "width": 114,
+        "height": 170
+      },
+      "kind": "nature"
+    }
+  },
+  "space": {
+    "src": "/images/destination-v1/space.webp",
+    "width": 1920,
+    "height": 640,
+    "anchor": {
+      "x": 1248,
+      "y": 448
+    },
+    "paintBounds": {
+      "x": 1108,
+      "y": 304,
+      "width": 280,
+      "height": 300
+    },
+    "kind": "space"
+  }
+}

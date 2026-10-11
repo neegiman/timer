@@ -19,6 +19,10 @@ assert.ok(!preview.includes('data-animal-scene="bear"'), 'Removed bear still app
 assert.ok(preview.includes('https://neegiman.github.io/timer/animal-preview/'), 'Animal preview canonical mismatch');
 const files = await filesIn(root);
 const scenery = JSON.parse(await readFile('src/lib/paintedScenery.json', 'utf8'));
+const destination = JSON.parse(await readFile('src/lib/destinationScenery.json', 'utf8'));
+const destinationAssets = [...Object.entries(destination).filter(([key]) => key !== 'space').flatMap(([, season]) => Object.values(season)), destination.space];
+assert.equal(destinationAssets.length, 9, 'Missing seasonal or space arrival background');
+for (const asset of destinationAssets) assert.ok((await stat(path.join(root, asset.src))).size > 1000, `Missing arrival background ${asset.src}`);
 assert.ok((await stat(path.join(root, 'images/scenery-v1/painted-glimmer-v1.webp'))).size > 500, 'Missing painted sky glimmer');
 for (const file of ['nebula.webp', 'stars.svg', 'near-stars.svg']) assert.ok((await stat(path.join(root, 'images/space-v1', file))).size > 200, `Missing pixel space asset ${file}`);
 for (const surface of ['road', 'railway']) for (const theme of ['day', 'night']) {

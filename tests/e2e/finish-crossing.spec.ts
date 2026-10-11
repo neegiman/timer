@@ -23,7 +23,7 @@ test('princess crosses a stationary line before celebrating with two visible arm
   await seek(session.targetTimestamp - 30_000);
   await expect(goal).toHaveCount(1);
   await page.clock.runFor(32);
-  await expect(goal.locator('.finish-flag')).toBeVisible();
+  await expect(goal.locator('.destination-paint')).toBeVisible();
   const lineX = (await goal.boundingBox())!.x;
   let previousX = 0;
   for (const remaining of [10_000, 2000, 100]) {

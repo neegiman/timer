@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { getAnimationState } from '@/lib/animation';
 import { clamp, finishOpacity, groundDistance, loopOffset, smoothstep, TILE_WIDTH } from '@/lib/journey';
 import { arrivalMotion, finishGeometry } from '@/lib/arrivalMotion';
+import { destinationLayout } from '@/lib/destinationBackground';
+import destinationArt from '@/lib/destinationScenery.json';
 import { getCharacterPose, type JointName } from '@/lib/characterPose';
 import { motionProfile } from '@/lib/motionProfiles';
 import type { AnimationInput, AnimationState } from '@/types/animation';
@@ -88,6 +90,15 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     let geometry = finishGeometry(width, actorWidth);
     element.style.setProperty('--finish-x', `${geometry.lineX}px`);
     element.style.setProperty('--scene-height', `${height}px`);
+    const backdrop = characterId === 'rocket' ? destinationArt.space : destinationArt[season][theme];
+    const sizeDestination = () => {
+      // svh-based heights can contain fractional pixels that clientHeight rounds.
+      // Keep the painted post base on the exact same 78% ground as CSS scenery.
+      const paintedHeight = Number.parseFloat(getComputedStyle(element).height);
+      const layout = destinationLayout(backdrop, width, paintedHeight, geometry.lineX, actorWidth);
+      for (const [name, value] of Object.entries(layout)) element.style.setProperty(`--destination-${name}`, `${value}px`);
+    };
+    sizeDestination();
     const sizeLayers = () => {
       for (const layer of layers) {
         const period = layer.dataset.tileScale ? height * Number(layer.dataset.tileScale) : TILE_WIDTH;
@@ -238,6 +249,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       geometry = finishGeometry(width, actorWidth);
       element.style.setProperty('--finish-x', `${geometry.lineX}px`);
       element.style.setProperty('--scene-height', `${height}px`);
+      sizeDestination();
       sizeLayers();
       draw();
     });

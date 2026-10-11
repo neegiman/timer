@@ -99,7 +99,7 @@ for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and prese
   await seek(latest.targetTimestamp - total / 2); await expect(page.locator('.journey-scene')).toHaveAttribute('data-stage', 'halfway');
   await seek(latest.targetTimestamp - total / 10); await expect(page.locator('.journey-scene')).toHaveAttribute('data-stage', 'near');
   // The anchor intentionally has no box: its flag/finish marker are positioned children.
-  await expect(page.getByTestId('journey-goal').locator('.finish-flag')).toBeVisible();
+  await expect(page.getByTestId('journey-goal').locator('.destination-paint')).toBeVisible();
   // React may mount the goal after the mocked rAF; let its first paint run too.
   await expect.poll(async () => {
     await page.clock.runFor(32);

@@ -1,8 +1,10 @@
-import { memo, type CSSProperties, type ReactNode } from 'react';
+import { memo, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import art from '@/lib/paintedScenery.json';
 import groundArt from '@/lib/paintedVehicleGround.json';
+import destinationArt from '@/lib/destinationScenery.json';
 import { assetPath } from '@/lib/assetPath';
 import type { Season } from '@/lib/seasons';
+import type { SceneTheme } from '@/lib/dayNight';
 import { RocketSky } from './RocketSky';
 
 interface PaintedAsset { src: string; width: number; height: number }
@@ -13,10 +15,19 @@ function Layer({ name, rate, tileScale, children }: { name: string; rate: number
 }
 
 /** Measured painted strips repeat independently; ground shares the feet's pixel speed. */
-export const ScrollingScenery = memo(function ScrollingScenery({ season, characterId }: { season: Season; characterId: string }) {
-  if (characterId === 'rocket') return <RocketSky />;
+export const ScrollingScenery = memo(function ScrollingScenery({ season, theme, characterId, showDestination, destinationRef }: {
+  season: Season; theme: SceneTheme; characterId: string; showDestination: boolean; destinationRef: RefObject<HTMLDivElement | null>;
+}) {
+  const backdrop = characterId === 'rocket' ? destinationArt.space : destinationArt[season][theme];
+  const destination = showDestination ? <div ref={destinationRef} className="destination-background" data-testid="journey-goal" aria-hidden="true">
+    <div className="destination-paint" data-destination-src={assetPath(backdrop.src)} data-source-width={backdrop.width} data-source-height={backdrop.height}
+      data-anchor-x={backdrop.anchor.x} data-anchor-y={backdrop.anchor.y} data-destination-kind={backdrop.kind} style={paint(backdrop)} />
+  </div> : null;
+  const preload = <link rel="preload" as="image" href={assetPath(backdrop.src)} />;
+  if (characterId === 'rocket') return <>{preload}<RocketSky />{destination}</>;
   const scene = art[season];
   return <div className="painted-environment" data-scenery="painted-v1" aria-hidden="true">
+    {preload}
     <Layer name="hill" rate={.14} tileScale={.78 * scene.day.width / scene.day.height}>
       <div className="scenery-paint scene-day" data-scenery-src={assetPath(scene.day.src)} style={paint(scene.day)} />
       <div className="scenery-paint scene-night" data-scenery-src={assetPath(scene.night.src)} style={paint(scene.night)} />
@@ -30,6 +41,7 @@ export const ScrollingScenery = memo(function ScrollingScenery({ season, charact
       <div className="scenery-paint scenery-ground-night" data-scenery-src={assetPath(scene.nightGround.src)} style={paint(scene.nightGround)} />
     </Layer>
     <VehicleGround characterId={characterId} />
+    {destination}
   </div>;
 });
 

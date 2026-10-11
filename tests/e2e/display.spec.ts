@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { finishPhaseStart } from '../../src/lib/animation';
+import { destinationLandmarks } from './destination';
 
 async function start(page: Page) {
   await page.getByRole('button', { name: '씻기', exact: true }).click();
@@ -26,12 +27,11 @@ async function assertInsideTrack(page: Page) {
     const promise = await (await reminder.isVisible() ? reminder : page.getByTestId('journey-message')).boundingBox();
     expect(promise!.y + promise!.height).toBeLessThanOrEqual(viewport.height);
   }
-  for (const selector of ['.finish-point']) {
-    if (await page.locator(selector).count() === 0) continue;
-    const endpoint = await page.locator(selector).boundingBox();
-    expect(endpoint!.x).toBeGreaterThanOrEqual(scene!.x);
-    expect(endpoint!.x + endpoint!.width).toBeLessThanOrEqual(scene!.x + scene!.width);
-    expect(endpoint!.y + endpoint!.height).toBeLessThanOrEqual(scene!.y + scene!.height);
+  if (await page.locator('.destination-paint').count()) {
+    const endpoint = (await page.evaluate(destinationLandmarks, {})).find((point) => point.selector === 'painted landmark')!;
+    expect(endpoint.x).toBeGreaterThanOrEqual(scene!.x);
+    expect(endpoint.x).toBeLessThanOrEqual(scene!.x + scene!.width);
+    expect(endpoint.y).toBeLessThanOrEqual(scene!.y + scene!.height);
   }
   const sizes = await page.evaluate(() => ({ viewport: innerWidth, page: document.documentElement.scrollWidth, shell: document.querySelector('.app-shell')!.scrollWidth }));
   expect(sizes.page).toBeLessThanOrEqual(sizes.viewport);
@@ -159,7 +159,7 @@ test('fixed character, separate progress and destination stay aligned after resi
         const progress = Number(document.querySelector<HTMLElement>('.progress-marker')!.dataset.progress);
         const track = document.querySelector('.progress-track')!.getBoundingClientRect();
         const marker = document.querySelector('.progress-marker')!.getBoundingClientRect();
-        const goal = document.querySelector<HTMLElement>('.journey-goal');
+        const goal = document.querySelector<HTMLElement>('.destination-background');
         return { error: Math.abs(box.y - scenery.y - scenery.height * .78),
           actorX: box.x - scenery.x, startX: scenery.width * .42, lineX: Number(actor.dataset.finishLineX),
           progress, markerError: Math.abs(marker.x - track.x - track.width * progress),
