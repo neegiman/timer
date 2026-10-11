@@ -217,3 +217,44 @@ test('night meteors cross the sky, fade, pause in place and stop with the finish
   const stopped = await visitor.getAttribute('style'); await page.clock.runFor(2000);
   await expect(visitor).toHaveAttribute('style', stopped!);
 });
+
+test('rocket has planets and a UFO that appears, drifts, pauses, disappears and survives refresh', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.clock.install({ time: new Date('2026-10-15T12:00:00+09:00') });
+  await page.goto('./');
+  await page.getByRole('button', { name: '다음', exact: true }).click();
+  await page.getByRole('button', { name: '다음', exact: true }).click();
+  await page.getByRole('button', { name: '로켓', exact: true }).click();
+  await page.getByRole('button', { name: '출발!', exact: true }).click();
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+  const scene = page.locator('.journey-scene'), visitor = page.locator('[data-scenery-visitor]'), planets = page.locator('[data-space-planet]');
+  await expect(scene).toHaveAttribute('data-environment', 'space');
+  await expect(page.locator('[data-rocket-sky]')).toBeVisible(); await expect(planets).toHaveCount(3);
+  await seek(page, 13_000); await expect(visitor).toHaveAttribute('data-event', 'ufo'); await expect(visitor).toHaveCSS('opacity', '1');
+  await expect(visitor.locator('[data-visitor-art="ufo"]')).toBeVisible();
+  await expect(visitor.locator('[data-visitor-art="birds"]')).toBeHidden();
+  const ufo = await visitor.getAttribute('style'), planet = await planets.first().getAttribute('style');
+  await page.clock.runFor(400); expect(await visitor.getAttribute('style')).not.toBe(ufo); expect(await planets.first().getAttribute('style')).not.toBe(planet);
+  if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/rocket-ufo-day-390.png', fullPage: true });
+  await menu(page); await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
+  const frozenUfo = await visitor.getAttribute('style'), frozenPlanet = await planets.first().getAttribute('style');
+  await page.clock.fastForward(3000); await expect(visitor).toHaveAttribute('style', frozenUfo!); await expect(planets.first()).toHaveAttribute('style', frozenPlanet!);
+  await menu(page); await page.getByRole('button', { name: '밤 배경', exact: true }).click(); await page.getByRole('button', { name: '닫기', exact: true }).click();
+  await page.clock.runFor(32); await expect(visitor).toHaveAttribute('data-event', 'ufo'); await expect(scene).toHaveAttribute('data-theme', 'night');
+  await expect(planets.first()).toHaveAttribute('style', frozenPlanet!);
+  if (testInfo.project.name === 'chromium') {
+    await page.waitForTimeout(1250); await page.screenshot({ path: 'artifacts/rocket-ufo-night-390.png', fullPage: true });
+  }
+  await page.reload(); await page.clock.runFor(32); await expect(scene).toHaveAttribute('data-environment', 'space'); await expect(visitor).toHaveAttribute('style', frozenUfo!);
+  await menu(page); await page.getByRole('button', { name: '계속', exact: true }).click();
+  await seek(page, 17_800); expect(Number(await visitor.evaluate((element) => getComputedStyle(element).opacity))).toBeLessThan(.1);
+  await seek(page, 18_000); await expect(visitor).toHaveCSS('opacity', '0');
+  await seek(page, 61_000); await expect(visitor).toHaveCSS('opacity', '1');
+  await page.emulateMedia({ reducedMotion: 'reduce' }); await page.clock.runFor(32);
+  await expect(page.locator('.seasonal-atmosphere')).toBeHidden(); await expect(planets.first()).toBeVisible();
+  const still = await planets.first().getAttribute('style'); await page.clock.runFor(1000); await expect(planets.first()).toHaveAttribute('style', still!);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await seek(page, 600_000); await page.clock.fastForward(6000);
+  const stopped = await planets.first().getAttribute('style'); await page.clock.runFor(1000); await expect(planets.first()).toHaveAttribute('style', stopped!);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

@@ -1,7 +1,7 @@
 import type { useDayNight } from '@/hooks/useDayNight';
 import { SEASONS } from '@/lib/seasons';
 
-export function SceneSettings({ appearance }: { appearance: ReturnType<typeof useDayNight> }) {
+export function SceneSettings({ appearance, space = false }: { appearance: ReturnType<typeof useDayNight>; space?: boolean }) {
   const { mode, setMode, theme, season, seasonMode, setSeasonMode, source, status, locationEnabled, enableLocation, disableLocation } = appearance;
   const description = source === 'manual' ? '고른 배경을 계속 보여요.'
     : source === 'location' ? '현재 위치의 일출·일몰에 맞추고 있어요.'
@@ -32,7 +32,7 @@ export function SceneSettings({ appearance }: { appearance: ReturnType<typeof us
       <strong>{SEASONS[season].icon} {SEASONS[season].name} · {theme === 'day' ? '☀️ 낮 배경' : '🌙 밤 배경'}</strong><span>{description}</span>
     </p>
     <p className="season-setting-note">계절과 낮·밤을 직접 골라 배경을 확인할 수 있어요. {seasonMode === 'auto' ? '계절 자동은 대한민국 달력에 맞춰 봄(3~5월) · 여름(6~8월) · 가을(9~11월) · 겨울(12~2월)로 바뀌어요.' : `지금은 ${SEASONS[season].name}으로 고정했어요. ‘계절 자동’을 누르면 대한민국 달력에 맞춰 돌아가요.`}</p>
-    <p className="season-setting-note scene-event-note">낮에는 계절마다 다른 새가, 밤에는 별똥별이 가끔 지나가요.</p>
+    <p className="season-setting-note scene-event-note">{space ? '로켓 여행에는 행성과 반짝이는 별이 있어요. UFO와 별똥별도 가끔 지나가요.' : '낮에는 계절마다 다른 새가, 밤에는 별똥별이 가끔 지나가요.'}</p>
     {mode === 'auto' ? <div className="location-controls">
       {source !== 'location' ? <button type="button" className="location-button" disabled={locationEnabled && status === 'pending'} onClick={enableLocation}>
         {locationEnabled && status === 'pending' ? '위치 확인 중…' : locationEnabled ? '현재 위치 다시 확인' : '현재 위치로 맞추기'}

@@ -105,6 +105,7 @@ h1:focus { outline: none; }
 .scenery-visitor { position: absolute; top: 0; left: 0; width: clamp(40px, 12vw, 72px); opacity: 0; will-change: transform; }
 .scenery-visitor[data-event="birds"] { width: clamp(58px, 16vw, 100px); }
 .scenery-visitor[data-event="shooting-star"] { width: clamp(100px, 28vw, 180px); filter: drop-shadow(0 0 4px #ffe9b777); }
+.scenery-visitor[data-event="ufo"] { width: clamp(76px, 22vw, 128px); }
 .scenery-visitor svg { display: none; width: 100%; height: auto; overflow: visible; }
 .scenery-visitor[data-event="butterfly"] [data-visitor-art="butterfly"],
 .scenery-visitor[data-event="dragonfly"] [data-visitor-art="dragonfly"],
@@ -112,7 +113,18 @@ h1:focus { outline: none; }
 .scenery-visitor[data-event="leaves"] [data-visitor-art="leaves"],
 .scenery-visitor[data-event="snow"] [data-visitor-art="snow"],
 .scenery-visitor[data-event="fireflies"] [data-visitor-art="fireflies"],
-.scenery-visitor[data-event="shooting-star"] [data-visitor-art="shooting-star"] { display: block; }
+.scenery-visitor[data-event="shooting-star"] [data-visitor-art="shooting-star"],
+.scenery-visitor[data-event="ufo"] [data-visitor-art="ufo"] { display: block; }
+.ufo-lights { opacity: var(--ufo-glow, .8); }
+.ufo-beam { opacity: calc(var(--ufo-glow, .8) * .22); }
+.rocket-sky { position: absolute; inset: 0 0 27%; z-index: 1; overflow: hidden; background: linear-gradient(180deg, #c8deeddd, #ded9ef77 46%, transparent 85%); }
+.journey-scene[data-theme="night"] .rocket-sky { background: linear-gradient(180deg, #273458ee, #52608a99 46%, transparent 85%); }
+.space-constellation { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .85; }
+.space-planet { position: absolute; will-change: transform; }
+.space-planet svg { display: block; width: 100%; height: auto; }
+.space-planet-ringed { left: 60%; top: 6%; width: clamp(80px, 23vw, 160px); }
+.space-planet-blue { left: 7%; top: 29%; width: clamp(48px, 13vw, 84px); }
+.space-planet-small { left: 38%; top: 7%; width: clamp(24px, 7vw, 40px); opacity: .85; }
 .visitor-wings { transform-box: view-box; transform-origin: 60px 45px; transform: scaleX(var(--wing, 1)); }
 .bird-wing { transform-box: view-box; transform-origin: 60px 45px; transform: rotate(var(--wing-angle, 0deg)); }
 .bird-wing-far { transform: rotate(calc(var(--wing-angle, 0deg) * -.65)); opacity: .7; }

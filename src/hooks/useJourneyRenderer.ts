@@ -75,6 +75,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     const visitor = element.querySelector<HTMLElement>('[data-scenery-visitor]');
     const particles = Array.from(element.querySelectorAll<HTMLElement>('[data-scenery-particle]'));
     const light = element.querySelector<HTMLElement>('[data-scenery-light]');
+    const planets = Array.from(element.querySelectorAll<HTMLElement>('[data-space-planet]'));
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     let width = element.clientWidth;
@@ -192,7 +193,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         light.style.transform = `translate3d(${Math.sin(elapsed / 11_000) * 6}px, 0, 0)`;
       }
       if (visitor && !reduced) {
-        const event = sceneryEvent(elapsed, season, theme);
+        const event = sceneryEvent(elapsed, season, theme, characterId === 'rocket');
         if (visitor.dataset.event !== event.kind) visitor.dataset.event = event.kind;
         visitor.style.opacity = String(event.opacity);
         const meteor = event.kind === 'shooting-star', bird = event.kind === 'birds';
@@ -202,6 +203,12 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         visitor.style.transform = `translate3d(${eventX}px, ${eventY}px, 0)`;
         visitor.style.setProperty('--wing', event.flutter.toFixed(3));
         visitor.style.setProperty('--wing-angle', `${(Math.sin(elapsed / 150) * 28).toFixed(2)}deg`);
+        visitor.style.setProperty('--ufo-glow', (.65 + .25 * Math.sin(elapsed / 400)).toFixed(3));
+      }
+      for (const [index, planet] of planets.entries()) {
+        const driftX = reduced ? 0 : Math.sin(elapsed / (19_000 + index * 6000) + index) * (5 + index * 2);
+        const driftY = reduced ? 0 : Math.sin(elapsed / (14_000 + index * 4000) + index) * 4;
+        planet.style.transform = `translate3d(${driftX.toFixed(3)}px, ${driftY.toFixed(3)}px, 0)`;
       }
       for (const [index, particle] of particles.entries()) {
         if (reduced) continue;

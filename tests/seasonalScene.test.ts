@@ -73,6 +73,20 @@ test('manual seasons accept only auto or the four known seasons', () => {
   for (const value of ['day', 'fall', '', 3, null, {}, ['spring']]) assert.equal(isSeasonMode(value), false);
 });
 
+test('rocket visits use a fading UFO and comet instead of animals in every season and sky', () => {
+  for (const season of Object.keys(SEASONS) as (keyof typeof SEASONS)[]) for (const theme of ['day', 'night'] as const) {
+    assert.equal(sceneryEvent(9000, season, theme, true).opacity, 0);
+    const ufo = sceneryEvent(13_000, season, theme, true);
+    assert.equal(ufo.kind, 'ufo'); assert.equal(ufo.opacity, 1);
+    assert.equal(sceneryEvent(17_800, season, theme, true).kind, 'ufo');
+    assert.ok(sceneryEvent(17_800, season, theme, true).opacity < .1);
+    assert.equal(sceneryEvent(18_000, season, theme, true).opacity, 0);
+    assert.equal(sceneryEvent(31_200, season, theme, true).kind, 'shooting-star');
+    assert.equal(sceneryEvent(31_200, season, theme, true).opacity, 1);
+    assert.equal(sceneryEvent(61_000, season, theme, true).kind, 'ufo');
+  }
+});
+
 test('ambient particles stay within the scene without random jumps or accumulated timing drift', () => {
   for (let index = 0; index < 6; index++) for (const time of [0, 1000, 13_000, 60_000, 7_200_000]) {
     const pose = sceneryParticle(time, index);

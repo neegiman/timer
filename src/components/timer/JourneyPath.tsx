@@ -17,11 +17,12 @@ export function JourneyPath({ character, promise, animation, input, theme, seaso
   const profile = motionProfile(character.id);
   const arrived = animation.messageStage === 'arrived';
   const celebration = animation.phase === 'LAND' || animation.phase === 'CELEBRATE';
+  const space = character.id === 'rocket';
   const variables = { '--cycle': `${profile.cycleMs}ms`, '--foot-origin': `${profile.groundY / 210 * 100}%` } as CSSProperties;
-  return <div ref={sceneRef} className={`journey-scene ${input.isPaused ? 'is-paused' : ''}`} data-phase={animation.phase} data-stage={animation.messageStage} data-theme={theme} data-season={season}
-    role="img" aria-label={`${SEASONS[season].name} ${theme === 'day' ? '낮' : '밤'} 풍경에서 ${character.name}와 함께 ${promise.name}까지 즐겁게 걸어요`}>
-    <ScrollingScenery season={season} />
-    <SeasonalAtmosphere season={season} />
+  return <div ref={sceneRef} className={`journey-scene ${input.isPaused ? 'is-paused' : ''}`} data-phase={animation.phase} data-stage={animation.messageStage} data-theme={theme} data-season={season} data-environment={space ? 'space' : 'nature'}
+    role="img" aria-label={`${SEASONS[season].name} ${theme === 'day' ? '낮' : '밤'} ${space ? '행성이 떠 있는 우주' : ''} 풍경에서 ${character.name}와 함께 ${promise.name}까지 여행해요`}>
+    <ScrollingScenery season={season} space={space} />
+    <SeasonalAtmosphere season={season} space={space} />
     {animation.position >= .9 ? <div ref={goalRef} className={`journey-goal ${arrived ? 'goal-arrived' : ''}`} data-testid="journey-goal" aria-hidden="true">
       <span className="goal-line" />
       <svg className="finish-flag" viewBox="0 0 36 48">

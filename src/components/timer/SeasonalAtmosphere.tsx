@@ -1,11 +1,13 @@
 import { memo } from 'react';
 import type { Season } from '@/lib/seasons';
 import { SeasonalBird } from './SeasonalBird';
+import { UfoVisitor } from './RocketSky';
 
 /** Small code-native illustrations; the shared journey frame clock animates their wrappers. */
-export const SeasonalAtmosphere = memo(function SeasonalAtmosphere({ season }: { season: Season }) {
+export const SeasonalAtmosphere = memo(function SeasonalAtmosphere({ season, space = false }: { season: Season; space?: boolean }) {
   return <div className="seasonal-atmosphere" aria-hidden="true">
     <div className="scenery-visitor" data-scenery-visitor data-event="none">
+      {space ? <UfoVisitor /> : null}
       <svg data-visitor-art="butterfly" viewBox="0 0 120 90">
         <g className="visitor-wings"><path d="M60 47C25 9 8 29 22 49c-17 22 10 30 38 2M60 47c35-38 52-18 38 2 17 22-10 30-38 2" fill="#ecb6c2" stroke="#ba899d" strokeWidth="2" /><path d="M51 39 33 31m36 8 18-8" stroke="#fff1ce" strokeWidth="4" strokeLinecap="round" /></g>
         <path d="M59 34v26m0-26-7-9m7 9 7-9" fill="none" stroke="#796d76" strokeWidth="3" strokeLinecap="round" />
@@ -33,7 +35,8 @@ export const SeasonalAtmosphere = memo(function SeasonalAtmosphere({ season }: {
     </div>
     {Array.from({ length: 6 }, (_, index) => <span key={index} className="scenery-particle" data-scenery-particle>
       <svg viewBox="0 0 24 24">
-        {season === 'spring' ? <path d="M5 5C15 0 23 8 17 15S2 15 5 5Z" fill="#edb7c5" />
+        {space ? <path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4Z" fill={index % 2 ? '#e3d7f0' : '#ffedbb'} />
+          : season === 'spring' ? <path d="M5 5C15 0 23 8 17 15S2 15 5 5Z" fill="#edb7c5" />
           : season === 'summer' ? <g stroke="var(--seed-color, #fff8dd)" strokeWidth="1.5" strokeLinecap="round"><path d="m12 9-4 12m4-12-6-4m6 4V2m0 7 7-5" /><circle cx="12" cy="9" r="2" fill="var(--seed-color, #fff8dd)" /></g>
           : season === 'autumn' ? <g><path d="M4 4q16-2 15 13Q2 22 4 4Z" fill={index % 2 ? '#d89a59' : '#bc785a'} /><path d="m6 6 11 12" stroke="#e8c28a" strokeWidth="1" /></g>
           : <g fill="none" stroke="#f5f9fa" strokeWidth="1.7" strokeLinecap="round"><path d="M12 3v18M4 7l16 10M4 17 20 7" /></g>}
