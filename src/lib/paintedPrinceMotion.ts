@@ -6,6 +6,7 @@ import type { CharacterPose } from './characterPose';
 import type { CharacterAction } from '../types/animation';
 
 export const PAINTED_PRINCE_ASSET = '/characters/raster-v1/prince-painted-v1.webp';
+export const PAINTED_PRINCE_OUTFIT_ASSET = '/characters/raster-v1/prince-long-pants-v2.webp';
 export type PrincePart = keyof typeof atlas.parts;
 const fitted = (part: PrincePart, x: number, y: number, width: number) => {
   const region = atlas.parts[part];
@@ -20,7 +21,8 @@ const hipY = PRINCE_GAIT.groundY - princeSole.y - upperLeg - lowerLeg;
 /** Rounded painted roots overlap inside the vest, elbows, knees and boot openings. */
 export const princeAnatomy = {
   head: fitted('head', 44, 12, 65), headPivot: { x: 80, y: 83 },
-  torso: fitted('torso', 53, 78, 54),
+  // The short vest ends at the belt; its cream hip cap overlaps the moving trousers.
+  torso: { x: 53, y: 78, width: 54, height: 56 },
   cape: fitted('cape', 32, 80, 86), capePivot: { x: 80, y: 87 },
   legs: { front: { x: 64, y: hipY, upper: upperLeg, lower: lowerLeg, bend: 1 }, back: { x: 96, y: hipY, upper: upperLeg, lower: lowerLeg, bend: 1 } },
   // Both bones sample one continuous trouser painting. The shared fabric point

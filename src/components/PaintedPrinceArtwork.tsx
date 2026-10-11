@@ -1,14 +1,17 @@
 import { useId } from 'react';
 import atlas from '@/lib/princeAtlas.json';
-import { PAINTED_PRINCE_ASSET, princeAnatomy as anatomy, paintedPrincePose, type PrincePart } from '@/lib/paintedPrinceMotion';
+import outfitAtlas from '@/lib/princeOutfitAtlas.json';
+import { PAINTED_PRINCE_ASSET, PAINTED_PRINCE_OUTFIT_ASSET, princeAnatomy as anatomy, paintedPrincePose, type PrincePart } from '@/lib/paintedPrinceMotion';
 import { assetPath } from '@/lib/assetPath';
 
 type Landmark = { pivot: { x: number; y: number }; tip: { x: number; y: number } };
 
 function Part({ part, x, y, width, height }: { part: PrincePart; x: number; y: number; width: number; height: number }) {
-  return <svg x={x} y={y} width={width} height={height} viewBox={atlas.parts[part].join(' ')}
+  const source = part === 'torso' ? outfitAtlas : atlas;
+  const region = part === 'torso' ? outfitAtlas.parts.torso : atlas.parts[part];
+  return <svg x={x} y={y} width={width} height={height} viewBox={region.join(' ')}
     preserveAspectRatio="none" overflow="hidden" data-painted-part={part}>
-    <image href={assetPath(PAINTED_PRINCE_ASSET)} width={atlas.width} height={atlas.height} />
+    <image href={assetPath(part === 'torso' ? PAINTED_PRINCE_OUTFIT_ASSET : PAINTED_PRINCE_ASSET)} width={source.width} height={source.height} />
   </svg>;
 }
 
@@ -64,14 +67,23 @@ function Arm({ side }: { side: 'front' | 'back' }) {
 }
 
 export function PaintedPrinceArtwork() {
+  const hipBlendId = useId().replace(/:/g, '');
   return <svg viewBox="0 0 160 210" className="character-artwork painted-prince-artwork"
     data-character="prince" data-artwork="imagegen" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id={`${hipBlendId}-hips`} x1="0" y1={anatomy.legs.front.y + 1} x2="0" y2={anatomy.torso.y + anatomy.torso.height} gradientUnits="userSpaceOnUse">
+        <stop stopColor="white" /><stop offset="1" stopColor="black" />
+      </linearGradient>
+      <mask id={`${hipBlendId}-hips-mask`} maskUnits="userSpaceOnUse" x="45" y="75" width="70" height="70">
+        <rect x="45" y="75" width="70" height="70" fill={`url(#${hipBlendId}-hips)`} />
+      </mask>
+    </defs>
     <g data-prince-body transform="translate(0 0)">
       <g transform={`translate(${anatomy.capePivot.x} ${anatomy.capePivot.y})`}><g data-joint="hair">
         <Part part="cape" x={anatomy.cape.x - anatomy.capePivot.x} y={anatomy.cape.y - anatomy.capePivot.y} width={anatomy.cape.width} height={anatomy.cape.height} />
       </g></g>
       <Leg side="back" /><Leg side="front" /><Arm side="back" />
-      <Part part="torso" {...anatomy.torso} /><Arm side="front" />
+      <g mask={`url(#${hipBlendId}-hips-mask)`}><Part part="torso" {...anatomy.torso} /></g><Arm side="front" />
       <g transform={`translate(${anatomy.headPivot.x} ${anatomy.headPivot.y})`}><g data-joint="head">
         <Part part="head" x={anatomy.head.x - anatomy.headPivot.x} y={anatomy.head.y - anatomy.headPivot.y} width={anatomy.head.width} height={anatomy.head.height} />
       </g></g>
@@ -80,15 +92,15 @@ export function PaintedPrinceArtwork() {
 }
 
 export function PaintedPrinceThumbnail({ label }: { label: string }) {
-  const [x, y, width, height] = atlas.parts.thumbnail;
+  const [x, y, width, height] = outfitAtlas.parts.thumbnail;
   const scale = Math.min(160 / width, 186 / height), drawWidth = width * scale, drawHeight = height * scale;
   return <span className="character-artwork painted-animal-thumbnail" data-character="prince" data-artwork="imagegen" role="img" aria-label={label}>
     <span className="painted-thumbnail-crop" aria-hidden="true" style={{
       left: `${(160 - drawWidth) / 320 * 100}%`, top: `${(210 - drawHeight) / 420 * 100}%`,
       width: `${drawWidth / 160 * 100}%`, height: `${drawHeight / 210 * 100}%`,
-      backgroundImage: `url("${assetPath(PAINTED_PRINCE_ASSET)}")`,
-      backgroundSize: `${atlas.width / width * 100}% ${atlas.height / height * 100}%`,
-      backgroundPosition: `${x / (atlas.width - width) * 100}% ${y / (atlas.height - height) * 100}%`,
+      backgroundImage: `url("${assetPath(PAINTED_PRINCE_OUTFIT_ASSET)}")`,
+      backgroundSize: `${outfitAtlas.width / width * 100}% ${outfitAtlas.height / height * 100}%`,
+      backgroundPosition: `${x / (outfitAtlas.width - width) * 100}% ${y / (outfitAtlas.height - height) * 100}%`,
     }} />
   </span>;
 }

@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import sharp from 'sharp';
 import atlas from '../src/lib/princeAtlas.json';
-import { PAINTED_PRINCE_ASSET, princeAnatomy as anatomy, princeSole, paintedPrincePose, settlePaintedPrincePose } from '../src/lib/paintedPrinceMotion';
+import outfitAtlas from '../src/lib/princeOutfitAtlas.json';
+import { PAINTED_PRINCE_ASSET, PAINTED_PRINCE_OUTFIT_ASSET, princeAnatomy as anatomy, princeSole, paintedPrincePose, settlePaintedPrincePose } from '../src/lib/paintedPrinceMotion';
 import { PRINCE_GAIT } from '../src/lib/princeMotion';
 import { animalFoot } from '../src/lib/animalMotion';
 
@@ -23,18 +24,41 @@ test('painted prince retains the original ImageGen alpha, and every joint is ins
     assert.ok(source.data[((y + Math.round(point.y)) * atlas.width + x + Math.round(point.x)) * 4 + 3] > 200, `${part} joint lies outside its painting`);
   };
   for (const part of ['thigh', 'shin'] as const) { check(anatomy.trouserPart, anatomy[part].pivot); check(anatomy.trouserPart, anatomy[part].tip); }
-  // The hip paint must begin underneath the tunic, rather than outside its silhouette.
-  const torsoScale = anatomy.torso.width / atlas.parts.torso[2];
-  for (const rig of Object.values(anatomy.legs)) check('torso', {
-    x: (rig.x - anatomy.torso.x) / torsoScale,
-    y: (rig.y - anatomy.torso.y) / torsoScale,
-  });
   check('boot', anatomy.boot.pivot); check('boot', anatomy.boot.sole);
   for (const rig of Object.values(anatomy.arms)) {
     check(rig.upperPart, rig.upperArt.pivot); check(rig.upperPart, rig.upperArt.tip);
     check(rig.lowerPart, rig.lowerArt.pivot); check(rig.lowerPart, rig.lowerArt.tip);
   }
   assert.ok((await readFile(`public${PAINTED_PRINCE_ASSET}`)).length < 1_000_000);
+});
+
+test('prince short vest preserves its paint and joins cream long trousers at both hips', async () => {
+  const source = await sharp('docs/character-design/prince-v2/prince-long-pants-atlas.png').ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const exported = await sharp(`public${PAINTED_PRINCE_OUTFIT_ASSET}`).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  assert.equal(source.info.width, outfitAtlas.width); assert.equal(source.info.height, outfitAtlas.height);
+  for (let i = 0; i < source.data.length; i += 4) {
+    assert.equal(exported.data[i + 3], source.data[i + 3]);
+    if (source.data[i + 3]) for (let c = 0; c < 3; c++) assert.equal(exported.data[i + c], source.data[i + c]);
+  }
+  const [left, top, width, height] = outfitAtlas.parts.torso;
+  const pixel = (x: number, y: number) => source.data.subarray((y * outfitAtlas.width + x) * 4, (y * outfitAtlas.width + x) * 4 + 4);
+  for (const rig of Object.values(anatomy.legs)) {
+    const x = left + Math.round((rig.x - anatomy.torso.x) / anatomy.torso.width * width);
+    const y = top + Math.round((rig.y - anatomy.torso.y) / anatomy.torso.height * height);
+    assert.ok(pixel(x, y)[3] > 200, 'Hip joint is outside the new trouser waistband');
+  }
+  // A blue flared hem below the waist would read as a skirt even with animated trouser legs.
+  const belowWaist = top + Math.ceil((anatomy.legs.front.y - anatomy.torso.y) / anatomy.torso.height * height);
+  let cream = 0, blue = 0, painted = 0;
+  for (let y = belowWaist; y < top + height; y++) for (let x = left; x < left + width; x++) {
+    const [r, g, b, a] = pixel(x, y);
+    if (a < 128) continue;
+    painted++;
+    if (r > 160 && r > b * 1.08 && g > b) cream++;
+    if (b > r * 1.08) blue++;
+  }
+  assert.ok(cream / painted > .75, 'Cream trousers must begin immediately below the belt');
+  assert.ok(blue / painted < .02, 'The vest must not flare into a blue skirt below the belt');
 });
 
 test('prince trousers share continuous knee fabric without a change in leg thickness', () => {

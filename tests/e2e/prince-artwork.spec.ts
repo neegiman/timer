@@ -20,7 +20,7 @@ test('painted prince stays connected and grounded through selection, walking, pa
     await expect(choice).toHaveAttribute('aria-pressed', 'true');
     await expect(choice.locator('[data-character="prince"]')).toBeVisible();
   }
-  await expect(choice.locator('.painted-thumbnail-crop')).toHaveCSS('background-image', /\/timer\/characters\/raster-v1\/prince-painted-v1.webp/);
+  await expect(choice.locator('.painted-thumbnail-crop')).toHaveCSS('background-image', /\/timer\/characters\/raster-v1\/prince-long-pants-v2.webp/);
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/prince-selection-320.png', fullPage: true });
   await page.getByRole('button', { name: '출발!' }).click();
   await expect(page.locator('[data-status="running"]')).toBeVisible();
@@ -141,7 +141,7 @@ test('painted prince stays connected and grounded through selection, walking, pa
   // Check the actual painted silhouette AND boots, not just self-consistent joint matrices.
   const painted = await page.evaluate(async (frames) => {
     const assets: Record<string, string> = {};
-    for (const source of ['/timer/characters/raster-v1/prince-painted-v1.webp']) {
+    for (const source of ['/timer/characters/raster-v1/prince-painted-v1.webp', '/timer/characters/raster-v1/prince-long-pants-v2.webp']) {
       const blob = await (await fetch(source)).blob();
       assets[source] = await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(blob); });
     }
