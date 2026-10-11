@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { finishPhaseStart } from '../../src/lib/animation';
 import { PIXEL_VEHICLES, vehicleMotion, vehicleViewBox, vehicleAsset } from '../../src/lib/pixelVehicles';
 import { instrumentAudio } from './audio';
+import groundArt from '../../src/lib/paintedVehicleGround.json';
 
 for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and preserves motion, pause, refresh and arrival`, async ({ page }, testInfo) => {
   test.setTimeout(60_000);
@@ -43,11 +44,14 @@ for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and prese
     await expect(surface).toHaveAttribute('data-ground-type', id === 'car' ? 'road' : 'railway');
     await expect(surface).toHaveAttribute('data-rate', '1');
     expect(await surface.getAttribute('data-scroll-offset')).toBe(await page.locator('[data-layer="ground"]').getAttribute('data-scroll-offset'));
-    const contact = await surface.evaluate((strip) => {
+    const contact = await surface.evaluate((strip, source) => {
       const scene = document.querySelector<HTMLElement>('.journey-scene')!;
-      return strip.getBoundingClientRect().top + Number((strip as HTMLElement).dataset.contactY)
+      // Measure the visible painted rail from its source pixels and rendered
+      // height, independently of the layer's positioning metadata.
+      const height = Number.parseFloat(getComputedStyle(strip.querySelector('.scenery-paint')!).backgroundSize.split(' ')[1]);
+      return strip.getBoundingClientRect().top + source.contactY * height / source.height
         - scene.getBoundingClientRect().top - Number(scene.dataset.groundY);
-    });
+    }, id === 'train' ? groundArt.railway : groundArt.road);
     expect(Math.abs(contact)).toBeLessThan(.5);
     const gap = await sprite.evaluate((svg) => {
       const root = svg as SVGSVGElement, scene = document.querySelector<HTMLElement>('.journey-scene')!;

@@ -54,8 +54,13 @@ function VehicleGround({ characterId }: { characterId: string }) {
   const surface = characterId === 'car' || characterId === 'train' ? surfaces[characterId] : null;
   if (!surface) return null;
   const source = (theme: 'day' | 'night') => assetPath(surface[theme]);
+  // Foreshorten the railway's depth so its far rail leaves the landscape visible.
+  // Scale the painted wheel contact with it; lowering the strip alone floats the train.
+  const surfaceHeight = surface.kind === 'railway' ? surface.height / 2 : surface.height;
+  const contactY = surface.contactY * surfaceHeight / surface.height;
   return <div className={`parallax-layer vehicle-ground-layer vehicle-${surface.kind}-layer`} data-layer="vehicle-ground" data-rate="1"
-    data-ground-type={surface.kind} data-contact-y={surface.contactY} style={{ '--surface-contact-y': `${surface.contactY}px` } as CSSProperties}>
+    data-ground-type={surface.kind} data-contact-y={contactY}
+    style={{ '--surface-contact-y': `${contactY}px`, '--surface-height': `${surfaceHeight}px` } as CSSProperties}>
     <div className="scenery-paint vehicle-surface-day" data-scenery-src={source('day')} style={{ backgroundImage: `url("${source('day')}")` }} />
     <div className="scenery-paint vehicle-surface-night" data-scenery-src={source('night')} style={{ backgroundImage: `url("${source('night')}")` }} />
   </div>;
