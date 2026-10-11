@@ -14,6 +14,7 @@ import { useVisualTimer } from '@/hooks/useVisualTimer';
 import { useAnimationController } from '@/hooks/useAnimationController';
 import { useAudio } from '@/hooks/useAudio';
 import { useFullscreen } from '@/hooks/useFullscreen';
+import { useScreenWakeLock } from '@/hooks/useScreenWakeLock';
 import { useDayNight } from '@/hooks/useDayNight';
 import { isBoolean, isCharacterId, isDuration, useLocalStorage } from '@/hooks/useLocalStorage';
 import { getCharacter } from '@/lib/characters';
@@ -40,6 +41,7 @@ export function TimerApp() {
   const [promise, setPromise] = useLocalStorage<PromiseActivity>('lastPromise', defaultPromise, isPromise);
   const [soundEnabled, setSoundEnabled] = useLocalStorage('soundEnabled', true, isBoolean);
   const [showNumericTime, setShowNumericTime] = useLocalStorage('showNumericTime', true, isBoolean);
+  const [keepScreenAwake, setKeepScreenAwake] = useLocalStorage('keepScreenAwake', true, isBoolean);
   const [stars, setStars] = useLocalStorage('todayStars', EMPTY_STARS, isStars);
   const [customDuration, setCustomDuration] = useState(false);
   const [setupStep, setSetupStep] = useState(0);
@@ -47,6 +49,8 @@ export function TimerApp() {
   const [modal, setModal] = useState<ModalName>(null);
   const ready = promise.activity.trim().length > 0;
   const timer = useVisualTimer(ready);
+  const keepAwakeActive = timer.status === 'running' || timer.status === 'arriving';
+  const screenWakeLock = useScreenWakeLock(keepScreenAwake, keepAwakeActive);
   const appearance = useDayNight(timer.now);
   const animation = useAnimationController(timer);
   const { unlock, playOnce, stop, needsGesture } = useAudio(soundEnabled);
@@ -65,6 +69,13 @@ export function TimerApp() {
   const awarded = !!sessionId && stars.awardedSessions.includes(sessionId);
   const customPromise = promise.id === 'custom';
   const durationIsCustom = customDuration || ![5, 10, 15, 20, 30].includes(minutes);
+  const screenWakeLockMessage = !keepScreenAwake ? '휴대폰의 자동 잠금 설정을 따라요.'
+    : screenWakeLock.status === 'active' ? '여행하는 동안 화면을 켜 두고 있어요.'
+    : screenWakeLock.status === 'requesting' ? '화면 켜짐을 준비하고 있어요.'
+    : screenWakeLock.status === 'unsupported' ? '이 브라우저는 지원하지 않아요. 최신 Safari 또는 Chrome으로 열어 주세요.'
+    : screenWakeLock.status === 'unavailable' ? '화면 켜짐 유지가 해제됐어요. 저전력 모드를 끄고 다시 시도해 주세요.'
+    : timer.status === 'paused' ? '일시정지 중에는 자동 잠금 설정을 따라요.'
+    : '출발하면 화면을 켜 두고, 일시정지·완료 시 해제해요.';
 
   useEffect(() => { if (!active) stepHeading.current?.focus({ preventScroll: true }); }, [setupStep, active]);
 
@@ -155,6 +166,8 @@ export function TimerApp() {
         {display.mode === 'window' ? <Maximize size={24} /> : <Minimize size={24} />}{display.label}
       </button>
       <p className="display-mode-hint">{display.mode === 'expanded' || !display.nativeSupported ? '페이지 안에서 여행 화면을 크게 보여요.' : '여행 화면을 크게 보여요. 끝낼 때는 부모 메뉴나 Esc를 눌러요.'}</p>
+      <div className="setting-row"><div><strong>화면 켜짐 유지</strong><p aria-live="polite" data-testid="screen-wake-lock-status" data-state={screenWakeLock.status}>{screenWakeLockMessage}</p></div><button type="button" className={`toggle ${keepScreenAwake ? 'on' : ''}`} role="switch" aria-checked={keepScreenAwake} aria-label="화면 켜짐 유지" onClick={() => setKeepScreenAwake(!keepScreenAwake)}><span /></button></div>
+      {keepScreenAwake && keepAwakeActive && screenWakeLock.status === 'unavailable' ? <button type="button" className="text-button" onClick={() => { void screenWakeLock.retry(); }}>화면 켜짐 다시 시도</button> : null}
       <SceneSettings appearance={appearance} />
       <div className="setting-row"><div><strong>소리 ON / OFF</strong><p>출발과 도착을 다정한 소리로 알려요.</p></div><button className={`toggle ${soundEnabled ? 'on' : ''}`} role="switch" aria-checked={soundEnabled} aria-label="소리 ON/OFF" onClick={toggleSound}><span /></button></div>
       <div className="setting-row"><div><strong>숫자로 남은 시간 표시</strong><p>꺼도 위쪽 여행 길로 시간을 알 수 있어요.</p></div><button className={`toggle ${showNumericTime ? 'on' : ''}`} role="switch" aria-checked={showNumericTime} aria-label="숫자로 남은 시간 표시" onClick={() => setShowNumericTime(!showNumericTime)}><span /></button></div>
@@ -162,7 +175,8 @@ export function TimerApp() {
     </Modal> : null}
     {modal === 'help' ? <Modal title="작은 기다림을 여행으로" onClose={() => setModal(null)}>
       <div className="help-steps"><p><span>1</span> 아이와 함께 지킬 약속을 골라요.</p><p><span>2</span> 기다릴 시간과 여행 친구를 정해요.</p><p><span>3</span> 친구가 도착하면 약속한 일을 해요.</p><p><span><Star size={14} /></span> 약속을 지켰다면 별 하나를 선물해요!</p></div>
-      <p className="modal-description">화면이 잠기거나 다른 탭에 가도 시간은 흘러요. 돌아오면 위쪽 작은 친구가 알맞은 위치에 있어요.</p>
+      <p className="modal-description">여행 중에는 화면 켜짐 유지를 자동으로 요청해요. 부모 메뉴에서 끌 수 있어요. 저전력 모드나 브라우저 설정에 따라 화면이 잠길 수 있으며, 직접 누른 잠금 버튼은 막지 않아요.</p>
+      <p className="modal-description">화면이 잠기거나 다른 탭에 가도 시간은 흘러요. 돌아오면 위쪽 작은 친구가 알맞은 위치에 있고, 진행 중인 여행은 화면 켜짐 유지를 다시 요청해요.</p>
       <p className="modal-description">휴대폰에서는 출발!을 누를 때 소리를 준비해요. 화면 잠금 중에는 소리가 늦어질 수 있어요. 돌아온 뒤 소리 안내를 누르면 다시 켤 수 있어요.</p>
       <p className="settings-note">⭐ 별은 칭찬이에요. 오늘의 별은 매일 새로 시작해요.</p>
     </Modal> : null}
