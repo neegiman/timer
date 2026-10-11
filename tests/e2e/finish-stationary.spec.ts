@@ -58,6 +58,57 @@ async function expectFixed(page: Page, fixed: Awaited<ReturnType<typeof landmark
 }
 
 for (const display of ['window', 'expanded'] as const) {
+  for (const [width, height] of [[320, 568], [390, 667]]) {
+    test(`viewport destination stays still at the bottom of a short phone: ${display} ${width}`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width, height });
+      const session = await start(page, display, false, '왕자');
+      await seek(page, session.targetTimestamp - 30_000);
+      await page.evaluate(() => {
+        const shell = document.querySelector<HTMLElement>('.app-shell')!;
+        if (shell.dataset.display === 'expanded') shell.scrollTo({ top: shell.scrollHeight, behavior: 'instant' });
+        else window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
+      });
+      await page.clock.runFor(128);
+      // Record actual viewport coordinates on every frame. Adding scrollY here
+      // would hide the browser moving the whole scene after a layout collapse.
+      await page.evaluate(() => {
+        const selectors = ['.journey-scene', '.goal-line', '.finish-flag > path', '.flag-cloth', '.finish-point', '.progress-endpoints > span:last-child'];
+        const ranges = selectors.map((selector) => {
+          const bounds = document.querySelector(selector)!.getBoundingClientRect();
+          return { selector, x: bounds.x, y: bounds.y, minX: bounds.x, maxX: bounds.x, minY: bounds.y, maxY: bounds.y };
+        });
+        const monitor = { ranges, frame: 0 };
+        (window as typeof window & { destinationMonitor?: typeof monitor }).destinationMonitor = monitor;
+        const sample = () => {
+          for (const range of ranges) {
+            const bounds = document.querySelector(range.selector)!.getBoundingClientRect();
+            range.minX = Math.min(range.minX, bounds.x); range.maxX = Math.max(range.maxX, bounds.x);
+            range.minY = Math.min(range.minY, bounds.y); range.maxY = Math.max(range.maxY, bounds.y);
+          }
+          monitor.frame = requestAnimationFrame(sample);
+        };
+        sample();
+      });
+      for (const remaining of [20_000, 1000, 0]) await seek(page, session.targetTimestamp - remaining);
+      await page.clock.runFor(FINISH_DURATION_MS + 500);
+      await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'completed');
+      await page.getByRole('button', { name: '⭐ 약속 지켰어요' }).evaluate((button: HTMLButtonElement) => button.click());
+      await page.clock.runFor(128);
+      const ranges = await page.evaluate(() => {
+        const monitor = (window as typeof window & { destinationMonitor: { ranges: { selector: string; minX: number; maxX: number; minY: number; maxY: number }[]; frame: number } }).destinationMonitor;
+        cancelAnimationFrame(monitor.frame);
+        return monitor.ranges;
+      });
+      for (const range of ranges) {
+        expect(range.maxX - range.minX, `${range.selector} moved horizontally in the viewport`).toBeLessThan(.01);
+        expect(range.maxY - range.minY, `${range.selector} moved vertically in the viewport`).toBeLessThan(.01);
+      }
+      if (testInfo.project.name === 'chromium') await page.screenshot({ path: `artifacts/destination-viewport-${display}-${width}.png` });
+    });
+  }
+}
+
+for (const display of ['window', 'expanded'] as const) {
   for (const [width, height] of [[390, 844], [844, 390]]) {
     test(`entire destination stays fixed through scrolling, crossing and rewards: ${display} ${width}`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width, height });

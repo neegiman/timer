@@ -199,7 +199,10 @@ h1:focus { outline: none; }
 .arrival-sparkles span:nth-child(5) { left: 35%; top: 13%; animation-delay: .5s; }
 .arrival-sparkles span:nth-child(6) { left: 93%; top: 36%; animation-delay: .1s; }
 .journey-message { text-align: center; padding: 20px 0 8px; }
-.journey-message-finished { display: none; }
+/* Keep the running layout until rewards replace this space. Collapsing it at
+   arrival clamps a short phone's scroll position and moves the fixed goal. */
+.journey-message-finished { visibility: hidden; pointer-events: none; }
+.app-shell[data-status="completed"] .journey-message-finished { display: none; }
 .promise-reminder, .completion-promise { display: flex; justify-content: center; align-items: center; gap: 10px; font-size: 24px; font-weight: 750; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
 .promise-reminder span, .completion-promise span { flex-shrink: 0; font-size: 40px; }
 .reward-panel { max-width: 520px; text-align: center; margin: 12px auto 0; }
