@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import { memo, type CSSProperties, type ReactNode } from 'react';
 import art from '@/lib/paintedScenery.json';
 import { assetPath } from '@/lib/assetPath';
 import type { Season } from '@/lib/seasons';
@@ -12,8 +12,8 @@ function Layer({ name, rate, tileScale, children }: { name: string; rate: number
 }
 
 /** Measured painted strips repeat independently; ground shares the feet's pixel speed. */
-export const ScrollingScenery = memo(function ScrollingScenery({ season, space = false }: { season: Season; space?: boolean }) {
-  if (space) return <RocketSky />;
+export const ScrollingScenery = memo(function ScrollingScenery({ season, characterId }: { season: Season; characterId: string }) {
+  if (characterId === 'rocket') return <RocketSky />;
   const scene = art[season];
   return <div className="painted-environment" data-scenery="painted-v1" aria-hidden="true">
     <Layer name="hill" rate={.14} tileScale={.78 * scene.day.width / scene.day.height}>
@@ -28,5 +28,20 @@ export const ScrollingScenery = memo(function ScrollingScenery({ season, space =
       <div className="scenery-paint scenery-ground-day" data-scenery-src={assetPath(scene.dayGround.src)} style={paint(scene.dayGround)} />
       <div className="scenery-paint scenery-ground-night" data-scenery-src={assetPath(scene.nightGround.src)} style={paint(scene.nightGround)} />
     </Layer>
+    <VehicleGround characterId={characterId} />
   </div>;
 });
+
+const surfaces = { car: { kind: 'road', contactY: 18 }, train: { kind: 'railway', contactY: 24 } } as const;
+
+/** The road/rails use the existing wheel-and-ground clock, never a second animation. */
+function VehicleGround({ characterId }: { characterId: string }) {
+  const surface = characterId === 'car' || characterId === 'train' ? surfaces[characterId] : null;
+  if (!surface) return null;
+  const source = (theme: 'day' | 'night') => assetPath(`/images/vehicle-ground-v1/${surface.kind}-${theme}.svg`);
+  return <div className={`parallax-layer vehicle-ground-layer vehicle-${surface.kind}-layer`} data-layer="vehicle-ground" data-rate="1"
+    data-ground-type={surface.kind} data-contact-y={surface.contactY} style={{ '--surface-contact-y': `${surface.contactY}px` } as CSSProperties}>
+    <div className="scenery-paint vehicle-surface-day" data-scenery-src={source('day')} style={{ backgroundImage: `url("${source('day')}")` }} />
+    <div className="scenery-paint vehicle-surface-night" data-scenery-src={source('night')} style={{ backgroundImage: `url("${source('night')}")` }} />
+  </div>;
+}

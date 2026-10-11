@@ -4,6 +4,7 @@ import { PIXEL_VEHICLES, vehicleMotion, vehicleViewBox, vehicleAsset } from '../
 import { instrumentAudio } from './audio';
 
 for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and preserves motion, pause, refresh and arrival`, async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
   const errors: string[] = [], failed: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('response', (response) => { if (response.status() >= 400) failed.push(response.url()); });
@@ -38,12 +39,40 @@ for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and prese
   await expect(sprite).toHaveAttribute('viewBox', vehicleViewBox(frame));
   await expect(page.locator('.character-wrapper')).toHaveAttribute('data-position', '.42');
   if (id !== 'rocket') {
+    const surface = page.locator('[data-layer="vehicle-ground"]');
+    await expect(surface).toHaveAttribute('data-ground-type', id === 'car' ? 'road' : 'railway');
+    await expect(surface).toHaveAttribute('data-rate', '1');
+    expect(await surface.getAttribute('data-scroll-offset')).toBe(await page.locator('[data-layer="ground"]').getAttribute('data-scroll-offset'));
+    const contact = await surface.evaluate((strip) => {
+      const scene = document.querySelector<HTMLElement>('.journey-scene')!;
+      return strip.getBoundingClientRect().top + Number((strip as HTMLElement).dataset.contactY)
+        - scene.getBoundingClientRect().top - Number(scene.dataset.groundY);
+    });
+    expect(Math.abs(contact)).toBeLessThan(.5);
     const gap = await sprite.evaluate((svg) => {
       const root = svg as SVGSVGElement, scene = document.querySelector<HTMLElement>('.journey-scene')!;
       const sole = new DOMPoint(root.viewBox.baseVal.x + 40, root.viewBox.baseVal.y + 197).matrixTransform(root.getScreenCTM()!);
       return sole.y - scene.getBoundingClientRect().y - Number(scene.dataset.groundY);
     });
     expect(Math.abs(gap)).toBeLessThan(.5);
+    const deadline = (await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!))).targetTimestamp;
+    for (const theme of ['night', 'day']) {
+      await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
+      await page.getByRole('button', { name: theme === 'night' ? '밤 배경' : '낮 배경', exact: true }).click();
+      await page.getByRole('button', { name: '닫기', exact: true }).click();
+      await page.clock.runFor(1400);
+      const painting = surface.locator(`.vehicle-surface-${theme}`);
+      await expect(painting).toHaveAttribute('data-scenery-src', `/timer/images/vehicle-ground-v1/${id === 'car' ? 'road' : 'railway'}-${theme}.svg`);
+      await expect(painting).toHaveCSS('opacity', '1');
+      if (testInfo.project.name === 'chromium') {
+        await page.setViewportSize({ width: 390, height: 844 }); await page.clock.runFor(32);
+        await page.screenshot({ path: `artifacts/vehicle-ground-${id}-${theme}-390.png`, fullPage: true });
+        await page.setViewportSize({ width: 320, height: 740 }); await page.clock.runFor(32);
+      }
+    }
+    expect((await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!))).targetTimestamp).toBe(deadline);
+  } else {
+    await expect(page.locator('[data-layer="vehicle-ground"]')).toHaveCount(0);
   }
   const walkingMarkup = await sprite.evaluate((node) => node.outerHTML);
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: `artifacts/pixel-${id}-walking-320.png`, fullPage: true });

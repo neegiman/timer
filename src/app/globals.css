@@ -92,6 +92,12 @@ h1:focus { outline: none; }
 .hill-layer { height: 78%; z-index: 0; }
 .tree-layer { top: 16%; height: 62%; z-index: 1; }
 .ground-layer { top: 78%; height: 22%; z-index: 2; }
+.vehicle-ground-layer { top: calc(78% - var(--surface-contact-y)); height: calc(22% + var(--surface-contact-y)); z-index: 3; }
+.vehicle-surface-night { opacity: 0; }
+.journey-scene[data-theme="night"] .vehicle-surface-day { opacity: 0; }
+.journey-scene[data-theme="night"] .vehicle-surface-night { opacity: 1; }
+/* Keep rail contact 24px below the strip's top at every screen height. */
+.vehicle-railway-layer .scenery-paint { background-size: var(--tile-width, 480px) 96px; }
 .scenery-paint { position: absolute; inset: 0; background-repeat: repeat-x; background-size: var(--tile-width, 480px) 100%; transition: opacity 1.2s ease-in-out; }
 .scene-night, .scenery-ground-night { opacity: 0; }
 .journey-scene[data-theme="night"] :is(.scene-day, .scenery-ground-day) { opacity: 0; }
