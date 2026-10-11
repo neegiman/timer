@@ -20,6 +20,12 @@ function drawPrinceFrame(element: SVGSVGElement | null | undefined, frame: numbe
   element.dataset.frame = String(frame);
 }
 
+function drawVehicleFrame(element: SVGSVGElement | null | undefined, frame: number) {
+  if (!element || element.dataset.frame === String(frame)) return;
+  element.setAttribute('viewBox', vehicleViewBox(frame));
+  element.dataset.frame = String(frame);
+}
+
 /** A shared elapsed-time clock drives feet, ground and scenery. Frame updates never enter React state. */
 export function useJourneyRenderer(input: AnimationInput, state: AnimationState, sampledAt: number, characterId: string, season: Season, theme: SceneTheme) {
   const scene = useRef<HTMLDivElement>(null);
@@ -55,7 +61,13 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     const actor = wrapper.current;
     const sprite = body.current;
     if (!element || !actor || !sprite) return;
-    const progressPrince = characterId === 'prince' ? marker.current?.querySelector<SVGSVGElement>('[data-prince-sprite]') : null;
+    const progressPrince = marker.current?.querySelector<SVGSVGElement>('[data-prince-sprite]');
+    const progressVehicle = marker.current?.querySelector<SVGSVGElement>('[data-vehicle-sprite]');
+    const progressAnimalBody = marker.current?.querySelector<SVGGElement>('[data-animal-body]');
+    const progressAnimalJoints = Array.from(marker.current?.querySelectorAll<SVGGElement>('[data-animal-joint]') ?? [])
+      .map((element) => ({ element, name: element.dataset.animalJoint as AnimalJoint }));
+    const progressJoints = Array.from(marker.current?.querySelectorAll<SVGGElement>('[data-joint]') ?? [])
+      .map((element) => ({ element, name: element.dataset.joint as JointName }));
     const profile = motionProfile(characterId);
     const animalId = isAnimalId(characterId) ? characterId : null;
     const vehicleId = isPixelVehicle(characterId) ? characterId : null;
@@ -93,6 +105,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       const groundY = height * .78;
       const reduced = preference.matches;
       const walking = pose.characterAction === 'walk';
+      const miniatureAction = next.hasStarted && !next.isFinished && next.remainingTime > 0 ? 'walk' : 'idle';
       const bob = 0;
 
       actor.style.transform = `translate3d(${x}px, ${groundY}px, 0)`;
@@ -122,22 +135,25 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       }
       // The miniature shares the existing gait clock, but rests at its destination
       // once time is up while the main character finishes its crossing/celebration.
-      drawPrinceFrame(progressPrince, princeFrame(next.hasStarted && !next.isFinished && next.remainingTime > 0 ? 'walk' : 'idle', gait, reduced));
+      drawPrinceFrame(progressPrince, princeFrame(miniatureAction, gait, reduced));
 
       if (vehicleSprite.current && vehicleId) {
         const pixelFrame = pose.phase === 'SETTLE' && pose.actionElapsedMs < 175 ? vehicleFrame(vehicleId, 'walk', gait, reduced)
           : vehicleFrame(vehicleId, pose.characterAction, animationTime, reduced);
-        if (vehicleSprite.current.dataset.frame !== String(pixelFrame)) {
-          vehicleSprite.current.setAttribute('viewBox', vehicleViewBox(pixelFrame));
-          vehicleSprite.current.dataset.frame = String(pixelFrame);
-        }
+        drawVehicleFrame(vehicleSprite.current, pixelFrame);
       }
+      if (vehicleId) drawVehicleFrame(progressVehicle, vehicleFrame(vehicleId, miniatureAction, gait, reduced));
 
       if (animalId) {
         const animal = pose.phase === 'SETTLE' ? settleAnimalPose(animalId, gait, pose.actionElapsedMs, reduced)
           : animalActionPose(animalId, pose.characterAction, animationTime, reduced);
         animalBody.current?.setAttribute('transform', `translate(0 ${animal.bob.toFixed(5)})`);
         for (const joint of animalJoints.current) joint.element.setAttribute('transform', `rotate(${animal.joints[joint.name].toFixed(5)})`);
+        // Reuse the exact main pose during travel; the miniature rests at the
+        // endpoint while the main character crosses and celebrates.
+        const miniature = miniatureAction === 'walk' && walking ? animal : animalActionPose(animalId, miniatureAction, gait, reduced);
+        progressAnimalBody?.setAttribute('transform', `translate(0 ${miniature.bob.toFixed(5)})`);
+        for (const joint of progressAnimalJoints) joint.element.setAttribute('transform', `rotate(${miniature.joints[joint.name].toFixed(5)})`);
       }
       let jointPose = characterId === 'princess' ? princessPose(pose.characterAction, animationTime, reduced)
         : getCharacterPose(pose.characterAction, animationTime, profile.cycleMs, reduced, bob);
@@ -149,6 +165,12 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         for (const name of Object.keys(jointPose) as JointName[]) jointPose[name] = last[name] + (jointPose[name] - last[name]) * blend;
       }
       for (const joint of joints.current) joint.element.setAttribute('transform', `rotate(${jointPose[joint.name].toFixed(5)})`);
+      if (progressJoints.length > 0) {
+        const miniature = miniatureAction === 'walk' && walking ? jointPose
+          : characterId === 'princess' ? princessPose(miniatureAction, gait, reduced)
+          : getCharacterPose(miniatureAction, gait, profile.cycleMs, reduced);
+        for (const joint of progressJoints) joint.element.setAttribute('transform', `rotate(${miniature[joint.name].toFixed(5)})`);
+      }
       for (const layer of layers) {
         const rate = Number(layer.dataset.rate);
         const offset = reduced ? 0 : loopOffset(distance * rate, TILE_WIDTH);
@@ -172,7 +194,10 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       if (goal.current) goal.current.style.opacity = String(finishOpacity(pose.position));
       fill.current?.style.setProperty('transform', `scaleX(${pose.position})`);
       marker.current?.style.setProperty('transform', `translate3d(${pose.position * progressWidth}px, 0, 0)`);
-      if (marker.current) marker.current.dataset.progress = pose.position.toFixed(6);
+      if (marker.current) {
+        marker.current.dataset.progress = pose.position.toFixed(6);
+        marker.current.dataset.action = miniatureAction;
+      }
     };
     const resize = new ResizeObserver(() => {
       width = element.clientWidth; height = element.clientHeight;

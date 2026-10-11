@@ -13,7 +13,7 @@ export function JourneyProgress({ character, progress, trackRef, fillRef, marker
     <div className="progress-endpoints" aria-hidden="true"><span><StoryIcon name="home" size={30} /> 출발</span><span>도착 <StoryIcon name="flag" size={30} /></span></div>
     <div ref={trackRef} className="progress-track">
       <div ref={fillRef} className="progress-fill" style={{ transform: `scaleX(${progress})` }} />
-      <div ref={markerRef} className="progress-marker" data-progress={progress} aria-hidden="true"><span><CharacterIcon character={character} size={36} /></span></div>
+      <div ref={markerRef} className="progress-marker" data-progress={progress} aria-hidden="true"><span><CharacterIcon character={character} size={36} animated /></span></div>
     </div>
   </div>;
 }

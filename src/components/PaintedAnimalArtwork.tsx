@@ -90,7 +90,7 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
 }
 
 /** ImageGen's transparent painted parts, posed by the same four-paw rig as the motion study. */
-export function PaintedAnimalArtwork({ id, label }: { id: AnimalId; label?: string }) {
+export function PaintedAnimalArtwork({ id, label, compact = false }: { id: AnimalId; label?: string; compact?: boolean }) {
   const prefix = useId().replace(/:/g, ''), bird = id === 'chick', rabbit = id === 'rabbit', dog = id === 'dog';
   const filter = `url(#${prefix}-far-fur)`;
   const anatomy = rabbit ? rabbitAnatomy : id === 'dog' || id === 'cat' ? walkingAnatomy[id] : null;
@@ -100,7 +100,7 @@ export function PaintedAnimalArtwork({ id, label }: { id: AnimalId; label?: stri
   const earNear = anatomy?.earNear ?? rabbitAnatomy.earNear;
   const earFar = anatomy?.earFar ?? rabbitAnatomy.earFar;
   const nearEar = !bird ? <PaintedEar id={id} part="earNear" placement={earNear} /> : null;
-  return <svg viewBox="0 0 160 210" className="character-artwork natural-animal-artwork painted-animal-artwork" data-character={id} data-animal={id}
+  return <svg viewBox={compact ? '0 72 160 140' : '0 0 160 210'} className="character-artwork natural-animal-artwork painted-animal-artwork" data-character={id} data-animal={id}
     data-artwork="imagegen" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} focusable="false">
       <defs><filter id={`${prefix}-far-fur`} colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse" x="-65" y="-25" width="140" height="105">
         <feComponentTransfer><feFuncR type="linear" slope=".79" /><feFuncG type="linear" slope=".79" /><feFuncB type="linear" slope=".79" /></feComponentTransfer>
