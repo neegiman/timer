@@ -431,6 +431,46 @@ h1:focus { outline: none; }
 .activity-mode-options strong { font-size: 23px; }
 .activity-mode-options span { font-size: 16px; color: var(--muted); }
 .activity-summary { text-align: center; line-height: 1.6; font-size: 19px; margin: -4px 0 24px; }
+/* Keep the next/start action in the visible phone viewport, outside scrolling choices. */
+@media (max-width: 767px), (max-width: 1000px) and (max-height: 500px) {
+  .app-shell[data-screen="setup"] {
+    display: flex;
+    flex-direction: column;
+    height: 100svh;
+    height: 100dvh;
+    min-height: 0;
+    padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    overflow: hidden;
+  }
+  .app-shell[data-screen="setup"] .site-header { flex-shrink: 0; margin-bottom: 10px; }
+  .app-shell[data-screen="setup"] main { display: flex; flex: 1; min-height: 0; }
+  .app-shell[data-screen="setup"] .setup-card { display: flex; flex-direction: column; width: 100%; min-height: 0; padding: 14px; }
+  .app-shell[data-screen="setup"] .setup-steps { flex-shrink: 0; gap: 8px; margin-bottom: 14px; }
+  .app-shell[data-screen="setup"] .setup-steps button { flex-direction: row; min-height: 48px; gap: 4px; font-size: 17px; }
+  .app-shell[data-screen="setup"] .setup-steps .story-icon { width: 28px; height: 28px; }
+  .app-shell[data-screen="setup"] .setup-card h1 { flex-shrink: 0; margin-bottom: 14px; font-size: clamp(24px, 5.5vw, 30px); line-height: 1.25; word-break: keep-all; }
+  .setup-content { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; padding: 4px; scroll-padding: 8px; }
+  .setup-content :is(.promise-grid, .time-grid, .character-grid) { gap: 8px; }
+  .setup-content .choice { min-height: clamp(88px, 15dvh, 116px); padding: 8px 4px; gap: 4px; font-size: 20px; }
+  .setup-content .promise-choice-icon { width: clamp(44px, 8dvh, 64px); height: clamp(44px, 8dvh, 64px); }
+  .setup-content .character-choice { min-height: clamp(96px, 15dvh, 126px); }
+  .setup-content .character-choice > span:first-child { display: flex; align-items: center; justify-content: center; font-size: 0; line-height: 0; }
+  .setup-content .character-choice .character-icon { width: clamp(44px, 7.2dvh, 58px) !important; height: clamp(58px, 9.5dvh, 76px) !important; }
+  .setup-content .custom-choice { min-height: 48px; margin-top: 12px; padding: 6px; font-size: 18px; }
+  .setup-content .custom-choice .story-icon { width: 34px; height: 34px; }
+  .setup-content .custom-input { margin-top: 12px; }
+  .setup-content .custom-input label { margin-bottom: 6px; }
+  .setup-content .activity-modes { margin-bottom: 14px; }
+  .setup-content .activity-mode-options button { min-height: 96px; padding: 10px 4px; gap: 4px; }
+  .setup-content .activity-mode-options strong { font-size: 20px; }
+  .setup-content .activity-mode-options span { font-size: 14px; }
+  .setup-content .parent-hint { margin-top: 12px; font-size: 16px; }
+  .setup-content .setup-summary { margin-top: 12px; gap: 6px; font-size: 18px; }
+  .setup-content .activity-summary { margin: 4px 0 0; font-size: 17px; }
+  .setup-content .duration-input { margin-top: 12px; gap: 8px; }
+  .app-shell[data-screen="setup"] .setup-actions { flex-shrink: 0; margin-top: 0; padding-top: 12px; gap: 10px; }
+  .app-shell[data-screen="setup"] .setup-actions .primary-button { min-height: 60px; padding: 12px 16px; }
+}
 .modal:has(.rewards-view) { width: min(600px, calc(100% - 24px)); }
 .reward-total { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; margin: 20px 0; }
 .reward-total strong { font-size: 25px; }

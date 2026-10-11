@@ -122,7 +122,7 @@ export function TimerApp() {
 
   const changeStep = (step: number) => { setSetupStep(step); scrollTop('smooth'); };
 
-  return <div ref={appShell} className="app-shell" data-status={timer.status} data-display={display.mode} data-theme={appearance.theme}>
+  return <div ref={appShell} className="app-shell" data-screen={active ? 'timer' : 'setup'} data-status={timer.status} data-display={display.mode} data-theme={appearance.theme}>
     <header className="site-header">
       <div className="brand"><StoryIcon name="handshake" size={44} priority /><span>약속 여행</span></div>
       <div className="header-actions"><button type="button" className="stars-pill" aria-label={`별 달력 열기, 모은 별 ${totalCount}개, 오늘 ${todayCount}개`} onClick={() => setModal('rewards')}><StoryIcon name="star" size={28} /><strong data-testid="star-count">{totalCount}</strong></button>
@@ -149,11 +149,13 @@ export function TimerApp() {
           <h1 tabIndex={-1} ref={stepHeading}>
             {['어떤 활동을 할까요?', mode === 'after' ? '시작까지 얼마나 필요해?' : '마무리까지 얼마나 필요해?', '친구를 골라요!'][setupStep]}
           </h1>
+          <div className="setup-content" key={setupStep}>
           {setupStep === 0 ? <PromiseSelector selected={promise} onSelect={setPromise} customMode={customPromise}
             custom={customPromise ? promise.name : ''} onCustom={(name) => setPromise({ id: 'custom', icon: '🎨', name, activity: name })}
             onCustomMode={() => setPromise({ id: 'custom', icon: '🎨', name: '', activity: '' })} /> : null}
           {setupStep === 1 ? <><ActivityModeSelector mode={mode} onChange={setMode} /><TimeSelector minutes={minutes} onChange={setMinutes} customMode={durationIsCustom} onCustomMode={setCustomDuration} /><p className="parent-hint">{durationLabel(minutes, mode)}<br />시간은 어른이 골라 주세요.</p></> : null}
           {setupStep === 2 ? <><CharacterSelector selectedId={selectedCharacter} onSelect={setCharacter} /><p className="setup-summary"><PromiseIcon id={promise.id} size={36} /> {promise.name} · {durationLabel(minutes, mode)}</p><p className="activity-summary">{activityReminder(promise, mode, getCharacter(selectedCharacter).name)}</p></> : null}
+          </div>
           <div className="setup-actions">
             {setupStep > 0 ? <button className="back-button" aria-label="뒤로" onClick={() => changeStep(setupStep - 1)}><ArrowLeft size={24} /></button> : null}
             <button className="primary-button" onClick={setupStep === 2 ? startJourney : () => changeStep(setupStep + 1)} disabled={!ready}>
