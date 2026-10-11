@@ -4,7 +4,7 @@ import { JourneyMessage } from './JourneyMessage';
 import { PromiseIcon } from '../StoryIcon';
 import { useJourneyRenderer } from '@/hooks/useJourneyRenderer';
 import { formatRemaining } from '@/lib/timer';
-import { activityCompletion, activityReminder } from '@/lib/activityMode';
+import { activityReminder } from '@/lib/activityMode';
 import type { Character, PromiseActivity, TimerMode, TimerStatus } from '@/types/timer';
 import type { AnimationInput, AnimationState } from '@/types/animation';
 import type { SceneTheme } from '@/lib/dayNight';
@@ -26,9 +26,8 @@ export function VisualTimer({ character, promise, mode = 'after', sessionId, pro
       <JourneyProgress character={character} progress={progress} trackRef={track} fillRef={fill} markerRef={marker} />
     </div>
     <JourneyPath character={character} promise={promise} animation={animation} input={input} theme={theme} season={season} sceneRef={scene} wrapperRef={wrapper} bodyRef={body} goalRef={goal} />
-    <div className="journey-message">
-      {arrived ? <p className="completion-promise"><PromiseIcon id={promise.id} size={42} /> {activityCompletion(promise, mode)}</p>
-        : <p className="promise-reminder"><PromiseIcon id={promise.id} size={42} /> {activityReminder(promise, mode)}</p>}
+    <div className={`journey-message ${arrived ? 'journey-message-finished' : ''}`} aria-hidden={arrived || undefined}>
+      <p className="promise-reminder"><PromiseIcon id={promise.id} size={42} /> {activityReminder(promise, mode)}</p>
     </div>
   </section>;
 }

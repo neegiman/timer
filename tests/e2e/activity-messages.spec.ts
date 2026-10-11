@@ -60,6 +60,11 @@ for (const mode of ['after', 'during'] as const) for (const promise of [promises
     await seek(page, 600_000); await check('arrived'); await expect(message).toBeVisible();
     await page.clock.runFor(6000); await expect(page.locator('[data-status="completed"]')).toBeVisible();
     await check('arrived');
+    await expect(message).not.toContainText(/도착|마무리|수고|잘했/);
+    await expect(page.locator('.journey-message')).toBeHidden();
+    await page.reload(); await check('arrived');
+    await expect(page.locator('.journey-message')).toBeHidden();
+    if (testInfo.project.name === 'chromium') await page.screenshot({ path: `artifacts/activity-action-${promise.id}-${mode}-320.png`, fullPage: true });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(errors).toEqual([]);
   });

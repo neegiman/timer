@@ -27,7 +27,7 @@ test('100 unique authored messages cover every activity, mode and time stage', (
 });
 
 test('activity choices stay relevant, and unknown or prototype-shaped IDs use custom copy', () => {
-  const topics = [/씻|목욕|보송|거품|보글/, /잠|이불|쉬|쉼/, /식사|식탁|밥|먹|음식|냠냠|씹/, /정리|장난감|차곡/, /외출|바깥|옷|신발|준비|챙길/, /영상|화면/];
+  const topics = [/씻|목욕|보송|거품|보글|헹구|닦/, /잠|이불|쉬|쉼/, /식사|식탁|식기|밥|먹|음식|냠냠|씹/, /정리|장난감|차곡/, /외출|바깥|옷|신발|준비|챙길/, /영상|화면/];
   for (const [index, promise] of promises.entries()) for (const mode of modes) for (const stage of stages)
     for (const text of activityMessageOptions(promise, mode, stage)) assert.match(text, topics[index]);
   for (const id of ['unknown', 'toString', '__proto__']) {
@@ -40,9 +40,11 @@ test('activity start and finish copy describe the right side of the deadline', (
   for (const promise of activities) {
     assert.match(activityReminder(promise, 'after'), /활동 시작/);
     assert.match(activityReminder(promise, 'during'), /활동 마무리/);
-    assert.match(activityCompletion(promise, 'during'), /마무리|끝났|끄고/);
     for (const text of activityMessageOptions(promise, 'during', 'near')) assert.match(text, /마무리|끝나/);
-    for (const text of activityMessageOptions(promise, 'after', 'arrived')) assert.match(text, /이제/);
+    for (const mode of modes) for (const text of activityMessageOptions(promise, mode, 'arrived')) {
+      assert.doesNotMatch(text, /도착|마무리|잘했|수고|시간이|끝났/);
+      assert.ok(text.startsWith(activityCompletion(promise, mode)));
+    }
   }
 });
 

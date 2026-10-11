@@ -4,7 +4,7 @@ export const JOURNEY_MESSAGES: Record<JourneyStage, string> = {
   beginning: '즐겁게 걸어가 볼까? 🌈',
   halfway: '벌써 반이나 왔어! 반만 더 가면 돼! 🌟',
   near: '거의 다 왔어! 이제 곧 약속 시간이야! 🏁',
-  arrived: '도착! 약속 시간이 됐어! 참 잘했어! 🎉',
+  arrived: '', // The UI displays the selected activity action instead of a generic finish message.
 };
 export const FINISH_SEQUENCE = [
   { phase: 'CROSS_FINISH', duration: 1600, action: 'walk' },

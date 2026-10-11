@@ -75,7 +75,7 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   }
   await seek(page, 600_000);
   await expect(scene).toHaveAttribute('data-phase', 'CROSS_FINISH');
-  await expect(message).toHaveText('도착! 이제 씻기를 시작해요. 🛁');
+  await expect(message).toHaveText('목욕하러 가요. 🛁');
   expect(await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x)).toBeCloseTo(goalX, 4);
   const stopped = await page.locator('[data-layer="ground"]').getAttribute('style');
   const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);

@@ -226,6 +226,7 @@ h1:focus { outline: none; }
 .arrival-sparkles span:nth-child(5) { left: 35%; top: 13%; animation-delay: .5s; }
 .arrival-sparkles span:nth-child(6) { left: 93%; top: 36%; animation-delay: .1s; }
 .journey-message { text-align: center; padding: 20px 0 8px; }
+.journey-message-finished { display: none; }
 .promise-reminder, .completion-promise { display: flex; justify-content: center; align-items: center; gap: 10px; font-size: 24px; font-weight: 750; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
 .promise-reminder span, .completion-promise span { flex-shrink: 0; font-size: 40px; }
 .numeric-time { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; font-size: 22px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 12px; }
@@ -394,6 +395,8 @@ h1:focus { outline: none; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .stage-message { min-height: 2.7em; font-size: 20px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { grid-column: 1; grid-row: 1 / span 2; height: max(190px, calc(100svh - 110px)); }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-message { grid-column: 2; grid-row: 2; padding: 0; }
+  /* Preserve the landscape grid's row heights without another visible message. */
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-message-finished { display: block; visibility: hidden; pointer-events: none; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) { flex-direction: row; gap: 6px; font-size: 18px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) span { font-size: 28px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .numeric-time { font-size: 20px; }

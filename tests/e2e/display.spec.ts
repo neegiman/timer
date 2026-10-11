@@ -22,7 +22,8 @@ async function assertInsideTrack(page: Page) {
   const viewport = page.viewportSize()!;
   if (display !== 'window' && viewport.width > viewport.height && viewport.height <= 500) {
     expect(scene!.y + scene!.height).toBeLessThanOrEqual(viewport.height);
-    const promise = await page.locator('.journey-message').boundingBox();
+    const reminder = page.locator('.journey-message');
+    const promise = await (await reminder.isVisible() ? reminder : page.getByTestId('journey-message')).boundingBox();
     expect(promise!.y + promise!.height).toBeLessThanOrEqual(viewport.height);
   }
   for (const selector of ['.finish-point']) {
