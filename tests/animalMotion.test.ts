@@ -70,11 +70,23 @@ test('rabbit paws roll over their toes, fold in swing and open smoothly for cont
   }
 });
 
-test('cat hind paw registers at the preceding forepaw ground location', () => {
-  const profile = animalProfiles.cat;
-  const fore = animalPose('cat', profile.cycleMs * .25);
-  const hind = animalPose('cat', profile.cycleMs);
-  assert.ok(Math.abs(fore.feet.nearFore!.x + fore.ground - hind.feet.nearHind!.x - hind.ground) < 1e-8);
+test('walkers use short, low steps with supporting forelegs rather than a crouching reach', () => {
+  for (const id of ['dog', 'cat'] as const) {
+    const profile = animalProfiles[id];
+    // A long torso must not force an equally long stride just to register footprints.
+    assert.ok(profile.travel * profile.support / 2 <= 11);
+    assert.ok(profile.lift <= 4);
+    for (let sample = 0; sample < 400; sample++) {
+      const pose = animalPose(id, profile.cycleMs * sample / 400);
+      for (const [paw, foot] of Object.entries(pose.feet)) {
+        const name = paw as PawName;
+        const knee = Math.abs(pose.joints[`${name}Knee`]);
+        assert.ok(knee < 90, `${id}/${paw} folds into a crouch`);
+        if (paw.includes('Fore') && foot.planted) assert.ok(knee < 65, `${id}/${paw} cannot support the chest upright`);
+        assert.ok(Math.abs(foot.x - profile.paws[name]!.x - foot.contactX) <= 11.5, `${id}/${paw} overreaches`);
+      }
+    }
+  }
 });
 
 test('animal cycles join continuously; idle and very long clocks remain deterministic', () => {

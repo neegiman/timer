@@ -17,7 +17,10 @@ function fittedEar(id: WalkerId, part: 'earNear' | 'earFar', anchorX: number, an
   return { anchorX, anchorY, sourceRoot, x: -sourceRoot.x * scale, y: -sourceRoot.y * scale, width: width * scale, height };
 }
 
-/** Pixel landmarks inside the existing paintings, in the same art space as the rabbit. */
+/** Pixel landmarks inside the existing paintings, in the same art space as the rabbit.
+ * Bone lengths match the shoulder/hip-to-ground gap. Excess length forces the
+ * solver into a deep crouch even when idle; the higher far-side roots need 2px more.
+ */
 export const walkingAnatomy = {
   dog: {
     torso: fittedPart('dog', 'torso', 23, 128, 103),
@@ -25,10 +28,10 @@ export const walkingAnatomy = {
     earNear: fittedEar('dog', 'earNear', 108, 130, { x: 96, y: 40 }, 33),
     earFar: fittedEar('dog', 'earFar', 118, 128, { x: 65, y: 40 }, 30),
     paws: {
-      nearHind: { x: 43, y: 155, upper: 28, lower: 29, bend: 1 },
-      farHind: { x: 51, y: 153, upper: 28, lower: 29, bend: 1 },
-      nearFore: { x: 108, y: 158, upper: 25, lower: 25, bend: -1 },
-      farFore: { x: 116, y: 156, upper: 25, lower: 25, bend: -1 },
+      nearHind: { x: 43, y: 155, upper: 22, lower: 22, bend: 1 },
+      farHind: { x: 51, y: 153, upper: 23, lower: 23, bend: 1 },
+      nearFore: { x: 108, y: 158, upper: 20, lower: 21, bend: -1 },
+      farFore: { x: 116, y: 156, upper: 21, lower: 22, bend: -1 },
     },
     hindArtwork: {
       upper: { pivot: { x: 88, y: 48 }, tip: { x: 88, y: 262 } },
@@ -47,10 +50,10 @@ export const walkingAnatomy = {
     earNear: fittedEar('cat', 'earNear', 112, 138, { x: 94, y: 183 }, 23),
     earFar: fittedEar('cat', 'earFar', 122, 134, { x: 97, y: 186 }, 21),
     paws: {
-      nearHind: { x: 42, y: 156, upper: 28, lower: 28, bend: 1 },
-      farHind: { x: 50, y: 154, upper: 28, lower: 28, bend: 1 },
-      nearFore: { x: 111, y: 158, upper: 27, lower: 28, bend: -1 },
-      farFore: { x: 119, y: 156, upper: 27, lower: 28, bend: -1 },
+      nearHind: { x: 42, y: 156, upper: 22, lower: 23, bend: 1 },
+      farHind: { x: 50, y: 154, upper: 23, lower: 24, bend: 1 },
+      nearFore: { x: 111, y: 158, upper: 20, lower: 22, bend: -1 },
+      farFore: { x: 119, y: 156, upper: 21, lower: 23, bend: -1 },
     },
     hindArtwork: {
       upper: { pivot: { x: 88, y: 42 }, tip: { x: 88, y: 244 } },
