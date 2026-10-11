@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { boardProgress, calendarDays, changeGoal, claimReward, createBackup, EMPTY_REWARDS, hasClaimed, isRewards, mergeRewards, migrateLegacy, nextBoard, parseBackup, starsOnDate, totalStars } from '../src/lib/rewards';
-import { activityCompletion, activityMessages, durationLabel, isTimerMode } from '../src/lib/activityMode';
+import { activityCompletion, durationLabel, isTimerMode } from '../src/lib/activityMode';
 import { isSession, localDate, pauseSession, resumeSession } from '../src/lib/timer';
 import { promises } from '../src/lib/promises';
 import type { TimerSession } from '../src/types/timer';
@@ -23,11 +23,9 @@ test('activity modes validate, persist through pause/resume, and accept old sess
   assert.equal(durationLabel(5, 'after'), '5분 뒤에 시작');
   assert.equal(durationLabel(5, 'during'), '5분 동안 하기');
   for (const promise of promises) {
-    assert.match(activityCompletion(promise, 'during'), /시간이 끝났어요/);
+    assert.match(activityCompletion(promise, 'during'), /마무리|끝났|끄고/);
     assert.match(activityCompletion(promise, 'after'), /이제/);
   }
-  assert.match(activityMessages('during').near, /마무리/);
-  assert.match(activityMessages('after').near, /약속 시간/);
 });
 test('only a completed promise can be claimed, once across dates and reload', () => {
   assert.equal(claimReward(EMPTY_REWARDS, { ...session('a'), status: 'running' }, now), EMPTY_REWARDS);

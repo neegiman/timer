@@ -133,7 +133,7 @@ export function TimerApp() {
 
     <main>
       {active ? <div className="timer-layout">
-          <VisualTimer character={character} promise={timer.session?.promise ?? promise} mode={sessionMode} progress={timer.progress}
+          <VisualTimer character={character} promise={timer.session?.promise ?? promise} mode={sessionMode} sessionId={timer.session!.id} progress={timer.progress}
             remaining={timer.remaining} minutes={timer.session ? timer.session.durationMs / 60_000 : minutes}
             status={timer.status} showNumericTime={showNumericTime} animation={animation.state} input={animation.input} sampledAt={animation.sampledAt} theme={appearance.theme} season={appearance.season} />
           {needsGesture && soundEnabled ? <button className="audio-recovery" onClick={unlock}><Volume2 size={22} /> 소리 켜기</button> : null}
@@ -146,7 +146,7 @@ export function TimerApp() {
             </button>)}
           </nav>
           <h1 tabIndex={-1} ref={stepHeading}>
-            {['무엇을 할까요?', mode === 'after' ? '얼마 뒤에 시작할까?' : '얼마나 필요해?', '친구를 골라요!'][setupStep]}
+            {['어떤 활동을 할까요?', mode === 'after' ? '시작까지 얼마나 필요해?' : '마무리까지 얼마나 필요해?', '친구를 골라요!'][setupStep]}
           </h1>
           {setupStep === 0 ? <PromiseSelector selected={promise} onSelect={setPromise} customMode={customPromise}
             custom={customPromise ? promise.name : ''} onCustom={(name) => setPromise({ id: 'custom', icon: '🎨', name, activity: name })}

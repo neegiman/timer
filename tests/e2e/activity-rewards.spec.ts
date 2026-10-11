@@ -35,7 +35,7 @@ test('activity finish uses its own copy through halfway, pause, restart, refresh
   await page.clock.install(); await page.goto('./'); await prepare(page, 'during');
   await expect(page.locator('.promise-reminder')).toContainText('도착하면 마무리');
   await page.clock.fastForward(150_000);
-  await expect(page.getByTestId('journey-message')).toHaveText('벌써 반이나 왔어! 잘하고 있어! 🌟');
+  await expect(page.getByTestId('journey-message')).toHaveAttribute('data-message-id', /^tidy-during-halfway-/);
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '일시정지', exact: true }).click();
   const pausedTime = await page.getByTestId('countdown').textContent();
@@ -50,10 +50,10 @@ test('activity finish uses its own copy through halfway, pause, restart, refresh
   await page.reload();
   await expect(page.locator('.promise-reminder')).toContainText('도착하면 마무리');
   await page.clock.fastForward(271_000);
-  await expect(page.getByTestId('journey-message')).toContainText('마무리해 볼까');
+  await expect(page.getByTestId('journey-message')).toHaveAttribute('data-message-id', /^tidy-during-near-/);
   await page.clock.fastForward(30_000); await page.clock.fastForward(6000);
-  await expect(page.getByTestId('journey-message')).toContainText('약속 시간이 끝났어');
-  await expect(page.locator('.completion-promise')).toHaveText('정리하기 시간이 끝났어요. 수고했어요!');
+  await expect(page.getByTestId('journey-message')).toHaveText('도착! 정리를 마무리해요. 함께해서 멋져요! 🌟');
+  await expect(page.locator('.completion-promise')).toHaveText('정리를 마무리해요. 수고했어요!');
   await expect(page.getByTestId('star-count')).toHaveText('0');
   await page.getByRole('button', { name: '⭐ 약속 지켰어요' }).click();
   await expect(page.getByTestId('star-count')).toHaveText('1');
@@ -69,7 +69,7 @@ test('activity finish uses its own copy through halfway, pause, restart, refresh
 
 test('activity start remains distinct and calendar stores each day cumulatively', async ({ page }) => {
   await page.clock.install(); await page.goto('./'); await prepare(page, 'after');
-  await expect(page.locator('.promise-reminder')).toContainText('도착하면 정리하기 시작');
+  await expect(page.locator('.promise-reminder')).toContainText('활동 시작 · 도착하면 장난감을 정리해요');
   await finish(page);
   await expect(page.locator('.completion-promise')).toHaveText('이제 장난감을 정리해요!');
   await expect(page.locator('.today-reward')).toContainText('활동을 시작한 뒤');

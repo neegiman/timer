@@ -32,15 +32,15 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   const main = page.locator('.character-wrapper');
   const message = page.getByTestId('journey-message');
   await expect(scene).toHaveAttribute('data-phase', 'WALK');
-  await expect(message).toHaveText('즐겁게 걸어가 볼까? 🌈');
+  await expect(message).toHaveAttribute('data-message-id', /^bath-after-beginning-/);
   await page.clock.runFor(800);
   if (supportsAudio) await expect.poll(() => played('start')).toBe(1);
   const fixedX = await main.evaluate((element) => element.getBoundingClientRect().x);
   await seek(page, 299_900);
-  await expect(message).toHaveText('즐겁게 걸어가 볼까? 🌈');
+  await expect(message).toHaveAttribute('data-message-id', /^bath-after-beginning-/);
   await expect(page.getByTestId('journey-goal')).toHaveCount(0);
   await seek(page, 300_000);
-  await expect(message).toHaveText('벌써 반이나 왔어! 반만 더 가면 돼! 🌟');
+  await expect(message).toHaveAttribute('data-message-id', /^bath-after-halfway-/);
   await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
   await expect(scene).toHaveAttribute('data-phase', 'WALK');
   if (supportsAudio) await expect.poll(() => played('midpoint')).toBe(1);
@@ -51,7 +51,7 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   await seek(page, 539_900);
   await expect(page.getByTestId('journey-goal')).toHaveCount(0);
   await seek(page, 540_000);
-  await expect(message).toHaveText('거의 다 왔어! 이제 곧 약속 시간이야! 🏁');
+  await expect(message).toHaveAttribute('data-message-id', /^bath-after-near-/);
   await expect(page.getByTestId('journey-goal')).toHaveCount(1);
   await page.clock.runFor(1000);
   if (supportsAudio) await expect.poll(() => played('sparkle')).toBe(1);
@@ -75,7 +75,7 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   }
   await seek(page, 600_000);
   await expect(scene).toHaveAttribute('data-phase', 'CROSS_FINISH');
-  await expect(message).toHaveText('도착! 약속 시간이 됐어! 참 잘했어! 🎉');
+  await expect(message).toHaveText('도착! 이제 씻기를 시작해요. 🛁');
   expect(await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x)).toBeCloseTo(goalX, 4);
   const stopped = await page.locator('[data-layer="ground"]').getAttribute('style');
   const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
@@ -155,7 +155,7 @@ test('restart resets scene, stage and scroll; exit cancels arrival', async ({ pa
   await page.getByRole('button', { name: '다시 출발', exact: true }).click();
   await page.clock.runFor(64);
   await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'WALK');
-  await expect(page.getByTestId('journey-message')).toHaveText('즐겁게 걸어가 볼까? 🌈');
+  await expect(page.getByTestId('journey-message')).toHaveAttribute('data-message-id', /^bath-after-beginning-/);
   await expect(page.getByTestId('journey-goal')).toHaveCount(0);
   expect(Number(await page.locator('.progress-marker').getAttribute('data-progress'))).toBeLessThan(.002);
   expect(Number(await page.locator('[data-layer="ground"]').getAttribute('data-scroll-offset'))).toBeLessThan(5);

@@ -35,7 +35,7 @@ test('10-minute bath journey, arrival sound once, reward persists across refresh
   await page.clock.fastForward(148_000);
   await expect.poll(async () => Number(await page.getByTestId('traveler').getAttribute('data-progress'))).toBeGreaterThanOrEqual(.25);
   await page.clock.fastForward(427_000);
-  await expect(page.getByTestId('journey-message')).toHaveText('거의 다 왔어! 이제 곧 약속 시간이야! 🏁');
+  await expect(page.getByTestId('journey-message')).toHaveAttribute('data-message-id', /^bath-after-near-/);
   await page.clock.fastForward(25_000);
   await expect(page.locator('[data-status="arriving"]')).toBeVisible();
   await expect(page.getByTestId('traveler')).toHaveAttribute('data-progress', '1');
@@ -103,7 +103,7 @@ test('custom values, restart, exit and settings persist', async ({ page }) => {
   await page.goto('./');
   await page.getByRole('button', { name: '직접 약속 쓰기' }).click();
   await expect(page.getByRole('button', { name: '다음', exact: true })).toBeDisabled();
-  await page.getByLabel('도착하면 무엇을 할까요?').fill('책 한 권을 읽어요');
+  await page.getByLabel('활동 이름').fill('책 한 권을 읽어요');
   await page.getByRole('button', { name: '다음', exact: true }).click();
   await page.getByRole('button', { name: '직접 설정', exact: true }).click();
   await page.getByRole('spinbutton', { name: '직접 설정 시간' }).fill('120');
@@ -124,7 +124,7 @@ test('custom values, restart, exit and settings persist', async ({ page }) => {
   await page.getByRole('button', { name: '종료', exact: true }).click();
   await page.getByRole('button', { name: '여행 마치기', exact: true }).click();
   await page.reload();
-  await expect(page.getByLabel('도착하면 무엇을 할까요?')).toHaveValue('책 한 권을 읽어요');
+  await expect(page.getByLabel('활동 이름')).toHaveValue('책 한 권을 읽어요');
   await page.getByRole('button', { name: '다음', exact: true }).click();
   await expect(page.getByRole('spinbutton', { name: '직접 설정 시간' })).toHaveValue('120');
   await page.getByRole('button', { name: '다음', exact: true }).click();

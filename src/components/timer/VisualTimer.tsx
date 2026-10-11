@@ -11,9 +11,9 @@ import type { SceneTheme } from '@/lib/dayNight';
 import type { Season } from '@/lib/seasons';
 import { journeyNotice } from '@/lib/journeyNotice';
 
-export function VisualTimer({ character, promise, mode = 'after', progress, remaining, minutes, status, showNumericTime, animation, input, sampledAt, theme, season }: {
+export function VisualTimer({ character, promise, mode = 'after', sessionId, progress, remaining, minutes, status, showNumericTime, animation, input, sampledAt, theme, season }: {
   character: Character; promise: PromiseActivity; progress: number; remaining: number;
-  mode?: TimerMode;
+  mode?: TimerMode; sessionId: string;
   minutes: number; status: TimerStatus; showNumericTime: boolean; animation: AnimationState; input: AnimationInput; sampledAt: number; theme: SceneTheme; season: Season;
 }) {
   const arrived = animation.messageStage === 'arrived';
@@ -21,7 +21,7 @@ export function VisualTimer({ character, promise, mode = 'after', progress, rema
   const { scene, wrapper, body, goal, track, fill, marker } = useJourneyRenderer(input, animation, sampledAt, character.id, season, theme);
   return <section className={`journey-card ${status === 'paused' ? 'is-paused' : ''}`} aria-label={`${minutes}분 약속 여행`}>
     <div className="journey-overview">
-      <JourneyMessage notice={notice} promiseId={promise.id} mode={mode} />
+      <JourneyMessage notice={notice} promise={promise} mode={mode} totalDuration={input.totalDuration} sessionId={sessionId} />
       {showNumericTime ? <p className="numeric-time" aria-label={`남은 시간 ${formatRemaining(remaining)}`} data-testid="countdown">{formatRemaining(remaining)}<span>남은 시간</span></p> : null}
       <JourneyProgress character={character} progress={progress} trackRef={track} fillRef={fill} markerRef={marker} />
     </div>

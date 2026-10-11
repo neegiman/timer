@@ -320,7 +320,7 @@ h1:focus { outline: none; }
 
 /* Fixed character, scrolling meadow and an independent elapsed-time journey indicator. */
 .journey-overview { text-align: center; margin-bottom: 18px; }
-.stage-message { display: grid; align-items: center; min-height: 2.7em; max-width: 760px; margin: 0 auto; font-size: clamp(24px, 5.5vw, 34px); line-height: 1.35; word-break: keep-all; }
+.stage-message { display: grid; align-items: center; min-height: 2.7em; max-width: 760px; margin: 0 auto; font-size: clamp(24px, 5.5vw, 34px); line-height: 1.35; word-break: keep-all; overflow-wrap: anywhere; }
 .stage-message > span { grid-area: 1 / 1; }
 .message-reserve { visibility: hidden; pointer-events: none; user-select: none; }
 .stage-halfway, .stage-near, .stage-arrived { color: var(--green); }
