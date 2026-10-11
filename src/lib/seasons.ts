@@ -1,4 +1,6 @@
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
+export type SeasonMode = 'auto' | Season;
+export const isSeasonMode = (value: unknown): value is SeasonMode => value === 'auto' || value === 'spring' || value === 'summer' || value === 'autumn' || value === 'winter';
 export const SEASONS: Record<Season, { name: string; icon: string; months: string }> = {
   spring: { name: '봄', icon: '🌸', months: '3~5월' },
   summer: { name: '여름', icon: '🌿', months: '6~8월' },

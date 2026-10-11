@@ -103,6 +103,8 @@ h1:focus { outline: none; }
 .season-setting-note { color: var(--muted); font-size: 14px; line-height: 1.7; }
 .seasonal-atmosphere { position: absolute; z-index: 2; inset: 0; pointer-events: none; overflow: hidden; }
 .scenery-visitor { position: absolute; top: 0; left: 0; width: clamp(40px, 12vw, 72px); opacity: 0; will-change: transform; }
+.scenery-visitor[data-event="birds"] { width: clamp(58px, 16vw, 100px); }
+.scenery-visitor[data-event="shooting-star"] { width: clamp(100px, 28vw, 180px); filter: drop-shadow(0 0 4px #ffe9b777); }
 .scenery-visitor svg { display: none; width: 100%; height: auto; overflow: visible; }
 .scenery-visitor[data-event="butterfly"] [data-visitor-art="butterfly"],
 .scenery-visitor[data-event="dragonfly"] [data-visitor-art="dragonfly"],
@@ -112,6 +114,8 @@ h1:focus { outline: none; }
 .scenery-visitor[data-event="fireflies"] [data-visitor-art="fireflies"],
 .scenery-visitor[data-event="shooting-star"] [data-visitor-art="shooting-star"] { display: block; }
 .visitor-wings { transform-box: view-box; transform-origin: 60px 45px; transform: scaleX(var(--wing, 1)); }
+.bird-wing { transform-box: view-box; transform-origin: 60px 45px; transform: rotate(var(--wing-angle, 0deg)); }
+.bird-wing-far { transform: rotate(calc(var(--wing-angle, 0deg) * -.65)); opacity: .7; }
 .scenery-particle { position: absolute; left: 0; top: 0; width: 12px; height: 12px; opacity: 0; will-change: transform; }
 .scenery-particle:nth-of-type(even) { width: 9px; height: 9px; }
 .scenery-particle svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 1px 1px #fff4); }
@@ -121,10 +125,16 @@ h1:focus { outline: none; }
 @media (prefers-reduced-motion: reduce) { .seasonal-atmosphere { display: none; } }
 .scene-settings { min-width: 0; margin: 20px 0 0; padding: 18px 0; border: 0; border-bottom: 1px solid var(--border); }
 .scene-settings legend { padding: 0; font-size: 20px; font-weight: 800; }
+.season-choices { min-width: 0; margin: 0 0 18px; padding: 0; border: 0; }
+.season-choices legend, .scene-choice-label { padding: 0; margin-bottom: 10px; font-size: 17px; font-weight: 750; }
+.scene-event-note { margin-top: 10px; }
 .background-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .background-choices button { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; min-height: 78px; padding: 8px; border: 2px solid var(--border); border-radius: 16px; background: #fffdf6; font-size: 18px; font-weight: 750; }
 .background-choices button span { font-size: 28px; }
 .background-choices button[aria-pressed="true"] { border-color: var(--green); background: #eef3e3; }
+.season-buttons { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.season-buttons button { min-height: 72px; padding: 8px 4px; font-size: 17px; }
+.season-buttons button:first-child { grid-column: 1 / -1; flex-direction: row; gap: 8px; min-height: 48px; }
 .scene-setting-status { display: grid; gap: 6px; margin: 16px 0 12px; font-size: 16px; line-height: 1.6; }
 .scene-setting-status strong { color: var(--green); font-size: 18px; }
 .scene-setting-status span, .location-controls p { color: var(--muted); }
@@ -173,7 +183,7 @@ h1:focus { outline: none; }
 .reward-button.awarded { color: var(--green); background: #e0edcc; }
 .today-reward { margin: 18px 0 8px; font-size: 18px; }
 .text-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 10px; border: 0; background: transparent; color: var(--green); font-size: 18px; font-weight: 650; }
-.audio-recovery { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 12px 18px; margin: 0 auto 16px; border: 2px solid #dbc997; border-radius: 16px; background: #fff4d8; font-size: 20px; font-weight: 700; }
+.audio-recovery { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 12px 18px; margin: 24px auto 16px; border: 2px solid #dbc997; border-radius: 16px; background: #fff4d8; font-size: 20px; font-weight: 700; }
 .modal { width: min(520px, calc(100% - 32px)); max-height: calc(100svh - 32px); padding: 0; border: 0; border-radius: 24px; color: var(--ink); background: var(--paper); }
 .modal::backdrop { background: #25322266; backdrop-filter: blur(3px); }
 .modal-content { padding: 24px; }

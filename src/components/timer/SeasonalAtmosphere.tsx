@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import type { Season } from '@/lib/seasons';
+import { SeasonalBird } from './SeasonalBird';
 
 /** Small code-native illustrations; the shared journey frame clock animates their wrappers. */
 export const SeasonalAtmosphere = memo(function SeasonalAtmosphere({ season }: { season: Season }) {
@@ -13,9 +14,7 @@ export const SeasonalAtmosphere = memo(function SeasonalAtmosphere({ season }: {
         <g className="visitor-wings" fill="#d5eae3" stroke="#89b8a7" strokeWidth="2"><ellipse cx="38" cy="36" rx="24" ry="8" transform="rotate(20 38 36)" /><ellipse cx="82" cy="36" rx="24" ry="8" transform="rotate(-20 82 36)" /><ellipse cx="39" cy="51" rx="22" ry="7" /><ellipse cx="81" cy="51" rx="22" ry="7" /></g>
         <path d="M60 29v42" stroke="#b58c58" strokeWidth="5" strokeLinecap="round" /><circle cx="60" cy="28" r="7" fill="#93bda7" /><circle cx="57" cy="26" r="2" fill="#526b65" />
       </svg>
-      <svg data-visitor-art="birds" viewBox="0 0 120 90" fill="none" stroke="var(--event-ink, #7c8d88)" strokeWidth="3" strokeLinecap="round">
-        <g className="visitor-wings"><path d="M9 42q12-16 24 0 12-16 24 0M61 25q9-12 18 0 9-12 18 0M59 61q8-10 16 0 8-10 16 0" /></g>
-      </svg>
+      <SeasonalBird season={season} />
       <svg data-visitor-art="leaves" viewBox="0 0 120 90" fill="#d6935c" stroke="#a87d55" strokeWidth="1.5">
         <path d="m27 25 5-15 8 11 14-4-5 15 7 8-18 4-6 10-3-13-14-5 12-5Z" /><path d="M77 58q-14-23 15-28 6 24-15 28Z" /><path d="m30 41 6-18m41 35 12-23" fill="none" />
       </svg>
@@ -26,7 +25,10 @@ export const SeasonalAtmosphere = memo(function SeasonalAtmosphere({ season }: {
         {[[22, 44], [49, 24], [72, 53], [94, 30]].map(([x, y]) => <g key={x}><circle cx={x} cy={y} r="9" fill="#f9e6a0" opacity=".12" /><circle cx={x} cy={y} r="3" fill="#f9e6a0" /><path d={`m${x - 5} ${y - 5} 4 2m3 0 4-2`} stroke="#c6d9b6" strokeWidth="2" strokeLinecap="round" /></g>)}
       </svg>
       <svg data-visitor-art="shooting-star" viewBox="0 0 120 90">
-        <path d="m25 59 69-41m-63 46 62-30" fill="none" stroke="#e5d9b4" strokeWidth="2" strokeLinecap="round" opacity=".6" /><path d="m23 51 3 8 9 2-9 3-3 9-3-9-9-3 9-2Z" fill="#f4e4ad" />
+        <defs><linearGradient id="meteor-trail" x1="23" y1="61" x2="109" y2="10" gradientUnits="userSpaceOnUse"><stop stopColor="#fff1c7" /><stop offset="1" stopColor="#dbeaff" stopOpacity="0" /></linearGradient></defs>
+        <path d="M23 61 109 10 43 53Z" fill="url(#meteor-trail)" opacity=".6" />
+        <path d="m23 61 86-51m-81 55 61-35" fill="none" stroke="url(#meteor-trail)" strokeWidth="1.8" strokeLinecap="round" />
+        <path d="m23 53 2 6 7 2-7 2-2 7-2-7-7-2 7-2Z" fill="#fff8df" /><circle cx="23" cy="61" r="2" fill="#fffdf3" />
       </svg>
     </div>
     {Array.from({ length: 6 }, (_, index) => <span key={index} className="scenery-particle" data-scenery-particle>

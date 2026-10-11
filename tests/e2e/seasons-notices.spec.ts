@@ -106,11 +106,12 @@ test('seasonal visitors move on the shared clock and reduced motion removes them
   await page.clock.install({ time: new Date('2026-04-15T12:00:00+09:00') });
   await start(page); await seek(page, 13_000);
   const visitor = page.locator('[data-scenery-visitor]');
-  await expect(visitor).toHaveAttribute('data-event', 'butterfly'); await expect(visitor).toHaveCSS('opacity', '1');
+  await expect(visitor).toHaveAttribute('data-event', 'birds'); await expect(visitor).toHaveCSS('opacity', '1');
+  await expect(visitor.locator('[data-bird-kind="swallow"]')).toBeVisible();
   const before = await visitor.getAttribute('style'); await page.clock.runFor(300);
   expect(await visitor.getAttribute('style')).not.toBe(before);
   await seek(page, 23_000); await expect(visitor).toHaveCSS('opacity', '0');
-  await seek(page, 34_000); await expect(visitor).toHaveAttribute('data-event', 'birds'); await expect(visitor).toHaveCSS('opacity', '1');
+  await seek(page, 34_000); await expect(visitor).toHaveAttribute('data-event', 'butterfly'); await expect(visitor).toHaveCSS('opacity', '1');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(page.locator('.seasonal-atmosphere')).toBeHidden();
   await expect(page.getByTestId('countdown')).toBeVisible(); await expect(page.getByRole('progressbar')).toBeVisible();
@@ -119,6 +120,99 @@ test('seasonal visitors move on the shared clock and reduced motion removes them
   await expect(quiet).toBeVisible();
   await expect(quiet.locator('.quiet-star').first()).toHaveCSS('animation-name', 'none');
   expect(await quiet.locator('.quiet-promise').evaluate((element) => getComputedStyle(element, '::before').animationName)).toBe('none');
+  await seek(page, 600_000); await page.clock.fastForward(6000);
+  const stopped = await visitor.getAttribute('style'); await page.clock.runFor(2000);
+  await expect(visitor).toHaveAttribute('style', stopped!);
+});
+
+test('parents can preview all eight backgrounds, persist a choice and return to calendar auto without moving a paused journey', async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.clock.install({ time: new Date('2026-10-15T12:00:00+09:00') });
+  await start(page); await seek(page, 11_200); await menu(page);
+  await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
+  const scene = page.locator('.journey-scene'), visitor = page.locator('[data-scenery-visitor]');
+  const remaining = await page.getByTestId('countdown').textContent();
+  const pose = await page.locator('.character-wrapper').getAttribute('style');
+  const ground = await page.locator('.ground-layer').getAttribute('data-scroll-offset');
+  for (const [season, name, bird] of [['spring', '봄', 'swallow'], ['summer', '여름', 'egret'], ['autumn', '가을', 'geese'], ['winter', '겨울', 'tit']] as const) {
+    for (const theme of ['day', 'night'] as const) {
+      await menu(page);
+      await page.getByRole('button', { name: `${name} 배경`, exact: true }).click();
+      await page.getByRole('button', { name: theme === 'day' ? '낮 배경' : '밤 배경', exact: true }).click();
+      const buttons = await page.locator('.season-buttons button').evaluateAll((elements) => elements.map((element) => ({ x: element.getBoundingClientRect().x, y: element.getBoundingClientRect().y, width: element.getBoundingClientRect().width })));
+      expect(new Set(buttons.slice(1).map((button) => button.y)).size).toBe(1);
+      expect(buttons.every((button) => button.width >= 44 && button.x >= 0 && button.x + button.width <= 320)).toBe(true);
+      await page.getByRole('button', { name: '닫기', exact: true }).click(); await page.clock.runFor(32);
+      await expect(scene).toHaveAttribute('data-season', season); await expect(scene).toHaveAttribute('data-theme', theme);
+      await expect(page.getByTestId('countdown')).toHaveText(remaining!);
+      await expect(page.locator('.character-wrapper')).toHaveAttribute('style', pose!);
+      await expect(page.locator('.ground-layer')).toHaveAttribute('data-scroll-offset', ground!);
+      await expect(visitor).toHaveAttribute('data-event', theme === 'day' ? 'birds' : 'shooting-star');
+      await expect(visitor).toHaveCSS('opacity', '1');
+      await expect(visitor.locator(theme === 'day' ? `[data-bird-kind="${bird}"]` : '[data-visitor-art="shooting-star"]')).toBeVisible();
+      if (testInfo.project.name === 'chromium') {
+        await page.waitForTimeout(1250);
+        await page.screenshot({ path: `artifacts/preview-${season}-${theme}-320.png`, fullPage: true });
+      }
+    }
+  }
+  await page.reload(); await page.clock.runFor(32);
+  await expect(scene).toHaveAttribute('data-season', 'winter'); await expect(scene).toHaveAttribute('data-theme', 'night');
+  await expect(page.locator('[data-status="paused"]')).toBeVisible();
+  await expect(page.getByTestId('countdown')).toHaveText(remaining!);
+  const frozen = await visitor.getAttribute('style');
+  await page.clock.fastForward(2000); await expect(visitor).toHaveAttribute('style', frozen!);
+  await menu(page);
+  await page.getByRole('button', { name: '계절 자동', exact: true }).click();
+  await page.getByRole('button', { name: '자동 배경', exact: true }).click();
+  await page.getByRole('button', { name: '계속', exact: true }).click();
+  await page.clock.runFor(300);
+  await expect(scene).toHaveAttribute('data-season', 'autumn'); await expect(scene).toHaveAttribute('data-theme', 'day');
+  expect(await visitor.getAttribute('style')).not.toBe(frozen);
+  await expect(visitor.locator('[data-bird-kind="geese"]')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('audio recovery button has space below the journey in portrait and expanded landscape', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'AudioContext', { configurable: true, value: undefined });
+    Object.defineProperty(window, 'webkitAudioContext', { configurable: true, value: undefined });
+    Object.defineProperty(document.documentElement, 'requestFullscreen', { configurable: true, value: undefined });
+  });
+  await page.clock.install({ time: new Date('2026-10-15T12:00:00+09:00') });
+  await page.setViewportSize({ width: 390, height: 844 }); await start(page);
+  const button = page.getByRole('button', { name: '소리 켜기', exact: true });
+  await expect(button).toBeVisible();
+  for (const [width, height] of [[320, 740], [390, 844], [844, 390]]) {
+    await page.setViewportSize({ width, height });
+    if (width === 844) { await menu(page); await page.getByRole('button', { name: /^(전체화면|큰 화면 보기)$/ }).click(); }
+    await page.clock.runFor(32);
+    const card = await page.locator('.journey-card').boundingBox(), recovery = await button.boundingBox();
+    expect(recovery!.y - (card!.y + card!.height)).toBeGreaterThanOrEqual(23.5);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});
+
+test('night meteors cross the sky, fade, pause in place and stop with the finished journey', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-10-15T21:00:00+09:00') });
+  await start(page); await seek(page, 10_700);
+  const visitor = page.locator('[data-scenery-visitor]');
+  await expect(visitor).toHaveAttribute('data-event', 'shooting-star'); await expect(visitor).toHaveCSS('opacity', '1');
+  await expect(visitor.locator('[data-visitor-art="birds"]')).toBeHidden();
+  const position = () => visitor.evaluate((element) => {
+    const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
+    return { x: matrix.m41, y: matrix.m42 };
+  });
+  const first = await position(); await page.clock.runFor(350); const next = await position();
+  expect(next.x).toBeLessThan(first.x); expect(next.y).toBeGreaterThan(first.y);
+  await menu(page); await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
+  const frozen = await visitor.getAttribute('style'); await page.clock.fastForward(2000);
+  await expect(visitor).toHaveAttribute('style', frozen!);
+  await menu(page); await page.getByRole('button', { name: '계속', exact: true }).click(); await page.clock.runFor(250);
+  expect(await visitor.getAttribute('style')).not.toBe(frozen);
+  await seek(page, 12_600); await expect(visitor).toHaveCSS('opacity', '0');
+  await seek(page, 59_200); await expect(visitor).toHaveAttribute('data-event', 'shooting-star'); await expect(visitor).toHaveCSS('opacity', '1');
   await seek(page, 600_000); await page.clock.fastForward(6000);
   const stopped = await visitor.getAttribute('style'); await page.clock.runFor(2000);
   await expect(visitor).toHaveAttribute('style', stopped!);

@@ -195,9 +195,13 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         const event = sceneryEvent(elapsed, season, theme);
         if (visitor.dataset.event !== event.kind) visitor.dataset.event = event.kind;
         visitor.style.opacity = String(event.opacity);
-        const eventY = event.kind === 'shooting-star' ? height * (.08 + event.progress * .2) : height * (.22 + .05 * Math.sin(event.progress * Math.PI * 3));
-        visitor.style.transform = `translate3d(${width * (1.05 - event.progress * 1.35)}px, ${eventY}px, 0)`;
+        const meteor = event.kind === 'shooting-star', bird = event.kind === 'birds';
+        const eventX = meteor ? width * (.9 - event.progress * .72) : width * (1.05 - event.progress * 1.35);
+        const eventY = meteor ? height * (.025 + event.progress * .23)
+          : height * (bird ? .1 + .025 * Math.sin(event.progress * Math.PI * 2) : .22 + .05 * Math.sin(event.progress * Math.PI * 3));
+        visitor.style.transform = `translate3d(${eventX}px, ${eventY}px, 0)`;
         visitor.style.setProperty('--wing', event.flutter.toFixed(3));
+        visitor.style.setProperty('--wing-angle', `${(Math.sin(elapsed / 150) * 28).toFixed(2)}deg`);
       }
       for (const [index, particle] of particles.entries()) {
         if (reduced) continue;

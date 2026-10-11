@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { koreanSeason, SEASONS } from '../src/lib/seasons';
+import { isSeasonMode, koreanSeason, SEASONS } from '../src/lib/seasons';
 import { journeyNotice, noticeInterval } from '../src/lib/journeyNotice';
 import { sceneryEvent, sceneryParticle } from '../src/lib/sceneryEvents';
 
@@ -48,19 +48,29 @@ test('halfway and near milestones override repeats, skipped notices do not repla
 });
 
 test('seasonal visitors alternate with quiet gaps and use different daytime and night events', () => {
-  assert.equal(sceneryEvent(13_000, 'spring', 'day').kind, 'butterfly');
-  assert.equal(sceneryEvent(34_000, 'spring', 'day').kind, 'birds');
-  assert.equal(sceneryEvent(13_000, 'summer', 'day').kind, 'dragonfly');
-  assert.equal(sceneryEvent(13_000, 'autumn', 'day').kind, 'leaves');
-  assert.equal(sceneryEvent(13_000, 'winter', 'day').kind, 'snow');
-  assert.equal(sceneryEvent(13_000, 'summer', 'night').kind, 'fireflies');
-  assert.equal(sceneryEvent(34_000, 'winter', 'night').kind, 'shooting-star');
+  assert.equal(sceneryEvent(34_000, 'spring', 'day').kind, 'butterfly');
+  assert.equal(sceneryEvent(34_000, 'summer', 'day').kind, 'dragonfly');
+  assert.equal(sceneryEvent(34_000, 'autumn', 'day').kind, 'leaves');
+  assert.equal(sceneryEvent(34_000, 'winter', 'day').kind, 'snow');
+  assert.equal(sceneryEvent(34_000, 'summer', 'night').kind, 'fireflies');
   for (const season of Object.keys(SEASONS) as (keyof typeof SEASONS)[]) for (const theme of ['day', 'night'] as const) {
     for (const time of [0, 9000, 17_000, 25_000, 39_000, 47_999]) assert.equal(sceneryEvent(time, season, theme).opacity, 0);
-    assert.equal(sceneryEvent(13_000, season, theme).opacity, 1);
-    assert.deepEqual(sceneryEvent(13_000, season, theme), sceneryEvent(13_000, season, theme));
-    assert.notEqual(sceneryEvent(13_000, season, theme).kind, sceneryEvent(61_000, season, theme).kind);
+    const time = theme === 'night' ? 11_200 : 13_000;
+    assert.equal(sceneryEvent(time, season, theme).opacity, 1);
+    assert.equal(sceneryEvent(time, season, theme).kind, theme === 'night' ? 'shooting-star' : 'birds');
+    assert.deepEqual(sceneryEvent(time, season, theme), sceneryEvent(time, season, theme));
+    assert.notEqual(sceneryEvent(time, season, theme).kind, sceneryEvent(34_000, season, theme).kind);
+    if (theme === 'night') {
+      assert.equal(sceneryEvent(12_600, season, theme).opacity, 0);
+      assert.equal(sceneryEvent(time + 48_000, season, theme).kind, 'shooting-star');
+      assert.equal(sceneryEvent(time + 48_000, season, theme).opacity, 1);
+    }
   }
+});
+
+test('manual seasons accept only auto or the four known seasons', () => {
+  for (const value of ['auto', ...Object.keys(SEASONS)]) assert.equal(isSeasonMode(value), true);
+  for (const value of ['day', 'fall', '', 3, null, {}, ['spring']]) assert.equal(isSeasonMode(value), false);
 });
 
 test('ambient particles stay within the scene without random jumps or accumulated timing drift', () => {

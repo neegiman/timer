@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { isBoolean, useLocalStorage } from './useLocalStorage';
 import { isBackgroundMode, isCoordinates, sceneTheme, type BackgroundMode, type SceneCoordinates } from '@/lib/dayNight';
-import { koreanSeason } from '@/lib/seasons';
+import { isSeasonMode, koreanSeason, type SeasonMode } from '@/lib/seasons';
 
 export type LocationStatus = 'idle' | 'pending' | 'ready' | 'denied' | 'unavailable' | 'timeout';
 
 /** Location stays in memory. Only the parent's background preference is persisted. */
 export function useDayNight(now: number) {
   const [mode, setMode] = useLocalStorage<BackgroundMode>('backgroundMode', 'auto', isBackgroundMode);
+  const [seasonMode, setSeasonMode] = useLocalStorage<SeasonMode>('backgroundSeason', 'auto', isSeasonMode);
   const [locationEnabled, setLocationEnabled] = useLocalStorage('useLocationBackground', false, isBoolean);
   const [coordinates, setCoordinates] = useState<SceneCoordinates | null>(null);
   const [status, setStatus] = useState<LocationStatus>('idle');
@@ -72,5 +73,6 @@ export function useDayNight(now: number) {
   const source = mode !== 'auto' ? 'manual' : activeCoordinates ? 'location' : 'clock';
   const enableLocation = () => { setStatus('pending'); setLocationEnabled(true); setRequest((value) => value + 1); };
   const disableLocation = () => { setLocationEnabled(false); setCoordinates(null); setStatus('idle'); };
-  return { mode, setMode, theme, season: koreanSeason(minute), source, status, locationEnabled, enableLocation, disableLocation };
+  const season = seasonMode === 'auto' ? koreanSeason(minute) : seasonMode;
+  return { mode, setMode, theme, season, seasonMode, setSeasonMode, source, status, locationEnabled, enableLocation, disableLocation };
 }
