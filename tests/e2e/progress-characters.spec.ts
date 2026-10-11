@@ -32,6 +32,12 @@ for (const character of characters) test(`${character.id}: progress artwork shar
   // Static choice cards deliberately keep their mobile-safe crop.
   if (['rabbit', 'dog', 'cat', 'chick', 'princess', 'prince'].includes(character.id)) await expect(choice.locator('.painted-animal-thumbnail')).toHaveCount(1);
   await page.getByRole('button', { name: '출발!', exact: true }).click();
+  // An SVG can be visible before its external paintings have downloaded. Wait
+  // for those pixels before comparing motion, including on the production CDN.
+  await page.evaluate(async () => {
+    const urls = new Set(Array.from(document.querySelectorAll<SVGImageElement>('.progress-marker svg.character-artwork image'), (image) => image.href.baseVal));
+    await Promise.all([...urls].map(async (src) => { const image = new Image(); image.src = src; await image.decode(); }));
+  });
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   const session = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!));
   const miniature = page.locator('.progress-marker');
