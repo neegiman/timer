@@ -26,7 +26,7 @@ test.describe('Korean calendar scenery', () => {
     await page.clock.install({ time: new Date('2026-03-15T12:00:00+09:00') });
     await start(page); await seek(page, 13_000); await menu(page);
     await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
-    const remaining = await page.getByTestId('countdown').textContent();
+    const remaining = await page.getByRole('slider', { name: '여행 시간 조절' }).getAttribute('aria-valuetext');
     const paintings = new Set<string>();
     for (const [season, date] of [['spring', '2026-03-15'], ['summer', '2026-06-15'], ['autumn', '2026-09-15'], ['winter', '2026-12-15']] as const) {
       await page.clock.setSystemTime(new Date(`${date}T12:00:00+09:00`));
@@ -36,7 +36,7 @@ test.describe('Korean calendar scenery', () => {
         await menu(page); await page.getByRole('button', { name: theme === 'day' ? '낮 배경' : '밤 배경', exact: true }).click();
         await page.getByRole('button', { name: '닫기', exact: true }).click(); await page.clock.runFor(32);
         await expect(page.locator('.journey-scene')).toHaveAttribute('data-theme', theme);
-        await expect(page.getByTestId('countdown')).toHaveText(remaining!);
+        await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', remaining!);
         const painting = await page.locator(theme === 'day' ? '.scene-day' : '.scene-night').getAttribute('data-scenery-src');
         expect(painting).toContain(`/timer/images/scenery-v1/${season}-${theme}-landscape.webp`);
         paintings.add(painting!);
@@ -51,7 +51,7 @@ test.describe('Korean calendar scenery', () => {
     await page.reload(); await page.clock.runFor(32);
     await expect(page.locator('.journey-scene')).toHaveAttribute('data-season', 'winter');
     await expect(page.locator('[data-status="paused"]')).toBeVisible();
-    await expect(page.getByTestId('countdown')).toHaveText(remaining!);
+    await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', remaining!);
     expect(errors).toEqual([]);
   });
 });
@@ -114,7 +114,7 @@ test('seasonal visitors move on the shared clock and reduced motion removes them
   await seek(page, 34_000); await expect(visitor).toHaveAttribute('data-event', 'butterfly'); await expect(visitor).toHaveCSS('opacity', '1');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(page.locator('.seasonal-atmosphere')).toBeHidden();
-  await expect(page.getByTestId('countdown')).toBeVisible(); await expect(page.getByRole('progressbar')).toBeVisible();
+  await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toBeVisible(); await expect(page.getByRole('progressbar')).toBeVisible();
   await seek(page, 37_000);
   const quiet = page.getByTestId('journey-quiet');
   await expect(quiet).toBeVisible();
@@ -132,7 +132,7 @@ test('parents can preview all eight backgrounds, persist a choice and return to 
   await start(page); await seek(page, 10_120); await menu(page);
   await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
   const scene = page.locator('.journey-scene'), visitor = page.locator('[data-scenery-visitor]');
-  const remaining = await page.getByTestId('countdown').textContent();
+  const remaining = await page.getByRole('slider', { name: '여행 시간 조절' }).getAttribute('aria-valuetext');
   const pose = await page.locator('.character-wrapper').getAttribute('style');
   const ground = await page.locator('.ground-layer').getAttribute('data-scroll-offset');
   for (const [season, name, bird] of [['spring', '봄', 'swallow'], ['summer', '여름', 'egret'], ['autumn', '가을', 'geese'], ['winter', '겨울', 'tit']] as const) {
@@ -145,7 +145,7 @@ test('parents can preview all eight backgrounds, persist a choice and return to 
       expect(buttons.every((button) => button.width >= 44 && button.x >= 0 && button.x + button.width <= 320)).toBe(true);
       await page.getByRole('button', { name: '닫기', exact: true }).click(); await page.clock.runFor(32);
       await expect(scene).toHaveAttribute('data-season', season); await expect(scene).toHaveAttribute('data-theme', theme);
-      await expect(page.getByTestId('countdown')).toHaveText(remaining!);
+      await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', remaining!);
       await expect(page.locator('.character-wrapper')).toHaveAttribute('style', pose!);
       await expect(page.locator('.ground-layer')).toHaveAttribute('data-scroll-offset', ground!);
       await expect(visitor).toHaveAttribute('data-event', theme === 'day' ? 'birds' : 'shooting-star');
@@ -161,7 +161,7 @@ test('parents can preview all eight backgrounds, persist a choice and return to 
   await page.reload(); await page.clock.runFor(32);
   await expect(scene).toHaveAttribute('data-season', 'winter'); await expect(scene).toHaveAttribute('data-theme', 'night');
   await expect(page.locator('[data-status="paused"]')).toBeVisible();
-  await expect(page.getByTestId('countdown')).toHaveText(remaining!);
+  await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', remaining!);
   const frozen = await visitor.getAttribute('style');
   await page.clock.fastForward(2000); await expect(visitor).toHaveAttribute('style', frozen!);
   await menu(page);

@@ -38,9 +38,9 @@ test('activity finish uses its own copy through halfway, pause, restart, refresh
   await expect(page.getByTestId('journey-message')).toHaveAttribute('data-message-id', /^tidy-during-halfway-/);
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '일시정지', exact: true }).click();
-  const pausedTime = await page.getByTestId('countdown').textContent();
+  const pausedTime = await page.getByRole('slider', { name: '여행 시간 조절' }).getAttribute('aria-valuetext');
   await page.clock.fastForward(60_000);
-  await expect(page.getByTestId('countdown')).toHaveText(pausedTime!);
+  await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', pausedTime!);
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '계속', exact: true }).click();
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();

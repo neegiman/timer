@@ -39,7 +39,6 @@ export function TimerApp() {
   const [minutes, setMinutes] = useLocalStorage('selectedDuration', 10, isDuration);
   const [promise, setPromise] = useLocalStorage<PromiseActivity>('lastPromise', defaultPromise, isPromise);
   const [soundEnabled, setSoundEnabled] = useLocalStorage('soundEnabled', true, isBoolean);
-  const [showNumericTime, setShowNumericTime] = useLocalStorage('showNumericTime', true, isBoolean);
   const [keepScreenAwake, setKeepScreenAwake] = useLocalStorage('keepScreenAwake', true, isBoolean);
   const [mode, setMode] = useLocalStorage('timerMode', 'after', isTimerMode);
   const [customDuration, setCustomDuration] = useState(false);
@@ -135,7 +134,7 @@ export function TimerApp() {
       {active ? <div className="timer-layout">
           <VisualTimer character={character} promise={timer.session?.promise ?? promise} mode={sessionMode} sessionId={timer.session!.id} progress={timer.progress}
             remaining={timer.remaining} minutes={timer.session ? timer.session.durationMs / 60_000 : minutes}
-            status={timer.status} showNumericTime={showNumericTime} animation={animation.state} input={animation.input} sampledAt={animation.sampledAt} theme={appearance.theme} season={appearance.season}
+            status={timer.status} animation={animation.state} input={animation.input} sampledAt={animation.sampledAt} theme={appearance.theme} season={appearance.season}
             adjustment={{ begin: timer.beginAdjustment, preview: timer.previewAdjustment, end: timer.endAdjustment, seek: timer.seek }} />
           {needsGesture && soundEnabled ? <button className="audio-recovery" onClick={unlock}><Volume2 size={22} /> 소리 켜기</button> : null}
           {completed ? <StarReward awarded={awarded} count={todayCount} total={totalCount} mode={sessionMode} goal={rewards.goal.target} filled={collection.filled} onAward={claimStar} onNewJourney={exit} onViewRewards={() => setModal('rewards')} /> : null}
@@ -183,7 +182,6 @@ export function TimerApp() {
       {keepScreenAwake && keepAwakeActive && screenWakeLock.status === 'unavailable' ? <button type="button" className="text-button" onClick={() => { void screenWakeLock.retry(); }}>화면 켜짐 다시 시도</button> : null}
       <SceneSettings appearance={appearance} space={character.id === 'rocket'} />
       <div className="setting-row"><div><strong>소리 ON / OFF</strong><p>출발과 도착을 다정한 소리로 알려요.</p></div><button className={`toggle ${soundEnabled ? 'on' : ''}`} role="switch" aria-checked={soundEnabled} aria-label="소리 ON/OFF" onClick={toggleSound}><span /></button></div>
-      <div className="setting-row"><div><strong>숫자로 남은 시간 표시</strong><p>꺼도 위쪽 여행 길로 시간을 알 수 있어요.</p></div><button className={`toggle ${showNumericTime ? 'on' : ''}`} role="switch" aria-checked={showNumericTime} aria-label="숫자로 남은 시간 표시" onClick={() => setShowNumericTime(!showNumericTime)}><span /></button></div>
       <button className="display-mode-button" onClick={() => setModal('rewardSettings')}><StoryIcon name="star" size={28} />별 목표 · 달력 · 백업</button>
       <button className="text-button" onClick={() => setModal('help')}><CircleHelp size={20} /> 사용 안내</button>
     </Modal> : null}

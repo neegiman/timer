@@ -56,17 +56,17 @@ test('clock fallback changes sky on foreground restoration without changing a pa
   await expect(page.locator('.journey-scene')).toHaveAttribute('data-theme', 'night');
   await menu(page);
   await page.getByRole('button', { name: '일시정지', exact: true }).click();
-  const remaining = await page.getByTestId('countdown').textContent();
+  const remaining = await page.getByRole('slider', { name: '여행 시간 조절' }).getAttribute('aria-valuetext');
   const ground = await page.locator('.ground-layer').getAttribute('style');
   await page.clock.setSystemTime(new Date('2026-10-09T06:00:00+09:00'));
   await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
   await expect(page.locator('.journey-scene')).toHaveAttribute('data-theme', 'day');
-  await expect(page.getByTestId('countdown')).toHaveText(remaining!);
+  await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', remaining!);
   expect(await page.locator('.ground-layer').getAttribute('style')).toBe(ground);
   await page.clock.setSystemTime(new Date('2026-10-09T18:00:00+09:00'));
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await expect(page.locator('.journey-scene')).toHaveAttribute('data-theme', 'night');
-  await expect(page.getByTestId('countdown')).toHaveText(remaining!);
+  await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', remaining!);
   expect(await page.evaluate(() => (window as unknown as GeoHarness).geoCalls)).toBe(0);
 });
 

@@ -118,7 +118,7 @@ test('pause freezes joints, scroll, miniature and time; finish stays fixed throu
       miniature: document.querySelector('.progress-marker')!.getAttribute('style'),
       // Opening the parent menu can scroll the page on mobile; compare scene coordinates.
       goal: { x: goal.x - scene.x, y: goal.y - scene.y },
-      number: document.querySelector('[data-testid="countdown"]')!.textContent,
+      remaining: document.querySelector('[role="slider"]')!.getAttribute('aria-valuetext'),
     };
   });
   const frozen = await pose();
@@ -190,7 +190,7 @@ test('1 and 120 minute journeys stay calm in their last ten seconds and stop at 
     }
     await seek(page, duration);
     await expect(page.getByTestId('journey-goal').locator('.finish-flag')).toBeVisible();
-    await expect(page.getByTestId('countdown')).toContainText('00:00');
+    await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', '남은 시간 00:00');
   }
 });
 

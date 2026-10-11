@@ -82,28 +82,22 @@ test('touch restart from pause and the large view keeps confirmation and returns
   expect((await session(page)).id).not.toBe(before.id);
   await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'running');
   await expect(page.locator('.app-shell')).toHaveAttribute('data-display', 'expanded');
-  await expect(page.getByTestId('countdown')).toHaveText('10:00남은 시간');
+  await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', '남은 시간 10:00');
   expect(await page.locator('.app-shell').evaluate((element) => element.scrollTop)).toBe(0);
 });
 
-test('countdown digits and their caption each sit at the horizontal center', async ({ page }) => {
+test('journey uses the visual trail without a numeric clock, including saved display preferences', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('promise-journey:v1:showNumericTime', 'true'));
   await start(page);
   for (const [width, height] of [[320, 740], [390, 844], [768, 1024], [1280, 900], [820, 390]]) {
     await page.setViewportSize({ width, height });
-    const alignment = await page.getByTestId('countdown').evaluate((element) => {
-      const range = document.createRange();
-      range.selectNode(element.firstChild!);
-      const digits = range.getBoundingClientRect();
-      const label = element.querySelector('span')!.getBoundingClientRect();
-      const overview = element.parentElement!.getBoundingClientRect();
-      return { digits: digits.x + digits.width / 2, label: label.x + label.width / 2,
-        center: overview.x + overview.width / 2, digitsBottom: digits.bottom, labelTop: label.top };
-    });
-    expect(Math.abs(alignment.digits - alignment.center)).toBeLessThan(1);
-    expect(Math.abs(alignment.label - alignment.center)).toBeLessThan(1);
-    expect(alignment.labelTop).toBeGreaterThanOrEqual(alignment.digitsBottom);
+    await expect(page.locator('.numeric-time')).toHaveCount(0);
+    await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toBeVisible();
+    await expect(page.locator('.progress-marker .character-icon')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
+  await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
+  await expect(page.getByRole('switch', { name: '숫자로 남은 시간 표시' })).toHaveCount(0);
 });
 
 test('time selection labels stay horizontally and vertically centered on phone and desktop', async ({ page, isMobile }, testInfo) => {

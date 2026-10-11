@@ -62,9 +62,9 @@ test('browser fullscreen follows external exits and preserves the active journey
   await expect(page.locator('.app-shell')).toHaveAttribute('data-display', 'native');
   await parentMenu(page);
   await page.getByRole('button', { name: '일시정지', exact: true }).click();
-  const paused = await page.getByTestId('countdown').textContent();
+  const paused = await page.getByRole('slider', { name: '여행 시간 조절' }).getAttribute('aria-valuetext');
   await page.clock.fastForward(60_000);
-  await expect(page.getByTestId('countdown')).toHaveText(paused!);
+  await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', paused!);
   await parentMenu(page);
   await page.getByRole('button', { name: '전체화면 끝내기', exact: true }).click();
   await expect(page.locator('.app-shell')).toHaveAttribute('data-display', 'window');

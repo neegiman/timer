@@ -129,6 +129,6 @@ test('a saved bear journey restores as rabbit without losing remaining time', as
   await expect(page.locator('[data-status="paused"]')).toBeVisible();
   await expect(page.locator('.traveler-body [data-character]')).toHaveAttribute('data-character', 'rabbit');
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).characterId)).toBe('rabbit');
-  await expect(page.getByTestId('countdown')).toHaveAttribute('aria-label', '남은 시간 06:40');
-  await page.reload(); await expect(page.getByTestId('countdown')).toHaveAttribute('aria-label', '남은 시간 06:40');
+  await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', '남은 시간 06:40');
+  await page.reload(); await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', '남은 시간 06:40');
 });

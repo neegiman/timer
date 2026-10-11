@@ -48,14 +48,13 @@ test('10-minute bath journey, arrival sound once, reward persists across refresh
   await page.getByRole('button', { name: '⭐ 약속 지켰어요' }).click();
   await expect(page.getByTestId('star-count')).toHaveText('1');
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
-  await page.getByRole('switch', { name: '숫자로 남은 시간 표시' }).click();
   await page.getByRole('button', { name: '닫기' }).click();
   await page.clock.fastForward(4000);
   if (supportsAudio) expect(await page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/finish.mp3')).length)).toBe(1);
   await page.reload();
   await expect(page.getByTestId('star-count')).toHaveText('1');
   await expect(page.getByRole('button', { name: '⭐ 별을 받았어요!' })).toBeDisabled();
-  await expect(page.getByTestId('countdown')).toHaveCount(0);
+  await expect(page.locator('.numeric-time')).toHaveCount(0);
   expect(errors).toEqual([]);
   expect(failedAssets).toEqual([]);
   expect([...assetUrls].some((url) => url.includes('/timer/_next/'))).toBe(true);
@@ -70,12 +69,12 @@ test('pause/resume, confirmation cancellation, refresh and background expiry', a
   await page.clock.fastForward(120_000);
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '일시정지', exact: true }).click();
-  const paused = await page.getByTestId('countdown').textContent();
+  const paused = await page.getByRole('slider', { name: '여행 시간 조절' }).getAttribute('aria-valuetext');
   await page.clock.fastForward(300_000);
-  await expect(page.getByTestId('countdown')).toHaveText(paused!);
+  await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', paused!);
   await page.reload();
   await expect(page.locator('[data-status="paused"]')).toBeVisible();
-  await expect(page.getByTestId('countdown')).toHaveText(paused!);
+  await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', paused!);
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '계속', exact: true }).click();
   await page.clock.fastForward(60_000);
@@ -111,10 +110,9 @@ test('custom values, restart, exit and settings persist', async ({ page }) => {
   await page.getByRole('button', { name: '로켓', exact: true }).click();
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('switch', { name: '소리 ON/OFF' }).click();
-  await page.getByRole('switch', { name: '숫자로 남은 시간 표시' }).click();
   await page.getByRole('button', { name: '닫기' }).click();
   await page.getByRole('button', { name: '출발!' }).click();
-  await expect(page.getByTestId('countdown')).toHaveCount(0);
+  await expect(page.locator('.numeric-time')).toHaveCount(0);
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.clock.fastForward(60_000);
   await page.getByRole('button', { name: '처음부터', exact: true }).click();
@@ -131,7 +129,7 @@ test('custom values, restart, exit and settings persist', async ({ page }) => {
   await expect(page.getByRole('button', { name: '로켓', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await expect(page.getByRole('switch', { name: '소리 ON/OFF' })).toHaveAttribute('aria-checked', 'false');
-  await expect(page.getByRole('switch', { name: '숫자로 남은 시간 표시' })).toHaveAttribute('aria-checked', 'false');
+  await expect(page.getByRole('switch', { name: '숫자로 남은 시간 표시' })).toHaveCount(0);
 });
 
 test('running timer refresh preserves original deadline', async ({ page }) => {

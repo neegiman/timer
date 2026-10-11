@@ -69,7 +69,7 @@ test('drag forward/back previews one clock, commits once, resumes and survives r
   // Allow one UI tick (250ms); the deadline itself is still exact.
   await page.clock.runFor(5250);
   expect(committed.targetTimestamp - await page.evaluate(() => Date.now())).toBe(selectedRemaining - 5250);
-  await expect(page.getByTestId('countdown')).toHaveAttribute('aria-label', `남은 시간 ${formatRemaining(selectedRemaining - 5000)}`);
+  await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', `남은 시간 ${formatRemaining(selectedRemaining - 5000)}`);
   await page.reload();
   await expect(slider(page)).toHaveAttribute('aria-valuetext', `남은 시간 ${formatRemaining(selectedRemaining - 5000)}`);
   expect((await session(page)).targetTimestamp).toBe(committed.targetTimestamp);
@@ -88,7 +88,7 @@ test('paused touch seek, cancellation, keyboard controls and endpoint finish exa
   await touch(page, 'pointerup', .9);
   await expect(page.locator('[data-status="paused"]')).toBeVisible();
   await page.clock.runFor(60_000);
-  await expect(page.getByTestId('countdown')).toHaveAttribute('aria-label', '남은 시간 01:00');
+  await expect(page.getByRole('slider', { name: '여행 시간 조절' })).toHaveAttribute('aria-valuetext', '남은 시간 01:00');
   await touch(page, 'pointerdown', .25);
   await touch(page, 'pointercancel', .25);
   await expect(slider(page)).toHaveAttribute('aria-valuetext', '남은 시간 01:00');
@@ -121,7 +121,7 @@ test('paused touch seek, cancellation, keyboard controls and endpoint finish exa
   await expect(page.getByTestId('star-count')).toHaveText('1');
 });
 
-test('running cancel restores time, numeric-off touch preview and mobile layouts', async ({ page }, testInfo) => {
+test('running cancel restores time, touch preview without a numeric clock and mobile layouts', async ({ page }, testInfo) => {
   await start(page);
   const original = await session(page);
   await move(page, .75); await page.mouse.down();
@@ -134,10 +134,7 @@ test('running cancel restores time, numeric-off touch preview and mobile layouts
   expect(cancelled.id).toBe(original.id);
   expect(cancelled.targetTimestamp - await page.evaluate(() => Date.now())).toBe(remaining);
   await page.mouse.up();
-  await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
-  await page.getByRole('switch', { name: '숫자로 남은 시간 표시' }).click();
-  await page.getByRole('button', { name: '닫기' }).click();
-  await expect(page.getByTestId('countdown')).toHaveCount(0);
+  await expect(page.locator('.numeric-time')).toHaveCount(0);
   for (const [width, height] of [[320, 740], [390, 844], [844, 390]]) {
     await page.setViewportSize({ width, height });
     await page.clock.runFor(32);

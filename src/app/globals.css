@@ -202,8 +202,6 @@ h1:focus { outline: none; }
 .journey-message-finished { display: none; }
 .promise-reminder, .completion-promise { display: flex; justify-content: center; align-items: center; gap: 10px; font-size: 24px; font-weight: 750; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
 .promise-reminder span, .completion-promise span { flex-shrink: 0; font-size: 40px; }
-.numeric-time { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; font-size: 22px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 12px; }
-.numeric-time span { font-size: 16px; }
 .reward-panel { max-width: 520px; text-align: center; margin: 12px auto 0; }
 .reward-button { width: 100%; }
 .reward-button.awarded { color: var(--green); background: #e0edcc; }
@@ -314,7 +312,6 @@ h1:focus { outline: none; }
 .is-paused .quiet-promise::before, .journey-card:has([data-suspended="true"]) .message-quiet *, .journey-card:has([data-suspended="true"]) .quiet-promise::before { animation-play-state: paused; }
 @keyframes quietTwinkle { 0%, 100% { opacity: .45; transform: translateY(1px); } 50% { opacity: .95; transform: translateY(-2px); } }
 @keyframes quietHalo { 0%, 100% { opacity: .35; transform: scale(.97); } 50% { opacity: .65; transform: scale(1.04); } }
-.numeric-time { margin-top: 8px; font-size: 23px; }
 .journey-progress { max-width: 650px; margin: 14px auto 0; padding: 0 20px; }
 .progress-endpoints { display: flex; justify-content: space-between; gap: 12px; font-size: 18px; font-weight: 800; margin-bottom: 26px; }
 .progress-endpoints > span { display: inline-flex; align-items: center; gap: 4px; }
@@ -371,7 +368,6 @@ h1:focus { outline: none; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-message-finished { display: block; visibility: hidden; pointer-events: none; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) { flex-direction: row; gap: 6px; font-size: 18px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) span { font-size: 28px; }
-  .app-shell:is([data-display="native"], [data-display="expanded"]) .numeric-time { font-size: 20px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .progress-endpoints { font-size: 16px; margin-bottom: 20px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .progress-track { margin-bottom: 0; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-progress { padding: 0 2px; margin-top: 10px; }
