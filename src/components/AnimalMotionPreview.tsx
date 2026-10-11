@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { NaturalAnimalArtwork } from './NaturalAnimalArtwork';
-import { animalIds, animalPose, animalProfiles, type AnimalId, type AnimalJoint } from '@/lib/animalMotion';
+import { animalIds, animalPose, animalProfiles, type AnimalId } from '@/lib/animalMotion';
 import { PaintedAnimalArtwork, PaintedAnimalThumbnail } from './PaintedAnimalArtwork';
+import { createAnimalRenderer } from '@/lib/renderAnimalPose';
 
 export function AnimalMotionPreview() {
   const gallery = useRef<HTMLDivElement>(null);
@@ -27,9 +28,8 @@ export function AnimalMotionPreview() {
     clock.current.startedAt ||= Date.now();
     const scenes = [...container.querySelectorAll<HTMLElement>('[data-animal-scene]')].map((scene) => {
       const id = scene.dataset.animalScene as AnimalId;
-      return { scene, id, body: scene.querySelector<SVGGElement>('[data-animal-body]')!,
+      return { scene, id, render: createAnimalRenderer(scene, id),
         ground: scene.querySelector<HTMLElement>('.animal-study-ground')!,
-        joints: [...scene.querySelectorAll<SVGGElement>('[data-animal-joint]')].map((node) => ({ node, joint: node.dataset.animalJoint as AnimalJoint })),
         scale: 1 };
     });
     let lastElapsed = -1;
@@ -47,10 +47,9 @@ export function AnimalMotionPreview() {
       const current = clock.current;
       const elapsed = current.accumulated + (current.playing ? Math.max(0, Date.now() - current.startedAt) * current.rate : 0);
       if (lastElapsed !== elapsed || lastReduced !== reduced.matches) {
-        for (const { scene, id, body, ground, joints, scale } of scenes) {
+        for (const { scene, id, render, ground, scale } of scenes) {
           const pose = animalPose(id, elapsed, !reduced.matches);
-          body.setAttribute('transform', `translate(0 ${pose.bob.toFixed(4)})`);
-          for (const { node, joint } of joints) node.setAttribute('transform', `rotate(${pose.joints[joint].toFixed(5)})`);
+          render(pose);
           ground.style.transform = `translate3d(${-pose.ground * scale % 48}px, 0, 0)`;
           scene.dataset.motionTime = elapsed.toFixed(3);
           scene.dataset.groundDistance = (pose.ground * scale).toFixed(5);

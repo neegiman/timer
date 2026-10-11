@@ -32,5 +32,9 @@ export function settleAnimalPose(id: AnimalId, gait: number, elapsed: number, re
   const from = animalPose(id, gait, !reduced), to = animalActionPose(id, 'idle', 0, reduced), blend = smoothstep(elapsed / 350);
   for (const name of Object.keys(to.joints) as AnimalJoint[]) to.joints[name] = from.joints[name] + (to.joints[name] - from.joints[name]) * blend;
   to.bob = from.bob * (1 - blend);
+  to.body.torso = from.body.torso.map((offset) => offset * (1 - blend));
+  to.body.tail = from.body.tail.map((offset) => offset * (1 - blend));
+  to.body.headY = from.body.headY * (1 - blend);
+  to.body.tailY = from.body.tailY * (1 - blend);
   return to;
 }

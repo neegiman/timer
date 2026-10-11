@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { walkingAnatomy, walkingPawContact } from '../../src/lib/walkingAnatomy';
+import { animalProfiles } from '../../src/lib/animalMotion';
 
 for (const [id, name, cycle] of [['dog', '강아지', 1440], ['cat', '고양이', 1900]] as const) {
   test(`${id} painted joints stay registered and all four paws remain attached through a stride`, async ({ page }) => {
@@ -102,7 +103,7 @@ for (const [id, name, cycle] of [['dog', '강아지', 1440], ['cat', '고양이'
     const first = await contact(); await page.clock.runFor(50); const second = await contact();
     for (const pose of [first, second]) { expect(Math.abs(pose.y - pose.baseline)).toBeLessThan(.3); expect(pose.heel).toBeLessThan(pose.y); }
     expect(Math.abs(second.x - first.x + second.distance - first.distance)).toBeLessThan(.3);
-    const pose = () => page.locator('.traveler-body [data-animal-joint]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('transform')));
+    const pose = () => page.locator('.traveler-body [data-animal-joint], .traveler-body [data-animal-torso-panel], .traveler-body [data-animal-tail-panel], .traveler-body [data-paw], .traveler-body [data-animal-head-root], .traveler-body [data-animal-tail-root]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('transform')));
     await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
     await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
     const paused = await pose(); await page.clock.runFor(3000); expect(await pose()).toEqual(paused);
@@ -116,6 +117,30 @@ for (const [id, name, cycle] of [['dog', '강아지', 1440], ['cat', '고양이'
     expect(await pose()).not.toEqual(paused);
   });
 }
+
+test('cat actual painted paws register on both sides while the head stays level through body and tail waves', async ({ page }) => {
+  await page.clock.install(); await page.goto('./animal-preview/');
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+  const read = (paw: string, sole: { x: number; y: number }) => page.locator('[data-animal-scene="cat"]').evaluate((scene, { paw, sole }) => {
+    const ankle = scene.querySelector<SVGGElement>(`[data-animal-joint="${paw}Ankle"]`)!;
+    const head = scene.querySelector<SVGGElement>('[data-animal-joint="head"]')!;
+    const toe = new DOMPoint(sole.x, sole.y).matrixTransform(ankle.getScreenCTM()!);
+    const headPoint = new DOMPoint(0, 0).matrixTransform(head.getScreenCTM()!);
+    return { worldX: toe.x + Number((scene as HTMLElement).dataset.groundDistance), headY: headPoint.y,
+      panels: Array.from(scene.querySelectorAll('[data-animal-torso-panel], [data-animal-tail-panel]'), (node) => node.getAttribute('transform')) };
+  }, { paw, sole });
+  const cycle = animalProfiles.cat.cycleMs;
+  for (const [side, touch] of [['near', .25], ['far', .75]] as const) {
+    await page.getByRole('button', { name: '다시 보기', exact: false }).click();
+    await page.clock.runFor(cycle * (2 + touch) + 16);
+    const fore = await read(`${side}Fore`, walkingPawContact('cat', false));
+    await page.clock.runFor(cycle * .75);
+    const hind = await read(`${side}Hind`, walkingPawContact('cat', true));
+    expect(Math.abs(fore.worldX - hind.worldX)).toBeLessThan(.2);
+    expect(Math.abs(fore.headY - hind.headY)).toBeLessThan(.05);
+    expect(hind.panels).not.toEqual(fore.panels);
+  }
+});
 
 test('a saved bear journey restores as rabbit without losing remaining time', async ({ page }) => {
   await page.clock.install();

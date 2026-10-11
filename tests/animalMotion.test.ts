@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { animalFoot, animalIds, animalPose, animalProfiles, PAW_BASELINE, rabbitFootPitch, type PawName } from '../src/lib/animalMotion';
+import { isWalker, torsoOffset } from '../src/lib/animalBodyMotion';
 
 test('rabbit hind paws push off together; four-legged walkers have a four-beat sequence', () => {
   const rabbit = animalProfiles.rabbit;
@@ -25,7 +26,8 @@ test('support paws move exactly with the ground and stay at the baseline', () =>
         const knee = pose.joints[`${paw as PawName}Knee`] * Math.PI / 180;
         const pitch = foot.pitch * Math.PI / 180;
         const x = rig.x + rig.upper * Math.cos(hip) + rig.lower * Math.cos(hip + knee) + foot.contactX * Math.cos(pitch) - foot.contactY * Math.sin(pitch);
-        const y = rig.y + rig.upper * Math.sin(hip) + rig.lower * Math.sin(hip + knee) + foot.contactX * Math.sin(pitch) + foot.contactY * Math.cos(pitch) + pose.bob;
+        const rootY = isWalker(id) ? torsoOffset(id, pose.body.torso, rig.x) : 0;
+        const y = rig.y + rootY + rig.upper * Math.sin(hip) + rig.lower * Math.sin(hip + knee) + foot.contactX * Math.sin(pitch) + foot.contactY * Math.cos(pitch) + pose.bob;
         assert.ok(Math.abs(x - foot.x) < .001, `${id} ${paw} misses target horizontally`);
         assert.ok(Math.abs(y - foot.y) < .001, `${id} ${paw} misses its vertical target`);
         if (foot.planted) assert.ok(Math.abs(y - PAW_BASELINE) < .001, `${id} ${paw} is not planted on the ground`);
@@ -70,11 +72,11 @@ test('rabbit paws roll over their toes, fold in swing and open smoothly for cont
   }
 });
 
-test('walkers use short, low steps with supporting forelegs rather than a crouching reach', () => {
+test('walkers keep low steps within their limb reach and support the chest without crouching', () => {
   for (const id of ['dog', 'cat'] as const) {
     const profile = animalProfiles[id];
-    // A long torso must not force an equally long stride just to register footprints.
-    assert.ok(profile.travel * profile.support / 2 <= 11);
+    const stride = profile.travel * profile.support / 2;
+    for (const rig of Object.values(profile.paws)) assert.ok(stride < (rig.upper + rig.lower) / 2);
     assert.ok(profile.lift <= 4);
     for (let sample = 0; sample < 400; sample++) {
       const pose = animalPose(id, profile.cycleMs * sample / 400);
@@ -83,9 +85,21 @@ test('walkers use short, low steps with supporting forelegs rather than a crouch
         const knee = Math.abs(pose.joints[`${name}Knee`]);
         assert.ok(knee < 90, `${id}/${paw} folds into a crouch`);
         if (paw.includes('Fore') && foot.planted) assert.ok(knee < 65, `${id}/${paw} cannot support the chest upright`);
-        assert.ok(Math.abs(foot.x - profile.paws[name]!.x - foot.contactX) <= 11.5, `${id}/${paw} overreaches`);
+        assert.ok(Math.abs(foot.x - profile.paws[name]!.x - foot.contactX) <= stride + 1, `${id}/${paw} overreaches`);
       }
     }
+  }
+});
+
+test('cat hind paws land in the preceding same-side forepaw prints in world coordinates', () => {
+  const profile = animalProfiles.cat;
+  for (let cycle = 0; cycle < 5; cycle++) for (const side of ['near', 'far'] as const) {
+    const forePaw = `${side}Fore` as const, hindPaw = `${side}Hind` as const;
+    const foreTime = (cycle + (side === 'near' ? .25 : .75)) * profile.cycleMs;
+    const fore = animalPose('cat', foreTime), hind = animalPose('cat', foreTime + .75 * profile.cycleMs);
+    assert.ok(Math.abs(fore.feet[forePaw]!.x + fore.ground - hind.feet[hindPaw]!.x - hind.ground) < 1e-8);
+    assert.equal(fore.feet[forePaw]!.y, PAW_BASELINE);
+    assert.equal(hind.feet[hindPaw]!.y, PAW_BASELINE);
   }
 });
 

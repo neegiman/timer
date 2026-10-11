@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { animalPose, animalProfiles, pawContact, type AnimalId, type PawName } from '@/lib/animalMotion';
+import { AnimalTorsoPanels, AnimalTailPanels } from './AnimalBodyPanels';
 
 function Paw({ id, name, far, fur }: { id: AnimalId; name: PawName; far?: boolean; fur: string }) {
   const profile = animalProfiles[id];
@@ -43,19 +44,19 @@ export function NaturalAnimalArtwork({ id }: { id: AnimalId }) {
       <linearGradient id={`${prefix}-natural-leg`} gradientUnits="userSpaceOnUse" x1="0" y1="-2" x2="4" y2="53"><stop stopColor={profile.fur} /><stop offset="1" stopColor={profile.light} /></linearGradient>
     </defs>
     <g data-animal-body>
-      <g transform={`translate(${bird ? 61 : 30} ${bird ? 167 : 157})`}><g data-animal-joint="tail">
+      <g transform={`translate(${bird ? 61 : 30} ${bird ? 167 : 157})`}><g data-animal-tail-root><g data-animal-joint="tail"><AnimalTailPanels id={id}>
         {rabbit ? <circle cx="-3" cy="-2" r="9" fill={profile.light} />
           : cat ? <path d="M3 4C-17-5-22-35-9-49Q-5-54-3-47C-10-29-8-11 7-4" fill={profile.shade} />
           : bird ? <path d="m4 1-19-12 9 18 8 7" fill={profile.shade} />
           : <path d="M6 7C-18 7-24-6-19-23Q-17-27-15-21C-12-9-3-6 11-7" fill={profile.shade} />}
-      </g></g>
+      </AnimalTailPanels></g></g></g>
       <Paw id={id} name="farHind" far fur={legFur} /><Paw id={id} name="farFore" far fur={legFur} />
-      {bird ? <ellipse cx="81" cy="161" rx="35" ry="32" fill={fur} />
+      <AnimalTorsoPanels id={id}>{bird ? <ellipse cx="81" cy="161" rx="35" ry="32" fill={fur} />
         : <path d={rabbit ? 'M28 160Q27 132 55 133Q74 136 90 147Q108 134 119 150Q132 169 114 176Q78 182 43 177Q26 174 28 160Z'
           : 'M30 149Q49 136 72 144Q96 139 113 150Q131 161 119 172Q95 176 79 172Q59 174 35 171Q24 165 30 149Z'} fill={fur} />}
       {rabbit ? <ellipse cx="49" cy="162" rx="26" ry="24" fill={fur} stroke={profile.line} strokeWidth=".7" /> : null}
-      {cat ? <g stroke={profile.shade} strokeWidth="3.5" strokeLinecap="round"><path d="m53 144 3 12m10-12 2 9m12-10 2 10m13-9 1 11M39 156l-2 9" /></g> : null}
-      <g transform={`translate(${bird ? 90 : 111} ${bird ? 158 : 154})`}><g data-animal-joint="head"><g transform={`translate(${bird ? -90 : -111} ${bird ? -158 : -154})`}>
+      {cat ? <g stroke={profile.shade} strokeWidth="3.5" strokeLinecap="round"><path d="m53 144 3 12m10-12 2 9m12-10 2 10m13-9 1 11M39 156l-2 9" /></g> : null}</AnimalTorsoPanels>
+      <g transform={`translate(${bird ? 90 : 111} ${bird ? 158 : 154})`}><g data-animal-head-root><g data-animal-joint="head"><g transform={`translate(${bird ? -90 : -111} ${bird ? -158 : -154})`}>
         {!bird ? <>
           <g transform={`translate(${rabbit ? 105 : 111} ${rabbit ? 113 : 124})`}><g data-animal-joint="earFar">
             {rabbit ? <><path d="M-5 5Q-18-22-10-43Q-6-55 1-43Q10-20 5 6Z" fill={profile.shade} /><path d="M-3-5Q-9-25-5-35Q0-24 1-6" fill="#e7b4a7" /></>
@@ -81,7 +82,7 @@ export function NaturalAnimalArtwork({ id }: { id: AnimalId }) {
           <circle cx="115" cy="134" r="4.8" fill="#55402b" /><circle cx="116" cy="132" r="1.6" fill="#fffbee" />
           <path d="m125 140 15 6-14 6Z" fill="#df9951" stroke="#be843e" strokeWidth=".7" />
         </>}
-      </g></g></g>
+      </g></g></g></g>
       {bird ? <g transform="translate(88 155)"><g data-animal-joint="wing"><g transform="scale(-1 1)"><path d="M-8-5Q14-14 28 2Q23 19 7 18L8 13 2 15 1 10Q-10 9-8-5Z" fill={profile.light} stroke={profile.shade} strokeWidth=".6" /></g></g></g> : null}
       <Paw id={id} name="nearHind" fur={legFur} /><Paw id={id} name="nearFore" fur={legFur} />
     </g>

@@ -6,6 +6,7 @@ import { assetPath } from '@/lib/assetPath';
 import { rabbitAnatomy } from '@/lib/rabbitAnatomy';
 import { walkingAnatomy, type LimbArtwork } from '@/lib/walkingAnatomy';
 import { chickAnatomy } from '@/lib/chickAnatomy';
+import { AnimalTorsoPanels, AnimalTailPanels } from './AnimalBodyPanels';
 
 type PartName = keyof typeof atlases.rabbit.parts;
 /** A bounded CSS image crop avoids nested SVG repainting when a choice is tapped on mobile. */
@@ -75,8 +76,8 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
   // Let the torso supply the hip/shoulder fur instead of painting a second
   // outlined thigh over it. Reveal the moving limb as it leaves the body.
   const walker = id === 'dog' || id === 'cat';
-  const fadeStart = walker ? hind ? -2 : -3 : artwork ? -14 : -overlap;
-  const fadeEnd = walker ? hind ? 14 : 8 : artwork ? 5 : 12;
+  const fadeStart = id === 'cat' ? 4 : walker ? hind ? -2 : -3 : artwork ? -14 : -overlap;
+  const fadeEnd = id === 'cat' ? 19 : walker ? hind ? 14 : 8 : artwork ? 5 : 12;
   return <g data-paw={name} transform={`translate(${rig.x} ${rig.y})`} filter={far ? filter : undefined}>
     {blendedRoot ? <defs>
       <linearGradient id={`${prefix}-root-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={fadeStart} x2="0" y2={fadeEnd}><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
@@ -114,18 +115,18 @@ export function PaintedAnimalArtwork({ id, label, compact = false }: { id: Anima
         <feComponentTransfer><feFuncR type="linear" slope=".79" /><feFuncG type="linear" slope=".79" /><feFuncB type="linear" slope=".79" /></feComponentTransfer>
       </filter></defs>
       <g data-animal-body data-body>
-        <g transform={`translate(${bird ? 58 : 29} ${bird ? 164 : 158})`}><g data-animal-joint="tail">
+        <g transform={`translate(${bird ? 58 : 29} ${bird ? 164 : 158})`}><g data-animal-tail-root><g data-animal-joint="tail"><AnimalTailPanels id={id}>
           <Part id={id} part="tail" x={id === 'cat' || dog ? -24 : -16} y={id === 'cat' || dog ? -51 : -13} width={id === 'cat' || dog ? 35 : 23} height={id === 'cat' || dog ? 57 : 24} />
-        </g></g>
+        </AnimalTailPanels></g></g></g>
         <PaintedPaw id={id} name="farHind" far filter={filter} /><PaintedPaw id={id} name="farFore" far filter={filter} />
         {/* Far limbs stay behind the torso; near limb roots blend into its fur. */}
-        <Part id={id} part="torso" {...torso} />
-        <g transform={`translate(${pivot.x} ${pivot.y})`}><g data-animal-joint="head"><g transform={`translate(${-pivot.x} ${-pivot.y})`}>
+        <AnimalTorsoPanels id={id}><Part id={id} part="torso" {...torso} /></AnimalTorsoPanels>
+        <g transform={`translate(${pivot.x} ${pivot.y})`}><g data-animal-head-root><g data-animal-joint="head"><g transform={`translate(${-pivot.x} ${-pivot.y})`}>
           {!bird ? <PaintedEar id={id} part="earFar" placement={earFar} /> : null}
           {!dog ? nearEar : null}
           <Part id={id} part="head" {...head} />
           {dog ? nearEar : null}
-        </g></g></g>
+        </g></g></g></g>
         {bird ? <g transform={`translate(${chickAnatomy.wing.anchorX} ${chickAnatomy.wing.anchorY})`}><g data-animal-joint="wing">
           <Part id={id} {...chickAnatomy.wing} />
         </g></g> : null}

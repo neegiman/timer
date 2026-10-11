@@ -45,15 +45,15 @@ export const walkingAnatomy = {
     },
   },
   cat: {
-    torso: fittedPart('cat', 'torso', 23, 132, 107),
-    head: fittedPart('cat', 'head', 101, 124, 44), headPivot: { x: 112, y: 149 },
-    earNear: fittedEar('cat', 'earNear', 112, 138, { x: 94, y: 183 }, 23),
-    earFar: fittedEar('cat', 'earFar', 122, 134, { x: 97, y: 186 }, 21),
+    torso: fittedPart('cat', 'torso', 23, 135, 100),
+    head: fittedPart('cat', 'head', 95, 124, 44), headPivot: { x: 106, y: 149 },
+    earNear: fittedEar('cat', 'earNear', 106, 138, { x: 94, y: 183 }, 23),
+    earFar: fittedEar('cat', 'earFar', 116, 134, { x: 97, y: 186 }, 21),
     paws: {
-      nearHind: { x: 42, y: 156, upper: 22, lower: 23, bend: 1 },
-      farHind: { x: 50, y: 154, upper: 23, lower: 24, bend: 1 },
-      nearFore: { x: 111, y: 158, upper: 20, lower: 22, bend: -1 },
-      farFore: { x: 119, y: 156, upper: 21, lower: 23, bend: -1 },
+      nearHind: { x: 47, y: 148, upper: 28, lower: 28, bend: 1 },
+      farHind: { x: 55, y: 146, upper: 29, lower: 29, bend: 1 },
+      nearFore: { x: 101, y: 150, upper: 27, lower: 27, bend: -1 },
+      farFore: { x: 109, y: 148, upper: 28, lower: 28, bend: -1 },
     },
     hindArtwork: {
       upper: { pivot: { x: 88, y: 42 }, tip: { x: 88, y: 244 } },

@@ -9,7 +9,7 @@ import { getCharacterPose, type JointName } from '@/lib/characterPose';
 import { gaitPixelsPerMs, motionProfile } from '@/lib/motionProfiles';
 import type { AnimationInput, AnimationState } from '@/types/animation';
 import { animalActionPose, isAnimalId, settleAnimalPose } from '@/lib/animalActionPose';
-import type { AnimalJoint } from '@/lib/animalMotion';
+import { createAnimalRenderer } from '@/lib/renderAnimalPose';
 import { princessPose, settlePrincessPose } from '@/lib/princessMotion';
 import { paintedPrincePose, princeCapePanelTransform, princeCapeRootTransform, settlePaintedPrincePose } from '@/lib/paintedPrinceMotion';
 import { isPixelVehicle, vehicleFrame, vehicleViewBox } from '@/lib/pixelVehicles';
@@ -36,8 +36,6 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
   const renderFrame = useRef<(() => void) | null>(null);
   const animations = useRef<Animation[]>([]);
   const joints = useRef<{ element: SVGGElement; name: JointName }[]>([]);
-  const animalJoints = useRef<{ element: SVGGElement; name: AnimalJoint }[]>([]);
-  const animalBody = useRef<SVGGElement | null>(null);
   const princeBody = useRef<SVGGElement | null>(null);
   const vehicleSprite = useRef<SVGSVGElement | null>(null);
 
@@ -51,9 +49,6 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     for (const animation of animations.current) animation.pause();
     joints.current = Array.from(body.current?.querySelectorAll<SVGGElement>('[data-joint]') ?? [])
       .map((element) => ({ element, name: element.dataset.joint as JointName }));
-    animalJoints.current = Array.from(body.current?.querySelectorAll<SVGGElement>('[data-animal-joint]') ?? [])
-      .map((element) => ({ element, name: element.dataset.animalJoint as AnimalJoint }));
-    animalBody.current = body.current?.querySelector<SVGGElement>('[data-animal-body]') ?? null;
     princeBody.current = body.current?.querySelector<SVGGElement>('[data-prince-body]') ?? null;
     vehicleSprite.current = body.current?.querySelector<SVGSVGElement>('[data-vehicle-sprite]') ?? null;
   }, [state.phaseKey, state.characterAction, characterId]);
@@ -69,13 +64,12 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     const princeCape = Array.from(sprite.querySelectorAll<SVGGElement>('[data-prince-cape-panel]'));
     const progressPrinceCape = Array.from(marker.current?.querySelectorAll<SVGGElement>('[data-prince-cape-panel]') ?? []);
     const progressVehicle = marker.current?.querySelector<SVGSVGElement>('[data-vehicle-sprite]');
-    const progressAnimalBody = marker.current?.querySelector<SVGGElement>('[data-animal-body]');
-    const progressAnimalJoints = Array.from(marker.current?.querySelectorAll<SVGGElement>('[data-animal-joint]') ?? [])
-      .map((element) => ({ element, name: element.dataset.animalJoint as AnimalJoint }));
     const progressJoints = Array.from(marker.current?.querySelectorAll<SVGGElement>('[data-joint]') ?? [])
       .map((element) => ({ element, name: element.dataset.joint as JointName }));
     const profile = motionProfile(characterId);
     const animalId = isAnimalId(characterId) ? characterId : null;
+    const renderAnimal = animalId ? createAnimalRenderer(sprite, animalId) : null;
+    const renderProgressAnimal = animalId ? createAnimalRenderer(marker.current, animalId) : null;
     const vehicleId = isPixelVehicle(characterId) ? characterId : null;
     const layers = Array.from(element.querySelectorAll<HTMLElement>('[data-layer]'));
     const visitor = element.querySelector<HTMLElement>('[data-scenery-visitor]');
@@ -165,13 +159,11 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       if (animalId) {
         const animal = pose.phase === 'SETTLE' ? settleAnimalPose(animalId, gait, pose.actionElapsedMs, reduced)
           : animalActionPose(animalId, pose.characterAction, animationTime, reduced);
-        animalBody.current?.setAttribute('transform', `translate(0 ${animal.bob.toFixed(5)})`);
-        for (const joint of animalJoints.current) joint.element.setAttribute('transform', `rotate(${animal.joints[joint.name].toFixed(5)})`);
+        renderAnimal?.(animal);
         // Reuse the exact main pose during travel; the miniature rests at the
         // endpoint while the main character crosses and celebrates.
         const miniature = miniatureAction === 'walk' && walking ? animal : animalActionPose(animalId, miniatureAction, gait, reduced);
-        progressAnimalBody?.setAttribute('transform', `translate(0 ${miniature.bob.toFixed(5)})`);
-        for (const joint of progressAnimalJoints) joint.element.setAttribute('transform', `rotate(${miniature.joints[joint.name].toFixed(5)})`);
+        renderProgressAnimal?.(miniature);
       }
       const prince = characterId === 'prince' ? (pose.phase === 'SETTLE' ? settlePaintedPrincePose(gait, pose.actionElapsedMs, reduced)
         : paintedPrincePose(pose.characterAction, animationTime, reduced)) : null;

@@ -1,6 +1,7 @@
 import { rabbitAnatomy, rabbitHindContact } from './rabbitAnatomy';
 import { walkingAnatomy, walkingPawContact } from './walkingAnatomy';
 import { chickAnatomy, chickPawContact } from './chickAnatomy';
+import { animalBodyMotion, isWalker, torsoOffset } from './animalBodyMotion';
 
 /** Animal-specific motion studies. Illustrative gait rigs, not measured motion-capture data. */
 export type AnimalId = 'rabbit' | 'dog' | 'cat' | 'chick';
@@ -22,14 +23,16 @@ export const animalProfiles: Record<AnimalId, AnimalProfile> = {
   // Short low strides keep these small paintings upright. Ground and finish
   // speed use this same travel value; a longer torso must not force overreaching.
   dog: { name: '강아지', cycleMs: 1440, support: .68, travel: 32, lift: 4,
-    phases: { nearHind: 0, nearFore: .75, farHind: .5, farFore: .25 },
+    // Four separate contacts, with closer diagonal support than the cat's lateral sequence.
+    phases: { nearHind: 0, nearFore: .6, farHind: .5, farFore: .1 },
     paws: walkingAnatomy.dog.paws,
-    description: '네 발이 차례대로 땅을 딛어요. 귀와 꼬리도 작은 리듬을 타요.',
+    description: '네 발로 또각또각, 대각선으로 몸을 받쳐요. 가슴과 귀, 꼬리가 작은 리듬을 타요.',
     fur: '#ddb787', light: '#f6ddaf', shade: '#bd9465', line: '#a17a53' },
-  cat: { name: '고양이', cycleMs: 1900, support: .7, travel: 30, lift: 3,
+  cat: { name: '고양이', cycleMs: 1900, support: .7,
+    travel: (walkingAnatomy.cat.paws.nearFore.x + walkingPawContact('cat', false).x - walkingAnatomy.cat.paws.nearHind.x - walkingPawContact('cat', true).x) / .75, lift: 3,
     phases: { nearHind: 0, nearFore: .75, farHind: .5, farFore: .25 },
     paws: walkingAnatomy.cat.paws,
-    description: '몸은 조용히, 네 발은 작은 보폭으로 사뿐히 옮겨요. 꼬리가 균형을 잡아요.',
+    description: '앞발이 디딘 자리를 뒷발이 사뿐히 따라 딛어요. 유연한 허리와 꼬리가 부드럽게 이어져요.',
     fur: '#a7aea0', light: '#d8dbcd', shade: '#808e7e', line: '#727e6b' },
   chick: { name: '병아리', cycleMs: 780, support: .65, travel: 18, lift: 5,
     phases: { nearHind: 0, farHind: .5, nearFore: 0, farFore: 0 },
@@ -87,7 +90,8 @@ export function animalPose(id: AnimalId, elapsedMs: number, moving = true) {
   const p = wrap(cycle);
   // Weight rises during hind-paw propulsion, then settles through fore-paw contact.
   const hop = id === 'rabbit' && moving ? 2.4 * (p < .86 ? ease((p - .72) / .14) : 1 - ease((p - .86) / .12)) : 0;
-  const bob = !moving ? 0 : id === 'rabbit' ? -hop : Math.sin(cycle * Math.PI * 4) * (id === 'chick' ? .7 : .25);
+  const bob = !moving ? 0 : id === 'rabbit' ? -hop : Math.sin(cycle * Math.PI * 4) * (id === 'chick' ? .7 : id === 'dog' ? .45 : .12);
+  const body = animalBodyMotion(id, cycle, bob, moving);
   const joints = {} as Record<AnimalJoint, number>;
   const feet = {} as Partial<Record<PawName, { x: number; y: number; planted: boolean; contactX: number; contactY: number; pitch: number }>>;
   for (const [paw, rig] of Object.entries(profile.paws) as [PawName, PawRig][]) {
@@ -100,17 +104,18 @@ export function animalPose(id: AnimalId, elapsedMs: number, moving = true) {
     const angle = pitch * Math.PI / 180;
     const soleX = contactX * Math.cos(angle) - contactY * Math.sin(angle);
     const soleY = contactX * Math.sin(angle) + contactY * Math.cos(angle);
-    const y = PAW_BASELINE - soleY - rig.y - bob - foot.lift;
+    const rootY = isWalker(id) ? torsoOffset(id, body.torso, rig.x) : 0;
+    const y = PAW_BASELINE - soleY - rig.y - rootY - bob - foot.lift;
     const solved = animalLeg(foot.x + contactX - soleX, y, rig);
     joints[`${paw}Hip`] = solved.hip; joints[`${paw}Knee`] = solved.knee; joints[`${paw}Ankle`] = solved.ankle + pitch;
     feet[paw] = { x: rig.x + foot.x + contactX, y: PAW_BASELINE - foot.lift, planted: foot.planted, contactX, contactY, pitch };
   }
-  joints.head = moving ? Math.sin(cycle * Math.PI * 2) * (id === 'chick' ? 2 : .8) : 0;
+  joints.head = moving ? Math.sin(cycle * Math.PI * (id === 'dog' ? 4 : 2)) * (id === 'chick' ? 2 : id === 'cat' ? .2 : id === 'dog' ? 1.1 : .8) : 0;
   joints.earNear = moving ? Math.sin(cycle * Math.PI * 2 - .8) * (id === 'rabbit' ? 4 : id === 'dog' ? 3 : .6) : 0;
   joints.earFar = moving ? Math.sin(cycle * Math.PI * 2 - 1) * (id === 'rabbit' ? 3 : id === 'dog' ? 2.5 : .5) : 0;
-  joints.tail = moving ? Math.sin(cycle * Math.PI * 2 - .7) * (id === 'dog' ? 7 : id === 'cat' ? 4 : 1) : 0;
+  joints.tail = moving ? Math.sin(cycle * Math.PI * (id === 'dog' ? 4 : 2) - .7) * (id === 'dog' ? 9 : id === 'cat' ? 1.5 : 1) : 0;
   joints.wing = moving && id === 'chick' ? Math.sin(cycle * Math.PI * 2 - .4) * 1.5 : 0;
-  return { joints, feet, bob, ground: moving ? cycle * profile.travel : 0 };
+  return { joints, feet, bob, body, ground: moving ? cycle * profile.travel : 0 };
 }
 
 /** The painted toe pad, shared by IK, the vector study and browser contact checks. */

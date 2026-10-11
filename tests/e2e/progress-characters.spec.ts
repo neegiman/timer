@@ -4,7 +4,8 @@ import sharp from 'sharp';
 import { characters } from '../../src/lib/characters';
 import { motionProfile } from '../../src/lib/motionProfiles';
 import { animalActionPose, isAnimalId } from '../../src/lib/animalActionPose';
-import type { AnimalJoint } from '../../src/lib/animalMotion';
+import { animalProfiles, type AnimalJoint } from '../../src/lib/animalMotion';
+import { isWalker } from '../../src/lib/animalBodyMotion';
 import { princessPose } from '../../src/lib/princessMotion';
 import { paintedPrincePose, princeCapePanelTransform, princeCapeRootTransform } from '../../src/lib/paintedPrinceMotion';
 import type { JointName } from '../../src/lib/characterPose';
@@ -19,6 +20,12 @@ async function readPoses(page: Page) {
       body: root.querySelector('[data-animal-body], [data-prince-body]')?.getAttribute('transform') ?? null,
       cape: Array.from(root.querySelectorAll('[data-prince-cape-panel]'), (panel) => panel.getAttribute('transform')),
       capeRoot: root.querySelector('[data-prince-cape]')?.getAttribute('transform') ?? null,
+      deformation: {
+        panels: Array.from(root.querySelectorAll('[data-animal-torso-panel], [data-animal-tail-panel]'), (node) => node.getAttribute('transform')),
+        roots: Array.from(root.querySelectorAll('[data-paw]'), (node) => node.getAttribute('transform')),
+        head: root.querySelector('[data-animal-head-root]')?.getAttribute('transform') ?? null,
+        tail: root.querySelector('[data-animal-tail-root]')?.getAttribute('transform') ?? null,
+      },
     });
     return { main: read(document.querySelector('.traveler-body')!), miniature: read(document.querySelector('.progress-marker')!) };
   });
@@ -101,6 +108,14 @@ for (const character of characters) test(`${character.id}: progress artwork shar
     body: restingAnimal ? `translate(0 ${restingAnimal.bob.toFixed(5)})` : restingPrince ? `translate(0 ${restingPrince.bodyY.toFixed(5)})` : null,
     cape: restingPrince ? beforeReduced.cape.map((_, index) => princeCapePanelTransform(restingPrince.cape, index)) : [],
     capeRoot: restingPrince ? princeCapeRootTransform(restingPrince.capeTransform) : null,
+    deformation: isAnimalId(character.id) && isWalker(character.id) ? {
+      panels: beforeReduced.deformation.panels.map(() => 'matrix(1.0000000 0.0000000 0.0000000 1.0000000 0.0000000 0.0000000)'),
+      roots: (['farHind', 'farFore', 'nearHind', 'nearFore'] as const).map((paw) => {
+        const rig = animalProfiles[character.id as 'dog' | 'cat'].paws[paw]!;
+        return `translate(${rig.x} ${rig.y.toFixed(5)})`;
+      }),
+      head: 'translate(0 0.00000)', tail: 'translate(0 0.00000)',
+    } : beforeReduced.deformation,
     joints: beforeReduced.joints.map((joint) => ({ ...joint, transform: `rotate(${(restingAnimal
       ? restingAnimal.joints[joint.name as AnimalJoint] : restingHuman[joint.name as JointName]).toFixed(5)})` })),
   };
