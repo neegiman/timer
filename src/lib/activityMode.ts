@@ -19,7 +19,7 @@ export function activityReminder(promise: PromiseActivity, mode: TimerMode, char
   if (characterName) return mode === 'after'
     ? `${characterName} 친구가 도착하면 ${startAction(promise)}.`
     : `${characterName} 친구와 ${promise.name} 함께 해요. 도착하면 마무리해요.`;
-  return mode === 'after' ? `활동 시작 · 도착하면 ${startAction(promise)}` : `활동 마무리 · ${promise.name}, 도착하면 마무리해요`;
+  return mode === 'after' ? `도착하면 ${startAction(promise)}` : `${promise.name}, 도착하면 마무리해요`;
 }
 
 export function activityCompletion(promise: PromiseActivity, mode: TimerMode) {

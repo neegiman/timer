@@ -33,7 +33,7 @@ function sampleBackup() {
 test('activity finish uses its own copy through halfway, pause, restart, refresh and manual reward', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', (error) => errors.push(error.message));
   await page.clock.install(); await page.goto('./'); await prepare(page, 'during');
-  await expect(page.locator('.promise-reminder')).toContainText('도착하면 마무리');
+  await expect(page.locator('.promise-reminder')).toHaveText('정리하기, 도착하면 마무리해요');
   await page.clock.fastForward(150_000);
   await expect(page.getByTestId('journey-message')).toHaveAttribute('data-message-id', /^tidy-during-halfway-/);
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
@@ -48,7 +48,7 @@ test('activity finish uses its own copy through halfway, pause, restart, refresh
   await page.getByRole('button', { name: '다시 출발', exact: true }).click();
   expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).mode, `${prefix}activeSession`)).toBe('during');
   await page.reload();
-  await expect(page.locator('.promise-reminder')).toContainText('도착하면 마무리');
+  await expect(page.locator('.promise-reminder')).toHaveText('정리하기, 도착하면 마무리해요');
   await page.clock.fastForward(271_000);
   await expect(page.getByTestId('journey-message')).toHaveAttribute('data-message-id', /^tidy-during-near-/);
   await page.clock.fastForward(30_000); await page.clock.fastForward(6000);
@@ -69,7 +69,7 @@ test('activity finish uses its own copy through halfway, pause, restart, refresh
 
 test('activity start remains distinct and calendar stores each day cumulatively', async ({ page }) => {
   await page.clock.install(); await page.goto('./'); await prepare(page, 'after');
-  await expect(page.locator('.promise-reminder')).toContainText('활동 시작 · 도착하면 장난감을 정리해요');
+  await expect(page.locator('.promise-reminder')).toHaveText('도착하면 장난감을 정리해요');
   await finish(page);
   await expect(page.getByTestId('journey-message')).toHaveText('장난감을 정리해요. 🧺');
   await expect(page.locator('.journey-message')).toBeHidden();

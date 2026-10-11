@@ -38,8 +38,8 @@ test('activity choices stay relevant, and unknown or prototype-shaped IDs use cu
 
 test('activity start and finish copy describe the right side of the deadline', () => {
   for (const promise of activities) {
-    assert.match(activityReminder(promise, 'after'), /활동 시작/);
-    assert.match(activityReminder(promise, 'during'), /활동 마무리/);
+    assert.match(activityReminder(promise, 'after'), /^도착하면 /);
+    assert.match(activityReminder(promise, 'during'), /, 도착하면 마무리해요$/);
     for (const text of activityMessageOptions(promise, 'during', 'near')) assert.match(text, /마무리|끝나/);
     for (const mode of modes) for (const text of activityMessageOptions(promise, mode, 'arrived')) {
       assert.doesNotMatch(text, /도착|마무리|잘했|수고|시간이|끝났/);
