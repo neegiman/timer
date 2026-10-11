@@ -18,7 +18,7 @@ test('chick feathers point backward and its actual painted feet touch the ground
     await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
     await page.clock.runFor(16);
   };
-  const frames: { html: string; planted: string[] }[] = [];
+  const frames: { html: string; planted: string[]; ankles: { name: string; y: number }[] }[] = [];
   const check = async (idle = false) => {
     const gait = Number(await page.locator('.character-wrapper').getAttribute('data-gait-time'));
     const pose = animalPose('chick', gait, !idle);
@@ -38,14 +38,24 @@ test('chick feathers point backward and its actual painted feet touch the ground
         const toe = partPoint(part, anatomy.legArtwork.paw.sole);
         return { name, y: toe.y, x: toe.x };
       });
+      const joints: number[] = [];
+      const ankles = ['nearHind', 'farHind'].map((name) => {
+        const paw = svg.querySelector<SVGGElement>(`[data-paw="${name}"]`)!;
+        const ankle = new DOMPoint(0, 0).matrixTransform(paw.querySelector<SVGGElement>(`[data-animal-joint="${name}Ankle"]`)!.getScreenCTM()!);
+        const lower = partPoint(paw.querySelector<SVGSVGElement>('[data-painted-part="hindLower"]')!, anatomy.legArtwork.lower.tip);
+        const foot = partPoint(paw.querySelector<SVGSVGElement>('[data-painted-part="hindPaw"]')!, anatomy.legArtwork.paw.pivot);
+        for (const point of [lower, foot]) joints.push(Math.hypot(point.x - ankle.x, point.y - ankle.y));
+        return { name, y: ankle.matrixTransform(svg.getScreenCTM()!.inverse()).y };
+      });
       return { html: svg.outerHTML, root, tip, wingError: Math.hypot(root.x - wingJoint.x, root.y - wingJoint.y), feet, baseline,
-        distance: Number(scene.dataset.groundDistance) };
+        joints, ankles, distance: Number(scene.dataset.groundDistance) };
     }, { anatomy: chickAnatomy, planted });
     expect(frame.wingError).toBeLessThan(.01);
     expect(frame.tip.x).toBeLessThan(frame.root.x - 10);
     expect(frame.feet.length).toBeGreaterThanOrEqual(1);
     for (const foot of frame.feet) expect(Math.abs(foot.y - frame.baseline), `${foot.name} floats above ground`).toBeLessThan(.25);
-    frames.push({ html: frame.html, planted });
+    for (const error of frame.joints) expect(error, 'painted shin and foot miss their shared ankle').toBeLessThan(.01);
+    frames.push({ html: frame.html, planted, ankles: frame.ankles });
     return frame;
   };
   for (let sample = 0; sample < 12; sample++) { await seek(session.startTimestamp + 400 + 780 * (40 + sample / 12)); await check(); }
@@ -58,7 +68,8 @@ test('chick feathers point backward and its actual painted feet touch the ground
   await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
   const joints = () => page.locator('.traveler-body [data-animal-joint]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('transform')));
   const frozen = await joints(); await page.clock.runFor(3000); expect(await joints()).toEqual(frozen);
-  await page.reload(); await page.clock.runFor(32); expect(await joints()).toEqual(frozen); await check();
+  await page.reload(); await expect(page.locator('.traveler-body [data-character="chick"]')).toBeVisible();
+  await page.clock.runFor(32); expect(await joints()).toEqual(frozen); await check();
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/chick-grounded-mobile.png', fullPage: true });
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '계속', exact: true }).click(); await page.clock.runFor(100);
@@ -68,27 +79,41 @@ test('chick feathers point backward and its actual painted feet touch the ground
   await seek(target); await page.clock.runFor(await finishWait(page));
   await expect(page.locator('[data-status="completed"]')).toBeVisible(); await check(true);
   // Rasterize each actual planted foot: a correct mathematical pivot alone cannot catch transparent padding.
-  const bottoms = await page.evaluate(async (frames) => {
+  const attachments = await page.evaluate(async (frames) => {
     const blob = await (await fetch('/timer/characters/raster-v1/chick.webp')).blob();
     const asset = await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(blob); });
     const width = 640, height = 840, canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
     const context = canvas.getContext('2d')!, results = [];
-    for (const frame of frames) for (const name of frame.planted) {
+    for (const frame of frames) for (const ankle of frame.ankles) {
+      const name = ankle.name;
       const svg = new DOMParser().parseFromString(frame.html.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '), 'image/svg+xml').documentElement;
       svg.setAttribute('width', '160'); svg.setAttribute('height', '210');
       for (const paw of svg.querySelectorAll('[data-paw]')) if (paw.getAttribute('data-paw') !== name) paw.remove();
-      for (const part of svg.querySelectorAll('[data-painted-part]')) if (part.getAttribute('data-painted-part') !== 'hindPaw') part.remove();
+      for (const part of svg.querySelectorAll('[data-painted-part]')) if (!['hindPaw', 'hindLower'].includes(part.getAttribute('data-painted-part')!)) part.remove();
       for (const image of svg.querySelectorAll('image')) image.setAttribute('href', asset);
-      const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' }));
-      try {
-        const image = new Image(); image.src = url; await image.decode(); context.clearRect(0, 0, width, height); context.drawImage(image, 0, 0, width, height);
-        const pixels = context.getImageData(0, 0, width, height).data;
-        let bottom = -1;
-        for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) if (pixels[(y * width + x) * 4 + 3] >= 160) bottom = y;
-        results.push({ name, bottom: (bottom + 1) / 4 });
-      } finally { URL.revokeObjectURL(url); }
+      const raster = async (part: string) => {
+        const clone = svg.cloneNode(true) as Element;
+        for (const node of clone.querySelectorAll('[data-painted-part]')) if (node.getAttribute('data-painted-part') !== part) node.remove();
+        const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml' }));
+        try {
+          const image = new Image(); image.src = url; await image.decode(); context.clearRect(0, 0, width, height); context.drawImage(image, 0, 0, width, height);
+          return context.getImageData(0, 0, width, height).data;
+        } finally { URL.revokeObjectURL(url); }
+      };
+      const foot = await raster('hindPaw'), shin = await raster('hindLower');
+      let bottom = -1, top = height, overlap = 0;
+      for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+        const alpha = (y * width + x) * 4 + 3;
+        if (foot[alpha] >= 160) { bottom = Math.max(bottom, y); top = Math.min(top, y); }
+        if (foot[alpha] >= 160 && shin[alpha] >= 160) overlap++;
+      }
+      results.push({ name, bottom: (bottom + 1) / 4, top: top / 4, ankleY: ankle.y, overlap, planted: frame.planted.includes(name) });
     }
     return results;
   }, frames);
-  for (const foot of bottoms) expect(Math.abs(foot.bottom - 205), `${foot.name} painted toes miss ground`).toBeLessThan(.8);
+  for (const foot of attachments) {
+    if (foot.planted) expect(Math.abs(foot.bottom - 205), `${foot.name} painted toes miss ground`).toBeLessThan(.8);
+    expect(foot.top, `${foot.name} has a second shin pointing above its ankle`).toBeGreaterThan(foot.ankleY - 1);
+    expect(foot.overlap, `${foot.name} foot separates from the shin`).toBeGreaterThan(12);
+  }
 });

@@ -37,13 +37,13 @@ function Part({ id, part, x, y, width, height, contain = false }: {
 }
 
 /** Match painted joint landmarks to the bone; padding is never a rotation pivot. */
-function PaintedBone({ id, part, length, landmarks }: { id: AnimalId; part: PartName; length: number; landmarks: LimbArtwork['upper'] }) {
+function PaintedBone({ id, part, length, landmarks, crossScale = 1 }: { id: AnimalId; part: PartName; length: number; landmarks: LimbArtwork['upper']; crossScale?: number }) {
   const dx = landmarks.tip.x - landmarks.pivot.x, dy = landmarks.tip.y - landmarks.pivot.y;
   const scale = length / Math.hypot(dx, dy), [, , width, height] = atlases[id].parts[part];
   const angle = 90 - Math.atan2(dy, dx) * 180 / Math.PI;
-  return <g transform={`rotate(${angle})`}>
+  return <g transform={`scale(${crossScale} 1)`}><g transform={`rotate(${angle})`}>
     <Part id={id} part={part} x={-landmarks.pivot.x * scale} y={-landmarks.pivot.y * scale} width={width * scale} height={height * scale} />
-  </g>;
+  </g></g>;
 }
 
 function PaintedEar({ id, part, placement }: {
@@ -93,6 +93,7 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
   const walker = id === 'dog' || id === 'cat';
   const fadeStart = walker ? -2 : artwork ? -14 : -overlap;
   const fadeEnd = walker ? id === 'cat' ? 10 : 8 : artwork ? 5 : 12;
+  const foot = <Part id={id} part={pawPart} x={artwork ? -artwork.paw.pivot.x * pawScale : -7} y={artwork ? -artwork.paw.pivot.y * pawScale : 4 - pawHeight} width={pawWidth} height={pawHeight} />;
   return <g data-paw={name} transform={`translate(${rig.x} ${rig.y})`} filter={far ? filter : undefined}>
     {blendedRoot ? <defs>
       <linearGradient id={`${prefix}-root-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={fadeStart} x2="0" y2={fadeEnd}><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
@@ -106,10 +107,13 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
         ? <PaintedBone id={id} part={upperPart} length={rig.upper} landmarks={artwork.upper} />
         : <Part id={id} part={upperPart} x={-upperWidth / 2} y={-overlap} width={upperWidth} height={upperHeight} />}</g> : null}
       <g transform={`translate(0 ${rig.upper})`}><g data-animal-joint={`${name}Knee`} transform={`rotate(${rest[`${name}Knee`]})`}>
-        {artwork ? <PaintedBone id={id} part={lowerPart} length={rig.lower} landmarks={artwork.lower} />
+        {artwork ? <PaintedBone id={id} part={lowerPart} length={rig.lower} landmarks={artwork.lower} crossScale={bird ? chickAnatomy.legArtwork.lower.widthScale : 1} />
           : <Part id={id} part={lowerPart} x={-lowerWidth / 2} y={-overlap} width={lowerWidth} height={lowerHeight} />}
         <g transform={`translate(0 ${rig.lower})`}><g data-animal-joint={`${name}Ankle`} transform={`rotate(${rest[`${name}Ankle`]})`}>
-          <Part id={id} part={pawPart} x={artwork ? -artwork.paw.pivot.x * pawScale : -7} y={artwork ? -artwork.paw.pivot.y * pawScale : 4 - pawHeight} width={pawWidth} height={pawHeight} />
+          {bird ? <g data-chick-foot>
+            <defs><clipPath id={`${prefix}-toe-only`}><rect x="-20" y={(chickAnatomy.legArtwork.paw.visibleTop - chickAnatomy.legArtwork.paw.pivot.y) * pawScale} width="50" height="30" /></clipPath></defs>
+            <g clipPath={`url(#${prefix}-toe-only)`}>{foot}</g>
+          </g> : foot}
         </g></g>
       </g></g>
     </g>

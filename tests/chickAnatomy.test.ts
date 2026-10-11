@@ -34,3 +34,20 @@ test('chick contact point matches its painted toe instead of transparent atlas p
   assert.equal(chickPawContact.y, (paw.sole.y - paw.pivot.y) * scale);
   assert.ok(chickPawContact.y > 5);
 });
+
+test('chick ankle landmarks sit on the painted centerline and match shin and foot thickness', async () => {
+  const atlas = atlases.chick, art = chickAnatomy.legArtwork;
+  const { data, info } = await sharp('public/characters/raster-v1/chick.webp').ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const span = (part: 'hindLower' | 'hindPaw', y: number) => {
+    const [left, top, width] = atlas.parts[part], xs: number[] = [];
+    for (let x = 0; x < width; x++) if (data[((top + y) * info.width + left + x) * 4 + 3] >= 240) xs.push(x);
+    return { center: (xs[0] + xs.at(-1)!) / 2, width: xs.at(-1)! - xs[0] };
+  };
+  const shin = span('hindLower', art.lower.tip.y), collar = span('hindPaw', art.paw.visibleTop);
+  assert.ok(Math.abs(shin.center - art.lower.tip.x) < 1);
+  assert.ok(Math.abs(collar.center - art.paw.pivot.x) < 4);
+  const shinWidth = shin.width * chickAnatomy.paws.nearHind.lower / Math.hypot(art.lower.tip.x - art.lower.pivot.x, art.lower.tip.y - art.lower.pivot.y) * art.lower.widthScale;
+  const collarWidth = collar.width * art.paw.width / atlas.parts.hindPaw[2];
+  assert.ok(Math.abs(shinWidth - collarWidth) < .6);
+  assert.ok((art.paw.pivot.y - art.paw.visibleTop) * art.paw.width / atlas.parts.hindPaw[2] < .6, 'a second shin protrudes above the ankle');
+});

@@ -10,9 +10,10 @@ export const chickAnatomy = {
   },
   legArtwork: {
     upper: { pivot: { x: 68, y: 37 }, tip: { x: 67, y: 207 } },
-    lower: { pivot: { x: 43, y: 25 }, tip: { x: 43, y: 207 } },
-    // The ankle is where the toes branch, below the shin already painted on this part.
-    paw: { pivot: { x: 53, y: 112 }, sole: { x: 122, y: 182 }, width: 19 },
+    lower: { pivot: { x: 43, y: 25 }, tip: { x: 48, y: 207 }, widthScale: .8 },
+    // The foot painting includes a second shin. Only its toe/ankle region is
+    // rendered; its socket matches the center of the remaining ankle collar.
+    paw: { pivot: { x: 66, y: 104 }, sole: { x: 122, y: 182 }, width: 19, visibleTop: 98 },
   },
   wing: {
     // earFar is the existing wing with its shoulder on the right and feather tips on the left.
