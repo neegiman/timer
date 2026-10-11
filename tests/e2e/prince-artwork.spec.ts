@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { princeAnatomy as anatomy, princeSole } from '../../src/lib/paintedPrinceMotion';
-import { PRINCE_GAIT } from '../../src/lib/princeMotion';
+import { princeAnatomy as anatomy, princeSole, PAINTED_PRINCE_GAIT as PRINCE_GAIT } from '../../src/lib/paintedPrinceMotion';
 import { animalFoot } from '../../src/lib/animalMotion';
 import { instrumentAudio } from './audio';
 import { finishPhaseStart } from '../../src/lib/animation';
@@ -65,16 +64,30 @@ test('painted prince stays connected and grounded through selection, walking, pa
           const childRoot = new DOMPoint(0, 0).matrixTransform(childGroup.getScreenCTM()!);
           jointErrors.push(Math.hypot(paintTip.x - childRoot.x, paintTip.y - childRoot.y));
         }
+        const upperArm = svg.querySelector<SVGGElement>(`[data-joint="${side}-arm"]`)!;
+        const elbow = svg.querySelector<SVGGElement>(`[data-joint="${side}-elbow"]`)!;
+        const paintTip = point(ownPaint(upperArm, anatomy.arms[side].upperPart), anatomy.arms[side].upperArt.tip);
+        const elbowRoot = new DOMPoint(0, 0).matrixTransform(elbow.getScreenCTM()!);
+        jointErrors.push(Math.hypot(paintTip.x - elbowRoot.x, paintTip.y - elbowRoot.y));
       }
       const feet = planted.map((side) => {
         const joint = svg.querySelector<SVGGElement>(`[data-joint="${side}-foot"]`)!;
         const toe = new DOMPoint(sole.x, sole.y).matrixTransform(joint.getScreenCTM()!);
         return { side, x: toe.x, y: toe.y };
       });
-      return { html: svg.outerHTML, feet, jointErrors, x: Number(scene.querySelector<HTMLElement>('.character-wrapper')!.dataset.position),
+      const angles = Object.fromEntries(Array.from(svg.querySelectorAll<SVGGElement>('[data-joint]')).map((joint) => {
+        const matrix = joint.transform.baseVal.consolidate()!.matrix;
+        return [joint.dataset.joint!, Math.atan2(matrix.b, matrix.a) * 180 / Math.PI];
+      }));
+      return { html: svg.outerHTML, feet, jointErrors, angles, x: Number(scene.querySelector<HTMLElement>('.character-wrapper')!.dataset.position),
         ground: scene.getBoundingClientRect().y + Number(scene.dataset.groundY), distance: Number(scene.dataset.groundDistance) };
     }, { anatomy, sole: princeSole, planted });
     for (const error of frame.jointErrors) expect(error, 'Painted limb is detached from its joint').toBeLessThan(.01);
+    for (const side of ['front', 'back'] as const) {
+      expect(frame.angles[`${side}-elbow`], 'Human elbow bends backward').toBeLessThanOrEqual(-8 + .001);
+      expect(frame.angles[`${side}-elbow`]).toBeGreaterThanOrEqual(-35);
+      if (!idle) expect(frame.angles[`${side}-shin`]).toBeLessThanOrEqual(planted.includes(side) ? 25 : 55);
+    }
     if (!idle) expect(frame.x).toBe(.42);
     expect(frame.feet.length).toBeGreaterThanOrEqual(1);
     for (const foot of frame.feet) expect(Math.abs(foot.y - frame.ground)).toBeLessThan(.25);

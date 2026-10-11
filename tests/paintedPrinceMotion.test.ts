@@ -5,8 +5,7 @@ import sharp from 'sharp';
 import atlas from '../src/lib/princeAtlas.json';
 import clothingAtlas from '../src/lib/princeClothingAtlas.json';
 import bootAtlas from '../src/lib/princeBootAtlas.json';
-import { PAINTED_PRINCE_ASSET, PAINTED_PRINCE_CLOTHING_ASSET, PAINTED_PRINCE_BOOT_ASSET, princeAnatomy as anatomy, princeSole, paintedPrincePose, settlePaintedPrincePose } from '../src/lib/paintedPrinceMotion';
-import { PRINCE_GAIT } from '../src/lib/princeMotion';
+import { PAINTED_PRINCE_ASSET, PAINTED_PRINCE_CLOTHING_ASSET, PAINTED_PRINCE_BOOT_ASSET, PAINTED_PRINCE_GAIT as PRINCE_GAIT, princeAnatomy as anatomy, princeSole, paintedPrincePose, settlePaintedPrincePose } from '../src/lib/paintedPrinceMotion';
 import { animalFoot } from '../src/lib/animalMotion';
 
 test('painted prince retains the original ImageGen alpha, and every joint is inside its painted root', async () => {
@@ -104,7 +103,7 @@ test('both prince feet reach their timestamp targets and planted soles match the
   for (let sample = 0; sample < 480; sample++) {
     const time = sample / 480 * PRINCE_GAIT.cycleMs;
     const { joints, bodyY } = paintedPrincePose('walk', time);
-    assert.ok(bodyY <= 3.4 + 1e-8 && bodyY >= 3 - 1e-8);
+    assert.ok(bodyY >= 0 && bodyY <= 3.4, 'Pelvis must not crouch or bounce excessively');
     for (const side of ['front', 'back'] as const) {
       const rig = anatomy.legs[side], phase = time / PRINCE_GAIT.cycleMs + (side === 'back' ? .5 : 0);
       const target = animalFoot(phase, PRINCE_GAIT), hip = (joints[`${side}-thigh`] + 90) * Math.PI / 180;
@@ -137,4 +136,33 @@ test('prince gait joins continuously, settles to rest and reduced motion is stab
   assert.ok(Math.abs(a.bodyY - b.bodyY) < .001);
   assert.deepEqual(settlePaintedPrincePose(990, 350), paintedPrincePose('idle', 0));
   assert.deepEqual(paintedPrincePose('walk', 200, true), paintedPrincePose('walk', 99_000, true));
+});
+
+test('human prince support knees extend while the returning knee folds without reversing a joint', () => {
+  const swingPeaks = { front: 0, back: 0 };
+  for (let sample = 0; sample < 1200; sample++) {
+    const time = sample / 1200 * PRINCE_GAIT.cycleMs;
+    const { joints, bodyY } = paintedPrincePose('walk', time);
+    assert.ok(bodyY < 2, 'Constant crouching is not a human walk');
+    for (const side of ['front', 'back'] as const) {
+      const planted = animalFoot(time / PRINCE_GAIT.cycleMs + (side === 'back' ? .5 : 0), PRINCE_GAIT).planted;
+      const hip = joints[`${side}-thigh`], knee = joints[`${side}-shin`];
+      assert.ok(hip >= -35 && hip <= 20, 'The thigh must swing from its hip rather than twist around the pelvis');
+      assert.ok(knee >= 0 && knee <= (planted ? 25 : 55), `${side}: support knee crouches or knee bends backward`);
+      if (!planted) swingPeaks[side] = Math.max(swingPeaks[side], knee);
+      assert.ok(joints[`${side}-arm`] >= -15 && joints[`${side}-arm`] <= 22, 'Walking shoulders must use a small swing');
+    }
+  }
+  for (const peak of Object.values(swingPeaks)) assert.ok(peak > 35, 'The returning foot must lift by bending its knee');
+});
+
+test('prince elbows retain their flexion direction from walking through jump, landing and cheering', () => {
+  for (const action of ['idle', 'walk', 'jump', 'land', 'celebrate'] as const) for (let time = 0; time <= 2400; time += 5) {
+    const { joints } = paintedPrincePose(action, time);
+    for (const side of ['front', 'back'] as const) {
+      assert.ok(joints[`${side}-elbow`] >= -35 && joints[`${side}-elbow`] <= -8,
+        `${action} ${time}ms: ${side} elbow hyperextends through its straight position`);
+      assert.ok(Math.abs(joints[`${side}-arm`]) <= 150, 'Shoulder must not spin around its socket');
+    }
+  }
 });

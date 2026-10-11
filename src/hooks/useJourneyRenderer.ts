@@ -10,8 +10,7 @@ import type { AnimationInput, AnimationState } from '@/types/animation';
 import { animalActionPose, isAnimalId, settleAnimalPose } from '@/lib/animalActionPose';
 import { animalProfiles, type AnimalJoint } from '@/lib/animalMotion';
 import { PRINCESS_GAIT, princessPose, settlePrincessPose } from '@/lib/princessMotion';
-import { PRINCE_GAIT } from '@/lib/princeMotion';
-import { paintedPrincePose, settlePaintedPrincePose } from '@/lib/paintedPrinceMotion';
+import { PAINTED_PRINCE_GAIT, paintedPrincePose, settlePaintedPrincePose } from '@/lib/paintedPrinceMotion';
 import { isPixelVehicle, vehicleFrame, vehicleViewBox } from '@/lib/pixelVehicles';
 import { meteorGlimmerPose, sceneryEvent, sceneryParticle } from '@/lib/sceneryEvents';
 import type { Season } from '@/lib/seasons';
@@ -123,7 +122,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       const scale = actorWidth / 160;
       const speed = (animalId ? animalProfiles[animalId].travel / profile.cycleMs
         : characterId === 'princess' ? PRINCESS_GAIT.travel / profile.cycleMs
-        : characterId === 'prince' ? PRINCE_GAIT.travel / profile.cycleMs : groundDistance(1, profile.cycleMs)) * scale;
+        : characterId === 'prince' ? PAINTED_PRINCE_GAIT.travel / profile.cycleMs : groundDistance(1, profile.cycleMs)) * scale;
       const motion = arrivalMotion(elapsed, next.totalDuration, next.finishElapsedMs, geometry, speed);
       const gait = motion.gait, distance = motion.backgroundDistance, x = motion.x;
       const groundY = height * .78;

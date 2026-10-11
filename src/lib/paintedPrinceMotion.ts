@@ -11,6 +11,8 @@ export const PAINTED_PRINCE_ASSET = '/characters/raster-v1/prince-painted-v1.web
 export const PAINTED_PRINCE_OUTFIT_ASSET = '/characters/raster-v1/prince-long-pants-v2.webp';
 export const PAINTED_PRINCE_BOOT_ASSET = '/characters/raster-v1/prince-boot-v3.webp';
 export const PAINTED_PRINCE_CLOTHING_ASSET = '/characters/raster-v1/prince-clothing-v3.webp';
+// This short-legged painted rig needs a shorter step than the legacy pixel rig.
+export const PAINTED_PRINCE_GAIT = { ...PRINCE_GAIT, travel: 28, support: .64, lift: 5 };
 export type PrincePart = keyof typeof atlas.parts | keyof typeof clothingAtlas.parts;
 const fitted = (part: keyof typeof atlas.parts, x: number, y: number, width: number) => {
   const region = atlas.parts[part];
@@ -52,8 +54,10 @@ export const princeAnatomy = {
 } as const;
 
 export interface PrincePose { joints: CharacterPose; bodyY: number }
+const softMaximum = (a: number, b: number) => (a + b + Math.sqrt((a - b) ** 2 + .15 ** 2)) / 2;
 
-/** A small weight shift gives bent walking knees room while standing legs stay upright. */
+/** Human support legs extend; only the returning leg folds. Feet and scenery
+ * share one clock, and elbows keep the same bend direction in every action. */
 export function paintedPrincePose(action: CharacterAction, elapsed: number, reduced = false): PrincePose {
   const joints: CharacterPose = {
     'front-thigh': princeAnatomy.legs.front.stance, 'front-shin': 0, 'front-foot': -princeAnatomy.legs.front.stance,
@@ -62,32 +66,42 @@ export function paintedPrincePose(action: CharacterAction, elapsed: number, redu
     head: 0, hair: 0, skirt: 0, 'ear-front': 0, 'ear-back': 0, tail: 0, 'wheel-front': 0, 'wheel-back': 0, 'wheel-middle': 0,
   };
   const walking = !reduced && ['walk', 'fastWalk', 'run', 'sprint'].includes(action);
-  const cycle = Math.max(0, elapsed) / PRINCE_GAIT.cycleMs;
-  const bodyY = walking ? 3.2 + .2 * Math.cos(cycle * Math.PI * 4) : 0;
-  if (walking) for (const side of ['front', 'back'] as const) {
+  const cycle = Math.max(0, elapsed) / PAINTED_PRINCE_GAIT.cycleMs;
+  const steps = walking ? (['front', 'back'] as const).map((side) => {
     const rig = princeAnatomy.legs[side], phase = cycle + (side === 'back' ? .5 : 0);
-    // The taller cuff needs a smaller ankle roll than the previous low shoe.
-    const foot = animalFoot(phase, PRINCE_GAIT), pitch = walkingFootPitch(phase, PRINCE_GAIT.support, false) * .65;
+    const foot = animalFoot(phase, PAINTED_PRINCE_GAIT);
+    const pitch = walkingFootPitch(phase, PAINTED_PRINCE_GAIT.support, false) * .45;
     const radians = pitch * Math.PI / 180;
     const soleX = princeSole.x * Math.cos(radians) - princeSole.y * Math.sin(radians);
     const soleY = princeSole.x * Math.sin(radians) + princeSole.y * Math.cos(radians);
-    const leg = animalLeg(rig.restX + foot.x + princeSole.x - soleX, PRINCE_GAIT.groundY - bodyY - soleY - rig.y - foot.lift, rig);
+    return { side, rig, foot, pitch, x: rig.restX + foot.x + princeSole.x - soleX,
+      y: PAINTED_PRINCE_GAIT.groundY - soleY - rig.y - foot.lift };
+  }) : [];
+  // Lower the pelvis only as far as the current step needs. A fixed 3.2px
+  // drop kept BOTH knees bent by 30–45 degrees throughout the old walk.
+  const bodyY = walking ? steps.reduce((drop, { rig, x, y }) => {
+    const reachSquared = rig.upper ** 2 + rig.lower ** 2 + 2 * rig.upper * rig.lower * Math.cos(6 * Math.PI / 180);
+    return softMaximum(drop, y - Math.sqrt(Math.max(0, reachSquared - x * x)));
+  }, .15) : 0;
+  if (walking) for (const { side, rig, foot, pitch, x, y } of steps) {
+    const leg = animalLeg(x, y - bodyY, rig);
     joints[`${side}-thigh`] = leg.hip; joints[`${side}-shin`] = leg.knee; joints[`${side}-foot`] = leg.ankle + pitch;
-    const reach = foot.x / (PRINCE_GAIT.travel * PRINCE_GAIT.support / 2);
-    joints[`${side}-arm`] = (side === 'front' ? 8 : -12) + reach * 18;
-    joints[`${side}-elbow`] = -12 - 8 * smoothstep((1 - reach) / 2);
+    const reach = foot.x / (PAINTED_PRINCE_GAIT.travel * PAINTED_PRINCE_GAIT.support / 2);
+    joints[`${side}-arm`] = 4 + reach * 16;
+    joints[`${side}-elbow`] = -14 - 8 * smoothstep((1 - reach) / 2);
   }
   if (walking) {
     joints.head = Math.sin(cycle * Math.PI * 2) * .6;
     joints.hair = Math.sin(cycle * Math.PI * 2 - .8) * 1.1; // Cape uses the spare soft-cloth joint.
   }
   if (!reduced && ['jump', 'hop', 'land', 'celebrate'].includes(action)) {
-    const raise = action === 'celebrate' ? smoothstep(elapsed / 500)
+    const raise = action === 'celebrate' ? smoothstep(elapsed / 650)
       : Math.sin(Math.PI * Math.min(1, Math.max(0, elapsed) / (action === 'land' ? 400 : 600)));
-    joints['front-arm'] = 8 + raise * (104 + (action === 'celebrate' ? Math.sin(elapsed / 330) * 2 : 0));
-    joints['back-arm'] = -12 - raise * (100 + (action === 'celebrate' ? Math.sin(elapsed / 360) * 2 : 0));
-    joints['front-elbow'] = -12 + raise * 52;
-    joints['back-elbow'] = -8 - raise * 32;
+    const balance = action === 'land' ? .15 : 1;
+    joints['front-arm'] = 8 + raise * balance * (137 + (action === 'celebrate' ? Math.sin(elapsed / 420) * 1.5 : 0));
+    joints['back-arm'] = -12 - raise * balance * (103 + (action === 'celebrate' ? Math.sin(elapsed / 450) * 1.5 : 0));
+    joints['front-elbow'] = -12 - raise * balance * 18;
+    joints['back-elbow'] = -8 - raise * balance * 17;
     joints.head = action === 'celebrate' ? Math.sin(elapsed / 500) * raise : 0;
   }
   return { joints, bodyY };
