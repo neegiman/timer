@@ -18,7 +18,7 @@ export function PromiseSelector({ selected, onSelect, custom, onCustom, customMo
       </button>)}
     </div>
     <button className={`custom-choice ${customMode ? 'active' : ''}`} type="button" onClick={onCustomMode} aria-expanded={customMode}>
-      <StoryIcon name="custom" size={30} /> 직접 약속 쓰기
+      <StoryIcon name="custom" size={40} /> 직접 약속 쓰기
     </button>
     {customMode ? <div className="custom-input"><label htmlFor="custom-promise">활동 이름</label>
       <input id="custom-promise" value={custom} maxLength={40} onChange={(event) => onCustom(event.target.value)} placeholder="예: 책 읽기, 그림 그리기" autoFocus />

@@ -3,7 +3,7 @@ import { assetPath } from '@/lib/assetPath';
 
 export type StoryIconName = 'handshake' | 'bath' | 'sleep' | 'meal' | 'tidy' | 'outside' | 'video' | 'clock' | 'rabbit' | 'custom' | 'home' | 'flag' | 'star';
 
-const vectorIcons: readonly StoryIconName[] = ['custom', 'home', 'flag', 'star'];
+const vectorIcons: readonly StoryIconName[] = ['home', 'flag', 'star'];
 const promiseIcons: Readonly<Record<string, StoryIconName>> = {
   bath: 'bath', sleep: 'sleep', meal: 'meal', tidy: 'tidy', outside: 'outside', video: 'video',
 };

@@ -118,14 +118,21 @@ h1:focus { outline: none; }
 .scenery-visitor[data-event="ufo"] [data-visitor-art="ufo"] { display: block; }
 .ufo-lights { opacity: var(--ufo-glow, .8); }
 .ufo-beam { opacity: calc(var(--ufo-glow, .8) * .22); }
-.rocket-sky { position: absolute; inset: 0 0 27%; z-index: 1; overflow: hidden; background: linear-gradient(180deg, #c8deeddd, #ded9ef77 46%, transparent 85%); }
-.journey-scene[data-theme="night"] .rocket-sky { background: linear-gradient(180deg, #273458ee, #52608a99 46%, transparent 85%); }
-.space-constellation { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .85; }
-.space-planet { position: absolute; will-change: transform; }
-.space-planet svg { display: block; width: 100%; height: auto; }
-.space-planet-ringed { left: 60%; top: 6%; width: clamp(80px, 23vw, 160px); }
-.space-planet-blue { left: 7%; top: 29%; width: clamp(48px, 13vw, 84px); }
-.space-planet-small { left: 38%; top: 7%; width: clamp(24px, 7vw, 40px); opacity: .85; }
+.journey-scene[data-environment="space"] { background: #10152e; }
+.rocket-sky { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #10152e; }
+.space-nebula-layer, .space-stars-layer, .space-near-layer { height: 100%; }
+.space-nebula { position: absolute; inset: 0; background-repeat: repeat-x; background-size: var(--tile-width, 1920px) 100%; image-rendering: pixelated; }
+.space-stars-layer, .space-near-layer { background-repeat: repeat; background-size: 480px 320px; image-rendering: pixelated; }
+.space-stars-layer { z-index: 1; }
+.space-near-layer { z-index: 2; }
+.space-planet { position: absolute; z-index: 3; will-change: transform; }
+.space-planet svg { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.space-planet-ringed { left: 57%; top: 5%; width: clamp(96px, 28vw, 176px); }
+.space-planet-blue { left: 6%; top: 34%; width: clamp(56px, 16vw, 96px); }
+.space-planet-small { left: 35%; top: 9%; width: clamp(24px, 7vw, 40px); }
+.journey-scene[data-environment="space"] .character-shadow { display: none; }
+.journey-scene[data-environment="space"] .scenery-particle { filter: none; }
+.journey-scene[data-environment="space"] .scenery-particle svg { filter: none; }
 .visitor-wings { transform-box: view-box; transform-origin: 60px 45px; transform: scaleX(var(--wing, 1)); }
 .bird-wing { transform-box: view-box; transform-origin: 60px 45px; transform: rotate(var(--wing-angle, 0deg)); }
 .bird-wing-far { transform: rotate(calc(var(--wing-angle, 0deg) * -.65)); opacity: .7; }
@@ -134,7 +141,7 @@ h1:focus { outline: none; }
 .scenery-particle svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 1px 1px #fff4); }
 @media (prefers-reduced-motion: reduce) { .scenery-light { opacity: .1 !important; transform: none !important; } .scenery-paint, .painted-trees { transition: none; } }
 .journey-scene[data-theme="night"] .seasonal-atmosphere { --event-ink: #b8c6ce; --seed-color: #eee4b4; }
-.journey-scene[data-theme="night"] .scenery-particle { filter: brightness(.9); }
+.journey-scene[data-environment="nature"][data-theme="night"] .scenery-particle { filter: brightness(.9); }
 @media (prefers-reduced-motion: reduce) { .seasonal-atmosphere { display: none; } }
 .scene-settings { min-width: 0; margin: 20px 0 0; padding: 18px 0; border: 0; border-bottom: 1px solid var(--border); }
 .scene-settings legend { padding: 0; font-size: 20px; font-weight: 800; }

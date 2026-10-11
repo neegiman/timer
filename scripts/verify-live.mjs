@@ -22,14 +22,15 @@ try {
   const animals = ['rabbit', 'dog', 'cat', 'chick', 'princess', 'princess-upper-v2'].map((id) => `/timer/characters/raster-v1/${id}.webp`);
   animals.push(...['dog', 'cat'].map((id) => `/timer/characters/raster-v1/${id}-torso-v7.webp`));
   const pixels = ['prince-upright-v3', 'car', 'train', 'rocket-horizontal-v3'].map((id) => `/timer/characters/pixel-v1/${id}.svg`);
-  const storyIcons = ['handshake', 'bath', 'sleep', 'meal', 'tidy', 'outside', 'video', 'clock', 'rabbit'].map((id) => `/timer/images/story-v1/${id}.webp`);
-  storyIcons.push(...['custom', 'home', 'flag', 'star'].map((id) => `/timer/images/story-v1/${id}.svg`));
+  const storyIcons = ['handshake', 'bath', 'sleep', 'meal', 'tidy', 'outside', 'video', 'clock', 'rabbit', 'custom'].map((id) => `/timer/images/story-v1/${id}.webp`);
+  storyIcons.push(...['home', 'flag', 'star'].map((id) => `/timer/images/story-v1/${id}.svg`));
+  const spaceAssets = ['nebula.webp', 'stars.svg', 'near-stars.svg'].map((id) => `/timer/images/space-v1/${id}`);
   const appIcons = ['favicon-handshake-v1', 'promise-handshake-v1', 'apple-touch-handshake-v1'].map((id) => `/timer/images/${id}.png`);
   const scenery = JSON.parse(await readFile('src/lib/paintedScenery.json', 'utf8'));
   const paintings = Object.values(scenery).flatMap((season) => Object.values(season).map((asset) => `/timer${asset.src}`));
   assert.ok(html.includes('/timer/images/favicon-handshake-v1.png'), 'Missing deployed handshake favicon');
   assert.ok(html.includes('/timer/images/apple-touch-handshake-v1.png'), 'Missing deployed handshake home screen icon');
-  for (const path of [...sounds.map((sound) => `/timer/sounds/${sound}.mp3`), ...animals, ...pixels, ...storyIcons, ...appIcons, ...paintings, '/timer/images/scenery-v1/painted-glimmer-v1.webp', '/timer/images/icon.svg', ...assets]) {
+  for (const path of [...sounds.map((sound) => `/timer/sounds/${sound}.mp3`), ...animals, ...pixels, ...storyIcons, ...appIcons, ...paintings, ...spaceAssets, '/timer/images/scenery-v1/painted-glimmer-v1.webp', '/timer/images/icon.svg', ...assets]) {
     const result = await fetch(`${origin}${path}`, { signal: AbortSignal.timeout(15_000) });
     assert.equal(result.status, 200, `${path}: HTTP ${result.status}`);
     assert.ok((await result.arrayBuffer()).byteLength > 0, `Empty asset ${path}`);

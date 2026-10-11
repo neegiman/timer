@@ -227,6 +227,7 @@ test('night glimmers flash briefly, fade, pause in place and stop with the finis
 });
 
 test('rocket has planets and a UFO that appears, drifts, pauses, disappears and survives refresh', async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.clock.install({ time: new Date('2026-10-15T12:00:00+09:00') });
   await page.goto('./');
@@ -237,7 +238,11 @@ test('rocket has planets and a UFO that appears, drifts, pauses, disappears and 
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   const scene = page.locator('.journey-scene'), visitor = page.locator('[data-scenery-visitor]'), planets = page.locator('[data-space-planet]');
   await expect(scene).toHaveAttribute('data-environment', 'space');
+  await expect(scene.locator('[data-scenery="pixel-space-v1"]')).toBeVisible();
+  await expect(scene.locator('[data-scenery-src*="/scenery-v1/"]')).toHaveCount(0);
+  await expect(scene.locator('[data-layer]')).toHaveCount(3);
   await expect(page.locator('[data-rocket-sky]')).toBeVisible(); await expect(planets).toHaveCount(3);
+  await expect(planets.locator('svg[shape-rendering="crispEdges"]')).toHaveCount(3);
   await seek(page, 13_000); await expect(visitor).toHaveAttribute('data-event', 'ufo'); await expect(visitor).toHaveCSS('opacity', '1');
   await expect(visitor.locator('[data-visitor-art="ufo"]')).toBeVisible();
   await expect(visitor.locator('[data-visitor-art="birds"]')).toBeHidden();
@@ -246,10 +251,17 @@ test('rocket has planets and a UFO that appears, drifts, pauses, disappears and 
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/rocket-ufo-day-390.png', fullPage: true });
   await menu(page); await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
   const frozenUfo = await visitor.getAttribute('style'), frozenPlanet = await planets.first().getAttribute('style');
+  const frozenStars = await scene.locator('[data-layer="stars"]').getAttribute('style');
+  const daySky = await scene.screenshot({ animations: 'disabled' });
   await page.clock.fastForward(3000); await expect(visitor).toHaveAttribute('style', frozenUfo!); await expect(planets.first()).toHaveAttribute('style', frozenPlanet!);
   await menu(page); await page.getByRole('button', { name: '밤 배경', exact: true }).click(); await page.getByRole('button', { name: '닫기', exact: true }).click();
   await page.clock.runFor(32); await expect(visitor).toHaveAttribute('data-event', 'ufo'); await expect(scene).toHaveAttribute('data-theme', 'night');
   await expect(planets.first()).toHaveAttribute('style', frozenPlanet!);
+  await expect(scene.locator('[data-layer="stars"]')).toHaveAttribute('style', frozenStars!);
+  expect((await scene.screenshot({ animations: 'disabled' })).equals(daySky)).toBe(true);
+  await menu(page); await page.getByRole('button', { name: '겨울 배경', exact: true }).click(); await page.getByRole('button', { name: '닫기', exact: true }).click();
+  await page.clock.runFor(32); await expect(scene).toHaveAttribute('data-season', 'winter');
+  expect((await scene.screenshot({ animations: 'disabled' })).equals(daySky)).toBe(true);
   if (testInfo.project.name === 'chromium') {
     await page.waitForTimeout(1250); await page.screenshot({ path: 'artifacts/rocket-ufo-night-390.png', fullPage: true });
   }
@@ -264,5 +276,23 @@ test('rocket has planets and a UFO that appears, drifts, pauses, disappears and 
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await seek(page, 600_000); await page.clock.fastForward(6000);
   const stopped = await planets.first().getAttribute('style'); await page.clock.runFor(1000); await expect(planets.first()).toHaveAttribute('style', stopped!);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('custom promises use the painted pinky promise icon during setup, travel and refresh', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.goto('./');
+  const custom = page.getByRole('button', { name: '직접 약속 쓰기', exact: true });
+  await expect(custom.locator('img')).toHaveAttribute('src', '/timer/images/story-v1/custom.webp');
+  await expect.poll(() => custom.locator('img').evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBe(320);
+  await custom.click(); await page.getByLabel('활동 이름', { exact: true }).fill('책 읽기');
+  if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/pinky-promise-setup-320.png', fullPage: true });
+  await page.getByRole('button', { name: '다음', exact: true }).click();
+  await page.getByRole('button', { name: '다음', exact: true }).click();
+  await page.getByRole('button', { name: '출발!', exact: true }).click();
+  await expect(page.locator('[data-status="running"]')).toBeVisible();
+  await expect(page.locator('.timer-layout img[src="/timer/images/story-v1/custom.webp"]:visible').first()).toBeVisible();
+  await page.reload(); await expect(page.locator('[data-status="running"]')).toBeVisible();
+  await expect(page.locator('.timer-layout img[src="/timer/images/story-v1/custom.webp"]:visible').first()).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

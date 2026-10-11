@@ -13,13 +13,13 @@ function Layer({ name, rate, tileScale, children }: { name: string; rate: number
 
 /** Measured painted strips repeat independently; ground shares the feet's pixel speed. */
 export const ScrollingScenery = memo(function ScrollingScenery({ season, space = false }: { season: Season; space?: boolean }) {
+  if (space) return <RocketSky />;
   const scene = art[season];
   return <div className="painted-environment" data-scenery="painted-v1" aria-hidden="true">
     <Layer name="hill" rate={.14} tileScale={.78 * scene.day.width / scene.day.height}>
       <div className="scenery-paint scene-day" data-scenery-src={assetPath(scene.day.src)} style={paint(scene.day)} />
       <div className="scenery-paint scene-night" data-scenery-src={assetPath(scene.night.src)} style={paint(scene.night)} />
     </Layer>
-    {space ? <RocketSky /> : null}
     <div className="scenery-light" data-scenery-light />
     <Layer name="tree" rate={.55} tileScale={.62 * scene.trees.width / scene.trees.height}>
       <div className="scenery-paint painted-trees" data-scenery-src={assetPath(scene.trees.src)} style={paint(scene.trees)} />

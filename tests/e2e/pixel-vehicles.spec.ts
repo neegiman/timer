@@ -59,7 +59,9 @@ for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and prese
   expect(await sprite.getAttribute('data-frame')).not.toBe(frozen);
   await page.emulateMedia({ reducedMotion: 'reduce' }); await expect(sprite).toHaveAttribute('data-frame', '0');
   await page.clock.runFor(350); await expect(sprite).toHaveAttribute('data-frame', '0');
-  await expect(page.locator('[data-layer="ground"]')).toHaveAttribute('data-scroll-offset', '0.000000');
+  for (const layer of await page.locator('.journey-scene [data-layer]').all()) {
+    await expect(layer).toHaveAttribute('data-scroll-offset', '0.000000');
+  }
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const latest = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!));
   const total = latest.durationMs;

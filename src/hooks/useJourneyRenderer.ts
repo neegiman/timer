@@ -213,6 +213,14 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       }
       for (const [index, particle] of particles.entries()) {
         if (reduced) continue;
+        if (characterId === 'rocket') {
+          // Space twinkles stay upright; seasonal petals may fall and rotate.
+          const x = ((index * .173 + .12) % .9) * width;
+          const y = (.15 + (index % 3) * .21) * height;
+          particle.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+          particle.style.opacity = String(.25 + .3 * (.5 + .5 * Math.sin(elapsed / 2300 + index * 1.7)));
+          continue;
+        }
         const pose = sceneryParticle(elapsed, index);
         particle.style.transform = `translate3d(${pose.x * width}px, ${pose.y * height}px, 0) rotate(${pose.rotation}deg)`;
         particle.style.opacity = String(pose.opacity);

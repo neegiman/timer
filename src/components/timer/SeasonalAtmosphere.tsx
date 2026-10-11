@@ -28,13 +28,16 @@ export const SeasonalAtmosphere = memo(function SeasonalAtmosphere({ season, spa
       <svg data-visitor-art="fireflies" viewBox="0 0 120 90">
         {[[22, 44], [49, 24], [72, 53], [94, 30]].map(([x, y]) => <g key={x}><circle cx={x} cy={y} r="9" fill="#f9e6a0" opacity=".12" /><circle cx={x} cy={y} r="3" fill="#f9e6a0" /><path d={`m${x - 5} ${y - 5} 4 2m3 0 4-2`} stroke="#c6d9b6" strokeWidth="2" strokeLinecap="round" /></g>)}
       </svg>
-      <div className="meteor-glimmer" data-visitor-art="shooting-star">
+      {space ? <svg data-visitor-art="shooting-star" viewBox="0 0 24 24" shapeRendering="crispEdges">
+        <path d="M10 2h4v6h2v2h6v4h-6v2h-2v6h-4v-6H8v-2H2v-4h6V8h2Z" fill="#a9b9df" opacity=".45" />
+        <path d="M11 5h2v5h1v1h5v2h-5v1h-1v5h-2v-5h-1v-1H5v-2h5v-1h1Z" fill="#ffe8bc" />
+      </svg> : <div className="meteor-glimmer" data-visitor-art="shooting-star">
         <Image src={assetPath('/images/scenery-v1/painted-glimmer-v1.webp')} alt="" width={128} height={128} loading="eager" draggable={false} />
-      </div>
+      </div>}
     </div>
     {Array.from({ length: 6 }, (_, index) => <span key={index} className="scenery-particle" data-scenery-particle>
-      <svg viewBox="0 0 24 24">
-        {space ? <path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4Z" fill={index % 2 ? '#e3d7f0' : '#ffedbb'} />
+      <svg viewBox="0 0 24 24" shapeRendering={space ? 'crispEdges' : undefined}>
+        {space ? <path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6Z" fill={index % 2 ? '#a4bbdf' : '#ffedbb'} />
           : season === 'spring' ? <path d="M5 5C15 0 23 8 17 15S2 15 5 5Z" fill="#edb7c5" />
           : season === 'summer' ? <g stroke="var(--seed-color, #fff8dd)" strokeWidth="1.5" strokeLinecap="round"><path d="m12 9-4 12m4-12-6-4m6 4V2m0 7 7-5" /><circle cx="12" cy="9" r="2" fill="var(--seed-color, #fff8dd)" /></g>
           : season === 'autumn' ? <g><path d="M4 4q16-2 15 13Q2 22 4 4Z" fill={index % 2 ? '#d89a59' : '#bc785a'} /><path d="m6 6 11 12" stroke="#e8c28a" strokeWidth="1" /></g>

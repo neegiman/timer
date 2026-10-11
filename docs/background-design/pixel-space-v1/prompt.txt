@@ -1,0 +1,6 @@
+Use case: stylized-concept.
+Asset type: seamless horizontal background tile for a preschool 8-bit rocket game. New image.
+Primary request: A calm deep-space starfield with delicately layered pixel nebula clouds and small scattered pixel stars. Strict 8-bit pixel art with square pixels, a coherent limited palette, crisp stepped shapes, no painterly or vector style.
+Scene: deep indigo/navy space, restrained desaturated violet and midnight blue nebula clusters, tiny warm ivory and ice-blue square stars, occasional tiny four-point pixel twinkles. Plenty of quiet dark space for a rocket and planets overlaid by the app. Friendly dreamy mood, no menacing objects.
+Composition: horizontal panorama, 3:2 landscape. Stars sparsely distributed. No horizon, no ground, no trees, no sun, no moon, no planets, no spacecraft, no UFO, no characters, no text, no user interface. Match left and right edges for repeating lateral scrolling; avoid big features at either seam. Same outer space appearance for day and night.
+Rendering: authentic retro game background, uniformly sized pixel grid, no gradients or blur, subtle dither only within faint nebula clouds. No speed lines or long meteor trails.

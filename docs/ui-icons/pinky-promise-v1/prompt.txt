@@ -1,0 +1,6 @@
+Use case: illustration-story.
+Asset type: a single transparent preschool app icon, pinky promise.
+Primary request: Two friendly hands reaching toward each other and hooking their little fingers in a recognizable pinky promise gesture. The four other fingers on each hand are gently curled into a loose fist; exactly one small finger from each fist extends and interlocks at the center. Accurate hands, clean anatomy, naturally connected fingers. Left hand with muted sage cuff, right hand with dusty coral cuff. No handshake grip.
+Reference image: icon-family.png is STYLE ONLY: match its warm hand-painted storybook gouache, fine warm soft edges, creamy peach skin, delicate shading and subtle paper paint texture. This new icon must belong to that icon family.
+Composition: centered two hands, isolated, bold readable silhouette at 36 pixels, close framing with a little transparent margin. Soft warm light.
+Constraints: genuinely transparent background, no words, no letters, no watermark, no pencils, no extra hands or detached fingers, no hearts or sparkles. Only the two pinky-promising hands.
