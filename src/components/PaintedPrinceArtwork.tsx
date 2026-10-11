@@ -1,30 +1,37 @@
 import { useId } from 'react';
 import atlas from '@/lib/princeAtlas.json';
 import outfitAtlas from '@/lib/princeOutfitAtlas.json';
-import { PAINTED_PRINCE_ASSET, PAINTED_PRINCE_OUTFIT_ASSET, princeAnatomy as anatomy, paintedPrincePose, type PrincePart } from '@/lib/paintedPrinceMotion';
+import bootAtlas from '@/lib/princeBootAtlas.json';
+import clothingAtlas from '@/lib/princeClothingAtlas.json';
+import { PAINTED_PRINCE_ASSET, PAINTED_PRINCE_OUTFIT_ASSET, PAINTED_PRINCE_BOOT_ASSET, PAINTED_PRINCE_CLOTHING_ASSET, princeAnatomy as anatomy, paintedPrincePose, type PrincePart } from '@/lib/paintedPrinceMotion';
 import { assetPath } from '@/lib/assetPath';
 
 type Landmark = { pivot: { x: number; y: number }; tip: { x: number; y: number } };
 
+function partSource(part: PrincePart) {
+  if (part === 'torso' || part === 'frontTrouser' || part === 'backTrouser') return { source: clothingAtlas, region: clothingAtlas.parts[part], asset: PAINTED_PRINCE_CLOTHING_ASSET };
+  if (part === 'boot') return { source: bootAtlas, region: bootAtlas.parts.boot, asset: PAINTED_PRINCE_BOOT_ASSET };
+  return { source: atlas, region: atlas.parts[part], asset: PAINTED_PRINCE_ASSET };
+}
+
 function Part({ part, x, y, width, height }: { part: PrincePart; x: number; y: number; width: number; height: number }) {
-  const source = part === 'torso' ? outfitAtlas : atlas;
-  const region = part === 'torso' ? outfitAtlas.parts.torso : atlas.parts[part];
+  const { source, region, asset } = partSource(part);
   return <svg x={x} y={y} width={width} height={height} viewBox={region.join(' ')}
     preserveAspectRatio="none" overflow="hidden" data-painted-part={part}>
-    <image href={assetPath(part === 'torso' ? PAINTED_PRINCE_OUTFIT_ASSET : PAINTED_PRINCE_ASSET)} width={source.width} height={source.height} />
+    <image href={assetPath(asset)} width={source.width} height={source.height} />
   </svg>;
 }
 
 /** A painted bone rotates around its actual rounded root, with a short blended overlap. */
-function Bone({ part, length, landmarks, crossScale = 1, blendRoot = false, blendTip = false, tipFeather = 0 }: {
-  part: PrincePart; length: number; landmarks: Landmark; crossScale?: number; blendRoot?: boolean; blendTip?: boolean; tipFeather?: number;
+function Bone({ part, length, landmarks, crossScale = 1, blendRoot = false, blendTip = false, tipFeather = 0, rootBlendStart = -3, rootBlendEnd = 1 }: {
+  part: PrincePart; length: number; landmarks: Landmark; crossScale?: number; blendRoot?: boolean; blendTip?: boolean; tipFeather?: number; rootBlendStart?: number; rootBlendEnd?: number;
 }) {
-  const id = useId().replace(/:/g, ''), region = atlas.parts[part];
+  const id = useId().replace(/:/g, ''), { region } = partSource(part);
   const dx = landmarks.tip.x - landmarks.pivot.x, dy = landmarks.tip.y - landmarks.pivot.y;
   const scale = length / Math.hypot(dx, dy);
   return <g>
     <defs>
-      {blendRoot ? <><linearGradient id={`${id}-root`} x1="0" y1="-3" x2="0" y2="1" gradientUnits="userSpaceOnUse"><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
+      {blendRoot ? <><linearGradient id={`${id}-root`} x1="0" y1={rootBlendStart} x2="0" y2={rootBlendEnd} gradientUnits="userSpaceOnUse"><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
         <mask id={`${id}-root-mask`} maskUnits="userSpaceOnUse" x="-30" y="-12" width="60" height="100"><rect x="-30" y="-12" width="60" height="100" fill={`url(#${id}-root)`} /></mask></> : null}
       {blendTip ? <><linearGradient id={`${id}-tip`} x1="0" y1={length + 1 - tipFeather} x2="0" y2={length + 4} gradientUnits="userSpaceOnUse"><stop stopColor="white" /><stop offset="1" stopColor="black" /></linearGradient>
         <mask id={`${id}-tip-mask`} maskUnits="userSpaceOnUse" x="-30" y="-12" width="60" height="100"><rect x="-30" y="-12" width="60" height="100" fill={`url(#${id}-tip)`} /></mask></> : null}
@@ -39,7 +46,7 @@ function Bone({ part, length, landmarks, crossScale = 1, blendRoot = false, blen
 
 const rest = paintedPrincePose('idle', 0).joints;
 function Leg({ side }: { side: 'front' | 'back' }) {
-  const rig = anatomy.legs[side], bootScaleX = anatomy.boot.width / atlas.parts.boot[2], bootScaleY = anatomy.boot.height / atlas.parts.boot[3];
+  const rig = anatomy.legs[side], bootScaleX = anatomy.boot.width / bootAtlas.parts.boot[2], bootScaleY = anatomy.boot.height / bootAtlas.parts.boot[3];
   return <g data-leg={side} transform={`translate(${rig.x} ${rig.y})`}>
     <g data-joint={`${side}-thigh`} transform={`rotate(${rest[`${side}-thigh`]})`}>
       <g transform={`translate(0 ${rig.upper})`}><g data-joint={`${side}-shin`} transform={`rotate(${rest[`${side}-shin`]})`}>
@@ -47,9 +54,9 @@ function Leg({ side }: { side: 'front' | 'back' }) {
           <Part part="boot" x={-anatomy.boot.pivot.x * bootScaleX} y={-anatomy.boot.pivot.y * bootScaleY}
             width={anatomy.boot.width} height={anatomy.boot.height} />
         </g></g>
-        <Bone part={anatomy.trouserPart} length={rig.lower} landmarks={anatomy.shin} crossScale={anatomy.shinCrossScale} blendRoot blendTip />
+        <Bone part={rig.part} length={rig.lower} landmarks={rig.shin} blendRoot rootBlendStart={-5} rootBlendEnd={-4} blendTip />
       </g></g>
-      <Bone part={anatomy.trouserPart} length={rig.upper} landmarks={anatomy.thigh} crossScale={anatomy.thighCrossScale} blendTip tipFeather={5} />
+      <Bone part={rig.part} length={rig.upper} landmarks={rig.thigh} blendRoot rootBlendStart={-4} rootBlendEnd={-3} blendTip tipFeather={5} />
     </g>
   </g>;
 }
@@ -71,11 +78,12 @@ export function PaintedPrinceArtwork() {
   return <svg viewBox="0 0 160 210" className="character-artwork painted-prince-artwork"
     data-character="prince" data-artwork="imagegen" aria-hidden="true" focusable="false">
     <defs>
-      <linearGradient id={`${hipBlendId}-hips`} x1="0" y1={anatomy.legs.front.y + 1} x2="0" y2={anatomy.torso.y + anatomy.torso.height} gradientUnits="userSpaceOnUse">
+      <linearGradient id={`${hipBlendId}-hips`} x1="0" y1={anatomy.legs.front.y - 3} x2="0" y2={anatomy.legs.front.y + 1.5} gradientUnits="userSpaceOnUse">
         <stop stopColor="white" /><stop offset="1" stopColor="black" />
       </linearGradient>
       <mask id={`${hipBlendId}-hips-mask`} maskUnits="userSpaceOnUse" x="45" y="75" width="70" height="70">
         <rect x="45" y="75" width="70" height="70" fill={`url(#${hipBlendId}-hips)`} />
+        <path d={`M75 ${anatomy.legs.front.y - 7}H89V${anatomy.legs.front.y + 9}Q82 ${anatomy.legs.front.y + 13} 75 ${anatomy.legs.front.y + 9}Z`} fill="white" />
       </mask>
     </defs>
     <g data-prince-body transform="translate(0 0)">

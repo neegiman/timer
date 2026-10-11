@@ -43,8 +43,9 @@ test('painted prince stays connected and grounded through selection, walking, pa
         Array.from(group.querySelectorAll<SVGSVGElement>(`[data-painted-part="${partName}"]`)).find((part) => part.closest('[data-joint]') === group)!;
       const jointErrors: number[] = [];
       for (const side of ['front', 'back'] as const) {
+        const leg = anatomy.legs[side];
         for (const [joint, partName, pivot] of [
-          [`${side}-thigh`, anatomy.trouserPart, anatomy.thigh.pivot], [`${side}-shin`, anatomy.trouserPart, anatomy.shin.pivot],
+          [`${side}-thigh`, leg.part, leg.thigh.pivot], [`${side}-shin`, leg.part, leg.shin.pivot],
           [`${side}-foot`, 'boot', anatomy.boot.pivot],
           [`${side}-arm`, anatomy.arms[side].upperPart, anatomy.arms[side].upperArt.pivot],
           [`${side}-elbow`, anatomy.arms[side].lowerPart, anatomy.arms[side].lowerArt.pivot],
@@ -56,11 +57,11 @@ test('painted prince stays connected and grounded through selection, walking, pa
         }
         // Test the actual painted endpoints against the next limb, not only each pivot in isolation.
         for (const [parent, child, tip] of [
-          ['thigh', 'shin', anatomy.thigh.tip], ['shin', 'foot', anatomy.shin.tip],
+          ['thigh', 'shin', leg.thigh.tip], ['shin', 'foot', leg.shin.tip],
         ] as const) {
           const parentGroup = svg.querySelector<SVGGElement>(`[data-joint="${side}-${parent}"]`)!;
           const childGroup = svg.querySelector<SVGGElement>(`[data-joint="${side}-${child}"]`)!;
-          const paintTip = point(ownPaint(parentGroup, anatomy.trouserPart), tip);
+          const paintTip = point(ownPaint(parentGroup, leg.part), tip);
           const childRoot = new DOMPoint(0, 0).matrixTransform(childGroup.getScreenCTM()!);
           jointErrors.push(Math.hypot(paintTip.x - childRoot.x, paintTip.y - childRoot.y));
         }
@@ -141,7 +142,7 @@ test('painted prince stays connected and grounded through selection, walking, pa
   // Check the actual painted silhouette AND boots, not just self-consistent joint matrices.
   const painted = await page.evaluate(async (frames) => {
     const assets: Record<string, string> = {};
-    for (const source of ['/timer/characters/raster-v1/prince-painted-v1.webp', '/timer/characters/raster-v1/prince-long-pants-v2.webp']) {
+    for (const source of ['/timer/characters/raster-v1/prince-painted-v1.webp', '/timer/characters/raster-v1/prince-clothing-v3.webp', '/timer/characters/raster-v1/prince-boot-v3.webp']) {
       const blob = await (await fetch(source)).blob();
       assets[source] = await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(blob); });
     }

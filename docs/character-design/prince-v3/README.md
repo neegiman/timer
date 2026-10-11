@@ -1,0 +1,16 @@
+# 시안 비율을 적용한 왕자 모션
+
+[승인된 긴바지 시안](../prince-v2/prince-long-pants-atlas.png)의 전신을 기준으로 몸통·바지·부츠·팔·망토 비율을 다시 맞췄습니다. 기존 모션은 시안보다 다리가 길고 부츠와 망토가 작았으며, 분리된 바지 허리 조각의 둥근 밑단이 허벅지 위에 드러났습니다.
+
+내장 ImageGen으로 시안의 조끼와 긴바지가 한 장으로 이어진 [복장 원화](./prince-clothing.png), 목이 높은 [부츠 원화](./prince-boot.png)를 만들었습니다. [실제 프롬프트](./prompts.json)도 보관합니다. 원본 알파와 보이는 색을 보존하는 무손실 WebP 변환만 사용합니다.
+
+- [사이트용 복장](../../../public/characters/raster-v1/prince-clothing-v3.webp), [부츠](../../../public/characters/raster-v1/prince-boot-v3.webp)
+- [복장 영역](../../../src/lib/princeClothingAtlas.json), [부츠 영역](../../../src/lib/princeBootAtlas.json), [보행·관절](../../../src/lib/paintedPrinceMotion.ts)
+- [시안·정지·걷기·축하 비교](./prince-design-comparison.png)
+- [모바일 걷기](./prince-walk-mobile.png), [도착](./prince-arrival-mobile.png)
+
+몸통과 양쪽 바지가 같은 복장 원화를 사용합니다. 허벅지와 정강이는 각 바지의 같은 무릎 좌표에서 연결하고 폭과 질감을 유지합니다. 정지 시 무릎을 곧게 펴고 두 발을 자연스럽게 벌려 서며, 걷기 시 실제 발바닥 위치를 역기구학으로 계산합니다. 높은 부츠에 맞춰 발목 회전 폭을 줄여 다리가 도달 범위를 넘거나 발이 미끄러지지 않게 했습니다. 팔과 망토도 시안의 길이에 맞췄습니다.
+
+메인과 진행바는 같은 원화·관절·보행 시계를 사용합니다. 기존 시간 계산·일시정지·새로고침 복원·도착 연출·완료음·별 보상을 유지하며 자산 경로는 모두 `/timer/`를 사용합니다.
+
+검증: TypeScript·ESLint·단위 테스트 108개·정적 빌드가 통과했습니다. Chromium과 모바일 WebKit의 브라우저 테스트 4개에서 재선택, 관절 연결, 발 접지, 메인/진행바 동기화, 일시정지·새로고침·재개, 도착 후 양팔, 완료음 1회, 별 저장을 확인했습니다. 320px 모바일 걷기·도착 화면과 시안 비교 이미지를 육안으로 확인했습니다.
