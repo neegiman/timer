@@ -15,6 +15,3 @@ export function locomotionTime(elapsed: number, total: number) {
 }
 export const groundDistance = (gaitMs: number, cycleMs: number, stride = WALK_STRIDE) => gaitMs / cycleMs * (2 * stride / SUPPORT_FRACTION);
 export const loopOffset = (distance: number, period = TILE_WIDTH) => ((distance % period) + period) % period;
-
-/** Reveal the fixed finish landmark in the final tenth; progress never moves it. */
-export const finishOpacity = (progress: number) => progress < .9 ? 0 : .2 + .8 * clamp((progress - .9) / .02);

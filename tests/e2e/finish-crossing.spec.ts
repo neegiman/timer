@@ -3,7 +3,7 @@ import { CROSSING_DURATION_MS, FINISH_DURATION_MS, finishPhaseStart } from '../.
 import { princessAnatomy } from '../../src/lib/princessMotion';
 import { instrumentAudio } from './audio';
 
-test('princess crosses a stationary line before celebrating with two visible arms', async ({ page }, testInfo) => {
+test('princess reaches the approaching destination, crosses, then celebrates with two visible arms', async ({ page }, testInfo) => {
   await instrumentAudio(page);
   await page.clock.install();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -24,18 +24,21 @@ test('princess crosses a stationary line before celebrating with two visible arm
   await expect(goal).toHaveCount(1);
   await page.clock.runFor(32);
   await expect(goal.locator('.destination-paint')).toBeVisible();
-  const lineX = (await goal.boundingBox())!.x;
+  let previousGoal = (await goal.boundingBox())!.x;
   let previousX = 0;
   for (const remaining of [10_000, 2000, 100]) {
     await seek(session.targetTimestamp - remaining);
     const x = (await page.locator('.character-wrapper').boundingBox())!.x;
     expect(x).toBeGreaterThanOrEqual(previousX);
-    expect(x).toBeLessThan(lineX);
-    expect((await goal.boundingBox())!.x).toBeCloseTo(lineX, 4);
+    const nextGoal = (await goal.boundingBox())!.x;
+    expect(x).toBeLessThan(nextGoal);
+    expect(nextGoal).toBeLessThan(previousGoal);
+    previousGoal = nextGoal;
     previousX = x;
   }
   await seek(session.targetTimestamp);
   await expect(scene).toHaveAttribute('data-phase', 'CROSS_FINISH');
+  const lineX = (await goal.boundingBox())!.x;
   const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
   const ground = await scene.getAttribute('data-ground-distance');
   await expect(page.locator('.arrival-sparkles')).toHaveCount(0);

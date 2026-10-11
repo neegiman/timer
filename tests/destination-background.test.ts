@@ -2,35 +2,58 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
 import manifest from '../src/lib/destinationScenery.json';
-import scenery from '../src/lib/paintedScenery.json';
-import { destinationLayout } from '../src/lib/destinationBackground';
+import { destinationApproach, destinationLayout } from '../src/lib/destinationBackground';
 import { finishGeometry } from '../src/lib/arrivalMotion';
 
 const seasons = ['spring', 'summer', 'autumn', 'winter'] as const;
-const assets = [...seasons.flatMap((season) => (['day', 'night'] as const).map((theme) => ({
-  art: manifest[season][theme], original: `public${scenery[season][theme].src}`,
-}))), { art: manifest.space, original: 'public/images/space-v1/nebula.webp' }];
+const assets = [...seasons.flatMap((season) => (['day', 'night'] as const).map((theme) => manifest[season][theme])), manifest.space];
 
-test('all nine arrival bitmaps contain the landmark and preserve the painted surroundings', async () => {
-  for (const { art, original } of assets) {
+test('destination stays visible in the distance, approaches continuously and stops at zero', () => {
+  for (const width of [288, 358, 720, 1100]) {
+    const lineX = finishGeometry(width, 100).lineX;
+    let previous = destinationApproach(0, width, lineX);
+    assert.ok(previous.scale > .3);
+    assert.ok(lineX + previous.offsetX > width * .85);
+    for (let i = 1; i <= 1000; i++) {
+      const next = destinationApproach(i / 1000, width, lineX);
+      assert.ok(next.offsetX < previous.offsetX);
+      assert.ok(next.scale > previous.scale);
+      assert.ok(previous.offsetX - next.offsetX < width * .001);
+      assert.ok(next.scale - previous.scale < .001);
+      previous = next;
+    }
+    assert.deepEqual(previous, { offsetX: 0, scale: 1 });
+    assert.deepEqual(destinationApproach(2, width, lineX), previous);
+    assert.deepEqual(destinationApproach(-1, width, lineX), destinationApproach(0, width, lineX));
+    const before = destinationApproach(.89999, width, lineX);
+    const after = destinationApproach(.90001, width, lineX);
+    assert.ok(before.offsetX - after.offsetX < .1, '90% must not reveal or teleport the destination');
+    assert.ok(after.scale - before.scale < .0001);
+  }
+});
+
+test('all nine arrival paintings leave every pixel outside the landmark transparent', async () => {
+  for (const art of assets) {
     const source = `public${art.src}`;
     const metadata = await sharp(source).metadata();
     assert.equal(metadata.width, art.width);
     assert.equal(metadata.height, art.height);
-    const region = { left: art.paintBounds.x, top: art.paintBounds.y, width: art.paintBounds.width, height: art.paintBounds.height };
-    const painted = await sharp(source).extract(region).removeAlpha().raw().toBuffer();
-    const previous = await sharp(original).extract(region).removeAlpha().raw().toBuffer();
-    let changed = 0;
-    for (let i = 0; i < painted.length; i++) if (Math.abs(painted[i] - previous[i]) > 15) changed++;
-    assert.ok(changed > painted.length * .12, `No painted arrival landmark in ${source}`);
-    const sky = { left: 0, top: 0, width: art.width, height: Math.min(60, art.paintBounds.y) };
-    assert.deepEqual(await sharp(source).extract(sky).removeAlpha().raw().toBuffer(),
-      await sharp(original).extract(sky).removeAlpha().raw().toBuffer(), `Repainted unrelated scenery in ${source}`);
+    assert.equal(metadata.hasAlpha, true, `Opaque arrival background in ${source}`);
+    const pixels = await sharp(source).ensureAlpha().raw().toBuffer();
+    let painted = 0;
+    for (let y = 0; y < art.height; y++) for (let x = 0; x < art.width; x++) {
+      const alpha = pixels[(y * art.width + x) * 4 + 3];
+      const inside = x >= art.paintBounds.x && x < art.paintBounds.x + art.paintBounds.width
+        && y >= art.paintBounds.y && y < art.paintBounds.y + art.paintBounds.height;
+      if (inside && alpha > 16) painted++;
+      if (!inside) assert.equal(alpha, 0, `Arrival would cover scenery at ${x},${y} in ${source}`);
+    }
+    assert.ok(painted > art.paintBounds.width * art.paintBounds.height * .2, `No arrival painting in ${source}`);
   }
 });
 
 test('painted landmark meets the fixed finish and ground/flight path without exposing background edges', () => {
-  for (const { art } of assets) {
+  for (const art of assets) {
     for (const [width, height, actorWidth] of [[288, 288, 102.4], [358, 358, 124.8], [720, 300, 168], [844, 190, 90], [1100, 650, 168]]) {
       const lineX = finishGeometry(width, actorWidth).lineX;
       const layout = destinationLayout(art, width, height, lineX, actorWidth);

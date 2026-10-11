@@ -160,10 +160,12 @@ test('fixed character, separate progress and destination stay aligned after resi
         const track = document.querySelector('.progress-track')!.getBoundingClientRect();
         const marker = document.querySelector('.progress-marker')!.getBoundingClientRect();
         const goal = document.querySelector<HTMLElement>('.destination-background');
+        const approach = progress * progress * (3 - 2 * progress);
+        const goalX = Number(actor.dataset.finishLineX) + Math.max(0, scenery.width * .88 - Number(actor.dataset.finishLineX)) * (1 - approach);
         return { error: Math.abs(box.y - scenery.y - scenery.height * .78),
           actorX: box.x - scenery.x, startX: scenery.width * .42, lineX: Number(actor.dataset.finishLineX),
           progress, markerError: Math.abs(marker.x - track.x - track.width * progress),
-          goalError: goal ? Math.hypot(goal.getBoundingClientRect().x - scenery.x - Number(actor.dataset.finishLineX), goal.getBoundingClientRect().y - scenery.y - scenery.height * .78) : null };
+          goalError: goal ? Math.hypot(goal.getBoundingClientRect().x - scenery.x - goalX, goal.getBoundingClientRect().y - scenery.y - scenery.height * .78) : null };
       });
       await expect.poll(async () => { await page.clock.runFor(32); return (await readGeometry()).error; }, { message: `actor leaves its anchor at ${width}px` }).toBeLessThan(1);
       const geometry = await readGeometry();
@@ -174,8 +176,7 @@ test('fixed character, separate progress and destination stay aligned after resi
       }
       expect(geometry.markerError).toBeLessThan(.1);
       expect(geometry.progress).toBeCloseTo(elapsed / 600_000, 2);
-      if (elapsed >= 540_000) expect(geometry.goalError).toBeLessThan(.1);
-      else expect(geometry.goalError).toBeNull();
+      expect(geometry.goalError).toBeLessThan(.1);
       await assertInsideTrack(page);
       if (testInfo.project.name === 'chromium' && width === 390) await page.screenshot({ path: `artifacts/road-mobile-${elapsed}.png`, fullPage: true });
     }

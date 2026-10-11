@@ -15,14 +15,16 @@ function Layer({ name, rate, tileScale, children }: { name: string; rate: number
 }
 
 /** Measured painted strips repeat independently; ground shares the feet's pixel speed. */
-export const ScrollingScenery = memo(function ScrollingScenery({ season, theme, characterId, showDestination, destinationRef }: {
-  season: Season; theme: SceneTheme; characterId: string; showDestination: boolean; destinationRef: RefObject<HTMLDivElement | null>;
+export const ScrollingScenery = memo(function ScrollingScenery({ season, theme, characterId, destinationRef }: {
+  season: Season; theme: SceneTheme; characterId: string; destinationRef: RefObject<HTMLDivElement | null>;
 }) {
   const backdrop = characterId === 'rocket' ? destinationArt.space : destinationArt[season][theme];
-  const destination = showDestination ? <div ref={destinationRef} className="destination-background" data-testid="journey-goal" aria-hidden="true">
+  // Transparent paint adds the destination without replacing the current
+  // landscape crop, covering foreground trees, or erasing space planets.
+  const destination = <div ref={destinationRef} className="destination-background" data-testid="journey-goal" aria-hidden="true">
     <div className="destination-paint" data-destination-src={assetPath(backdrop.src)} data-source-width={backdrop.width} data-source-height={backdrop.height}
       data-anchor-x={backdrop.anchor.x} data-anchor-y={backdrop.anchor.y} data-destination-kind={backdrop.kind} style={paint(backdrop)} />
-  </div> : null;
+  </div>;
   const preload = <link rel="preload" as="image" href={assetPath(backdrop.src)} />;
   if (characterId === 'rocket') return <>{preload}<RocketSky />{destination}</>;
   const scene = art[season];

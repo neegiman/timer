@@ -1,7 +1,7 @@
 {
   "spring": {
     "day": {
-      "src": "/images/destination-v1/spring-day.webp",
+      "src": "/images/destination-v2/spring-day.webp",
       "width": 2048,
       "height": 383,
       "anchor": {
@@ -17,7 +17,7 @@
       "kind": "nature"
     },
     "night": {
-      "src": "/images/destination-v1/spring-night.webp",
+      "src": "/images/destination-v2/spring-night.webp",
       "width": 2048,
       "height": 383,
       "anchor": {
@@ -35,7 +35,7 @@
   },
   "summer": {
     "day": {
-      "src": "/images/destination-v1/summer-day.webp",
+      "src": "/images/destination-v2/summer-day.webp",
       "width": 2048,
       "height": 401,
       "anchor": {
@@ -51,7 +51,7 @@
       "kind": "nature"
     },
     "night": {
-      "src": "/images/destination-v1/summer-night.webp",
+      "src": "/images/destination-v2/summer-night.webp",
       "width": 2048,
       "height": 401,
       "anchor": {
@@ -69,7 +69,7 @@
   },
   "autumn": {
     "day": {
-      "src": "/images/destination-v1/autumn-day.webp",
+      "src": "/images/destination-v2/autumn-day.webp",
       "width": 2048,
       "height": 387,
       "anchor": {
@@ -85,7 +85,7 @@
       "kind": "nature"
     },
     "night": {
-      "src": "/images/destination-v1/autumn-night.webp",
+      "src": "/images/destination-v2/autumn-night.webp",
       "width": 2048,
       "height": 387,
       "anchor": {
@@ -103,7 +103,7 @@
   },
   "winter": {
     "day": {
-      "src": "/images/destination-v1/winter-day.webp",
+      "src": "/images/destination-v2/winter-day.webp",
       "width": 2048,
       "height": 387,
       "anchor": {
@@ -119,7 +119,7 @@
       "kind": "nature"
     },
     "night": {
-      "src": "/images/destination-v1/winter-night.webp",
+      "src": "/images/destination-v2/winter-night.webp",
       "width": 2048,
       "height": 387,
       "anchor": {
@@ -136,7 +136,7 @@
     }
   },
   "space": {
-    "src": "/images/destination-v1/space.webp",
+    "src": "/images/destination-v2/space.webp",
     "width": 1920,
     "height": 640,
     "anchor": {

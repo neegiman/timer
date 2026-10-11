@@ -19,7 +19,7 @@ async function seek(page: Page, elapsed: number) {
   await page.clock.runFor(32);
 }
 
-test('fixed walking, one-time 50/90 messages, stationary finish and ordered celebration', async ({ page }, testInfo) => {
+test('fixed walking, one-time 50/90 messages, approaching destination and ordered celebration', async ({ page }, testInfo) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await instrumentAudio(page);
@@ -38,7 +38,7 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   const fixedX = await main.evaluate((element) => element.getBoundingClientRect().x);
   await seek(page, 299_900);
   await expect(message).toHaveAttribute('data-message-id', /^bath-after-beginning-/);
-  await expect(page.getByTestId('journey-goal')).toHaveCount(0);
+  await expect(page.getByTestId('journey-goal').locator('.destination-paint')).toBeVisible();
   await seek(page, 300_000);
   await expect(message).toHaveAttribute('data-message-id', /^bath-after-halfway-/);
   await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
@@ -49,7 +49,7 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   await expect(message).toHaveAttribute('data-visible', 'true');
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/motion-midpoint.png', fullPage: true });
   await seek(page, 539_900);
-  await expect(page.getByTestId('journey-goal')).toHaveCount(0);
+  await expect(page.getByTestId('journey-goal').locator('.destination-paint')).toBeVisible();
   await seek(page, 540_000);
   await expect(message).toHaveAttribute('data-message-id', /^bath-after-near-/);
   await expect(page.getByTestId('journey-goal')).toHaveCount(1);
@@ -57,7 +57,7 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   if (supportsAudio) await expect.poll(() => played('sparkle')).toBe(1);
   await expect(message).toHaveAttribute('data-cue', 'near');
   await expect(message).toHaveAttribute('data-visible', 'true');
-  const goalX = await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x);
+  let previousGoalX = await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x);
   let previousGround = Number(await scene.getAttribute('data-ground-distance'));
   let previousActor = fixedX;
   for (const elapsed of [550_000, 570_000, 590_000, 599_900]) {
@@ -65,9 +65,11 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
     await expect(scene).toHaveAttribute('data-phase', 'WALK');
     const actorX = await main.evaluate((element) => element.getBoundingClientRect().x);
     expect(actorX).toBeGreaterThan(previousActor);
-    expect(actorX).toBeLessThan(goalX);
+    const nextGoalX = await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x);
+    expect(actorX).toBeLessThan(nextGoalX);
     previousActor = actorX;
-    expect(await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x)).toBeCloseTo(goalX, 4);
+    expect(nextGoalX).toBeLessThan(previousGoalX);
+    previousGoalX = nextGoalX;
     const ground = Number(await scene.getAttribute('data-ground-distance'));
     expect(ground).toBeGreaterThan(previousGround);
     previousGround = ground;
@@ -76,7 +78,7 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   await seek(page, 600_000);
   await expect(scene).toHaveAttribute('data-phase', 'CROSS_FINISH');
   await expect(message).toHaveText('목욕하러 가요. 🛁');
-  expect(await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x)).toBeCloseTo(goalX, 4);
+  const goalX = await page.getByTestId('journey-goal').evaluate((element) => element.getBoundingClientRect().x);
   const stopped = await page.locator('[data-layer="ground"]').getAttribute('style');
   const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
   for (const { phase } of FINISH_SEQUENCE.slice(1)) {
@@ -99,7 +101,7 @@ test('fixed walking, one-time 50/90 messages, stationary finish and ordered cele
   expect(errors).toEqual([]);
 });
 
-test('pause freezes joints, scroll, miniature and time; finish stays fixed through refresh/resume', async ({ page }) => {
+test('pause freezes joints, scroll, miniature, destination and time through refresh', async ({ page }) => {
   await page.clock.install();
   await begin(page);
   await seek(page, 570_100);
@@ -142,7 +144,9 @@ test('pause freezes joints, scroll, miniature and time; finish stays fixed throu
   expect(Number(resumed.gait) - Number(frozen.gait)).toBeLessThan(500);
   expect(resumed.joints).not.toEqual(frozen.joints);
   expect(resumed.layers).not.toEqual(frozen.layers);
-  expect(resumed.goal).toEqual(frozen.goal);
+  expect(Math.abs(resumed.goal.x - frozen.goal.x)).toBeLessThan(.1);
+  expect(resumed.goal.x).toBeLessThanOrEqual(frozen.goal.x);
+  expect(resumed.goal.y).toBe(frozen.goal.y);
   expect(await page.evaluate(() => (window as unknown as { wrongResumeStage: boolean }).wrongResumeStage)).toBe(false);
 });
 
@@ -156,7 +160,7 @@ test('restart resets scene, stage and scroll; exit cancels arrival', async ({ pa
   await page.clock.runFor(64);
   await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'WALK');
   await expect(page.getByTestId('journey-message')).toHaveAttribute('data-message-id', /^bath-after-beginning-/);
-  await expect(page.getByTestId('journey-goal')).toHaveCount(0);
+  await expect(page.getByTestId('journey-goal').locator('.destination-paint')).toBeVisible();
   expect(Number(await page.locator('.progress-marker').getAttribute('data-progress'))).toBeLessThan(.002);
   expect(Number(await page.locator('[data-layer="ground"]').getAttribute('data-scroll-offset'))).toBeLessThan(5);
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
@@ -176,17 +180,11 @@ test('1 and 120 minute journeys stay calm in their last ten seconds and stop at 
     const duration = minutes * 60_000;
     for (const remaining of [9900, 2900, 100]) {
       await seek(page, duration - remaining);
-      // The test clock is frozen. Wait for React to commit the new sample
-      // (and mount the final-10% goal), then let its first rAF paint run.
+      // Wait for React's new sample and the corresponding rAF paint.
       await expect(page.getByTestId('traveler')).toHaveAttribute('data-progress', String((duration - remaining) / duration));
       await page.clock.runFor(16);
       await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'WALK');
-      if (remaining <= duration * .1) {
-        await expect(page.getByTestId('journey-goal').locator('.destination-paint')).toBeVisible();
-      } else {
-        // In a one-minute journey, ten seconds remaining is still before 90%.
-        await expect(page.getByTestId('journey-goal')).toHaveCount(0);
-      }
+      await expect(page.getByTestId('journey-goal').locator('.destination-paint')).toBeVisible();
     }
     await seek(page, duration);
     await expect(page.getByTestId('journey-goal').locator('.destination-paint')).toBeVisible();

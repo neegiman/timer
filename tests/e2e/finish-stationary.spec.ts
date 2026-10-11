@@ -33,12 +33,12 @@ async function seek(page: Page, time: number) {
   }
 }
 
-async function landmarks(page: Page) {
-  return page.evaluate(destinationLandmarks, { layout: true });
+async function landmarks(page: Page, layoutOnly = false) {
+  return page.evaluate(destinationLandmarks, { layout: true, layoutOnly });
 }
 
 async function expectFixed(page: Page, fixed: Awaited<ReturnType<typeof landmarks>>) {
-  const current = await landmarks(page);
+  const current = (await landmarks(page)).filter((point) => fixed.some((expected) => expected.selector === point.selector));
   expect(current.map((point) => point.selector)).toEqual(fixed.map((point) => point.selector));
   // A hundredth of a CSS pixel catches visible movement of the painted sign.
   for (const [index, point] of current.entries()) {
@@ -62,7 +62,9 @@ for (const display of ['window', 'expanded'] as const) {
       await page.clock.runFor(128);
       // Record actual viewport coordinates on every frame. Adding scrollY here
       // would hide the browser moving the whole scene after a layout collapse.
-      await page.evaluate(destinationLandmarks, { monitor: true });
+      // The destination intentionally approaches during the timer. The viewport
+      // and progress endpoint must still stay completely stable at zero.
+      await page.evaluate(destinationLandmarks, { monitor: true, layoutOnly: true });
       for (const remaining of [20_000, 1000, 0]) await seek(page, session.targetTimestamp - remaining);
       await page.clock.runFor(FINISH_DURATION_MS + 500);
       await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'completed');
@@ -84,18 +86,19 @@ for (const display of ['window', 'expanded'] as const) {
 
 for (const display of ['window', 'expanded'] as const) {
   for (const [width, height] of [[390, 844], [844, 390]]) {
-    test(`entire destination stays fixed through scrolling, crossing and rewards: ${display} ${width}`, async ({ page }, testInfo) => {
+    test(`destination stops at zero through crossing and rewards: ${display} ${width}`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width, height });
       const session = await start(page, display);
       await seek(page, session.targetTimestamp - 30_000);
-      const fixed = await landmarks(page);
+      const layout = await landmarks(page, true);
       const ground = await page.locator('.ground-layer').getAttribute('style');
       await seek(page, session.targetTimestamp - 20_000);
       expect(await page.locator('.ground-layer').getAttribute('style')).not.toBe(ground);
-      await expectFixed(page, fixed);
+      await expectFixed(page, layout);
       await seek(page, session.targetTimestamp - 1000);
-      await expectFixed(page, fixed);
+      await expectFixed(page, layout);
       await seek(page, session.targetTimestamp);
+      const fixed = await landmarks(page);
       const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
       const stopped = await page.locator('.ground-layer').getAttribute('style');
       for (const offset of [1800, finishPhaseStart('CELEBRATE') + 200, FINISH_DURATION_MS + 500]) {
@@ -115,22 +118,28 @@ for (const display of ['window', 'expanded'] as const) {
 }
 
 for (const [minutes, width, height] of [[1, 320, 740], [10, 390, 844], [120, 1440, 900]]) {
-  test(`distance to the fixed destination decreases across 90–100%: ${minutes}min ${width}px`, async ({ page }, testInfo) => {
+  test(`destination approaches from departure until zero: ${minutes}min ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height });
     const session = await start(page, 'window', false, '왕자', minutes);
     let fixed: Awaited<ReturnType<typeof landmarks>> | undefined;
     let previousGap = Infinity;
-    for (const progress of [.9, .92, .94, .96, .98, .99]) {
+    let previousPaintWidth = 0;
+    for (const progress of [.01, .25, .5, .75, .9, .92, .94, .96, .98, .99]) {
       await seek(page, session.startTimestamp + minutes * 60_000 * progress);
       const actor = (await page.locator('.character-wrapper').boundingBox())!;
       const goal = (await page.getByTestId('journey-goal').boundingBox())!;
+      await expect(page.locator('.destination-paint')).toBeVisible();
+      await expect(page.getByTestId('journey-goal')).toHaveCSS('opacity', '1');
+      const paint = (await page.locator('.destination-paint').boundingBox())!;
+      expect(paint.width).toBeGreaterThan(previousPaintWidth);
+      previousPaintWidth = paint.width;
       const gap = goal.x - actor.x;
       expect(gap, `No visible approach at ${progress * 100}%`).toBeLessThan(previousGap - 1);
       expect(gap).toBeGreaterThan(0);
       if (fixed) await expectFixed(page, fixed);
-      else fixed = await landmarks(page);
+      else fixed = await landmarks(page, true);
       previousGap = gap;
-      if (minutes === 10 && testInfo.project.name === 'chromium' && [.9, .94, .99].includes(progress)) {
+      if (minutes === 10 && testInfo.project.name === 'chromium' && [.01, .25, .5, .75, .9, .94, .99].includes(progress)) {
         await page.locator('.journey-scene').screenshot({ path: `artifacts/approach-prince-${progress * 100}.png` });
       }
     }
@@ -143,11 +152,11 @@ for (const [minutes, width, height] of [[1, 320, 740], [10, 390, 844], [120, 144
   });
 }
 
-test('prince walks independently of both fixed destinations, including pause and restoration', async ({ page }) => {
+test('prince and approaching destination pause and restore together', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const session = await start(page, 'expanded', false, '왕자');
   await seek(page, session.targetTimestamp - 30_000);
-  const fixed = await landmarks(page);
+  const layout = await landmarks(page, true);
   const moving = async () => ({
     ground: await page.locator('.ground-layer').getAttribute('style'),
     miniature: await page.locator('.progress-marker').getAttribute('style'),
@@ -159,10 +168,11 @@ test('prince walks independently of both fixed destinations, including pause and
   expect(next.ground).not.toBe(walking.ground);
   expect(next.miniature).not.toBe(walking.miniature);
   expect(next.frame).not.toBe(walking.frame);
-  await expectFixed(page, fixed);
+  await expectFixed(page, layout);
 
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '일시정지', exact: true }).click();
+  const fixed = await landmarks(page);
   const stopped = await moving();
   await page.clock.runFor(5000);
   expect(await moving()).toEqual(stopped);
@@ -172,21 +182,30 @@ test('prince walks independently of both fixed destinations, including pause and
   await page.getByRole('button', { name: '계속', exact: true }).click();
   await page.clock.runFor(350);
   expect((await moving()).ground).not.toBe(stopped.ground);
-  await expectFixed(page, fixed);
+  await expectFixed(page, layout);
+
+  await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
+  await page.getByRole('button', { name: '일시정지', exact: true }).click();
+  const restored = await landmarks(page);
 
   await page.reload();
-  await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'running');
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'paused');
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '큰 화면 보기', exact: true }).click();
-  await page.clock.runFor(128);
-  await expectFixed(page, fixed);
+  // A paused renderer has no continuous rAF. WebKit delivers ResizeObserver
+  // after the expanded layout paints, independently of Playwright's clock.
+  await expect.poll(async () => {
+    await page.clock.runFor(32);
+    return page.locator('.journey-scene').evaluate((scene) => Math.abs(
+      Number.parseFloat(getComputedStyle(scene).getPropertyValue('--destination-y')) - scene.getBoundingClientRect().height * .78));
+  }).toBeLessThan(.01);
+  await expectFixed(page, restored);
 });
 
 test('audio recovery at arrival cannot move the finish line or resize the scene', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const session = await start(page, 'expanded', true);
   await seek(page, session.targetTimestamp - 30_000);
-  const fixed = await landmarks(page);
   // Simulate Safari interrupting an already unlocked output near the finish.
   await page.evaluate(() => {
     if (typeof AudioContext !== 'undefined') {
@@ -194,6 +213,7 @@ test('audio recovery at arrival cannot move the finish line or resize the scene'
     }
   });
   await seek(page, session.targetTimestamp);
+  const fixed = await landmarks(page);
   const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
   await seek(page, arrival + finishPhaseStart('CELEBRATE') + 100);
   await expect(page.getByRole('button', { name: '소리 켜기', exact: true })).toBeVisible();

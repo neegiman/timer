@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { getAnimationState } from '@/lib/animation';
-import { clamp, finishOpacity, groundDistance, loopOffset, smoothstep, TILE_WIDTH } from '@/lib/journey';
+import { clamp, groundDistance, loopOffset, smoothstep, TILE_WIDTH } from '@/lib/journey';
 import { arrivalMotion, finishGeometry } from '@/lib/arrivalMotion';
-import { destinationLayout } from '@/lib/destinationBackground';
+import { destinationApproach, destinationLayout } from '@/lib/destinationBackground';
 import destinationArt from '@/lib/destinationScenery.json';
 import { getCharacterPose, type JointName } from '@/lib/characterPose';
 import { motionProfile } from '@/lib/motionProfiles';
@@ -233,7 +233,11 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         particle.style.transform = `translate3d(${pose.x * width}px, ${pose.y * height}px, 0) rotate(${pose.rotation}deg)`;
         particle.style.opacity = String(pose.opacity);
       }
-      if (goal.current) goal.current.style.opacity = String(finishOpacity(pose.position));
+      if (goal.current) {
+        const destination = destinationApproach(pose.position, width, geometry.lineX);
+        goal.current.style.transform = `translate3d(${destination.offsetX}px, 0, 0) scale(${destination.scale})`;
+        goal.current.style.opacity = '1';
+      }
       fill.current?.style.setProperty('clip-path', `inset(0 ${(1 - pose.position) * 100}% 0 0)`);
       marker.current?.style.setProperty('transform', `translate3d(${pose.position * progressWidth}px, 0, 0)`);
       if (marker.current) {

@@ -1,14 +1,17 @@
 /** Measure the landmark painted INSIDE the bitmap, not merely its DOM origin.
  * This function is serialized into the browser by Playwright. */
-export function destinationLandmarks(options: { layout?: boolean; monitor?: boolean } = {}) {
+export function destinationLandmarks(options: { layout?: boolean; monitor?: boolean; layoutOnly?: boolean } = {}) {
   const read = () => {
     const shell = document.querySelector<HTMLElement>('.app-shell')!;
     const scrollY = options.layout ? window.scrollY + (shell.dataset.display === 'expanded' ? shell.scrollTop : 0) : 0;
     const scrollX = options.layout ? window.scrollX : 0;
-    const points = ['.journey-scene', '.destination-paint', '.progress-endpoints > span:last-child'].map((selector) => {
+    const selectors = options.layoutOnly ? ['.journey-scene', '.progress-endpoints > span:last-child']
+      : ['.journey-scene', '.destination-paint', '.progress-endpoints > span:last-child'];
+    const points = selectors.map((selector) => {
       const box = document.querySelector(selector)!.getBoundingClientRect();
       return { selector, x: box.x + scrollX, y: box.y + scrollY, width: box.width, height: box.height };
     });
+    if (options.layoutOnly) return points;
     const paint = document.querySelector<HTMLElement>('.destination-paint')!;
     const box = paint.getBoundingClientRect();
     points.push({ selector: 'painted landmark',

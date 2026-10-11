@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { finishOpacity, groundDistance, locomotionTime, loopOffset, SUPPORT_FRACTION, TILE_WIDTH } from '../src/lib/journey';
+import { groundDistance, locomotionTime, loopOffset, SUPPORT_FRACTION, TILE_WIDTH } from '../src/lib/journey';
 import { footTarget } from '../src/lib/characterPose';
 
 test('locomotion gently starts and stops, keeping the same speed across milestones', () => {
@@ -36,12 +36,4 @@ test('scenery wraps by precisely one whole tile without accumulated drift', () =
     assert.ok(Math.abs(loopOffset(TILE_WIDTH * cycle - .01) - (TILE_WIDTH - .01)) < 1e-8);
     assert.equal(loopOffset(TILE_WIDTH * cycle), 0);
   }
-});
-
-test('the fixed finish landmark appears only in the final tenth and fades in gently', () => {
-  assert.equal(finishOpacity(0), 0);
-  assert.equal(finishOpacity(.89999), 0);
-  assert.equal(finishOpacity(.9), .2);
-  assert.ok(finishOpacity(.91) > .2 && finishOpacity(.91) < 1);
-  for (const progress of [.93, .95, .99, .99999, 1, 2]) assert.equal(finishOpacity(progress), 1);
 });
