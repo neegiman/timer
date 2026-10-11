@@ -11,20 +11,25 @@ const fitted = (part: PrincePart, x: number, y: number, width: number) => {
   const region = atlas.parts[part];
   return { x, y, width, height: width * region[3] / region[2] };
 };
-const boot = { width: 27, pivot: { x: 61, y: 31 }, sole: { x: 138, y: 153 } };
-const bootScale = boot.width / atlas.parts.boot[2];
-export const princeSole = { x: (boot.sole.x - boot.pivot.x) * bootScale, y: (boot.sole.y - boot.pivot.y) * bootScale };
-const hipY = PRINCE_GAIT.groundY - princeSole.y - 68;
+const boot = { width: 32, height: 27, pivot: { x: 61, y: 31 }, sole: { x: 138, y: 153 } };
+const bootScaleX = boot.width / atlas.parts.boot[2], bootScaleY = boot.height / atlas.parts.boot[3];
+export const princeSole = { x: (boot.sole.x - boot.pivot.x) * bootScaleX, y: (boot.sole.y - boot.pivot.y) * bootScaleY };
+const upperLeg = 30, lowerLeg = 31;
+const hipY = PRINCE_GAIT.groundY - princeSole.y - upperLeg - lowerLeg;
 
 /** Rounded painted roots overlap inside the vest, elbows, knees and boot openings. */
 export const princeAnatomy = {
   head: fitted('head', 44, 12, 65), headPivot: { x: 80, y: 83 },
   torso: fitted('torso', 53, 78, 54),
   cape: fitted('cape', 32, 80, 86), capePivot: { x: 80, y: 87 },
-  legs: { front: { x: 66, y: hipY, upper: 35, lower: 33, bend: 1 }, back: { x: 94, y: hipY, upper: 35, lower: 33, bend: 1 } },
-  thigh: { pivot: { x: 75, y: 33 }, tip: { x: 72, y: 238 } },
-  shin: { pivot: { x: 65, y: 34 }, tip: { x: 65, y: 233 } },
-  shinCrossScale: .95,
+  legs: { front: { x: 64, y: hipY, upper: upperLeg, lower: lowerLeg, bend: 1 }, back: { x: 96, y: hipY, upper: upperLeg, lower: lowerLeg, bend: 1 } },
+  // Both bones sample one continuous trouser painting. The shared fabric point
+  // at y=133 replaces the old shin's exposed oval cap at the moving knee.
+  trouserPart: 'thigh',
+  thigh: { pivot: { x: 75, y: 33 }, tip: { x: 73.5, y: 133 } },
+  shin: { pivot: { x: 73.5, y: 133 }, tip: { x: 72, y: 238 } },
+  thighCrossScale: .48,
+  shinCrossScale: .48,
   boot,
   arms: {
     front: { x: 61, y: 88, upper: 22, lower: 20, upperPart: 'upperArm', lowerPart: 'foreArm',

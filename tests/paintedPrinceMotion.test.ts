@@ -22,13 +22,27 @@ test('painted prince retains the original ImageGen alpha, and every joint is ins
     const [x, y] = atlas.parts[part];
     assert.ok(source.data[((y + Math.round(point.y)) * atlas.width + x + Math.round(point.x)) * 4 + 3] > 200, `${part} joint lies outside its painting`);
   };
-  for (const part of ['thigh', 'shin'] as const) { check(part, anatomy[part].pivot); check(part, anatomy[part].tip); }
+  for (const part of ['thigh', 'shin'] as const) { check(anatomy.trouserPart, anatomy[part].pivot); check(anatomy.trouserPart, anatomy[part].tip); }
+  // The hip paint must begin underneath the tunic, rather than outside its silhouette.
+  const torsoScale = anatomy.torso.width / atlas.parts.torso[2];
+  for (const rig of Object.values(anatomy.legs)) check('torso', {
+    x: (rig.x - anatomy.torso.x) / torsoScale,
+    y: (rig.y - anatomy.torso.y) / torsoScale,
+  });
   check('boot', anatomy.boot.pivot); check('boot', anatomy.boot.sole);
   for (const rig of Object.values(anatomy.arms)) {
     check(rig.upperPart, rig.upperArt.pivot); check(rig.upperPart, rig.upperArt.tip);
     check(rig.lowerPart, rig.lowerArt.pivot); check(rig.lowerPart, rig.lowerArt.tip);
   }
   assert.ok((await readFile(`public${PAINTED_PRINCE_ASSET}`)).length < 1_000_000);
+});
+
+test('prince trousers share continuous knee fabric without a change in leg thickness', () => {
+  assert.deepEqual(anatomy.thigh.tip, anatomy.shin.pivot, 'The knee must use the same point in the painted fabric');
+  const upperScale = anatomy.legs.front.upper / Math.hypot(anatomy.thigh.tip.x - anatomy.thigh.pivot.x, anatomy.thigh.tip.y - anatomy.thigh.pivot.y);
+  const lowerScale = anatomy.legs.front.lower / Math.hypot(anatomy.shin.tip.x - anatomy.shin.pivot.x, anatomy.shin.tip.y - anatomy.shin.pivot.y);
+  const kneeWidthRatio = lowerScale * anatomy.shinCrossScale / (upperScale * anatomy.thighCrossScale);
+  assert.ok(Math.abs(kneeWidthRatio - 1) < .03, 'Trouser width changes abruptly at the knee');
 });
 
 test('prince standing and celebration keep separate upright legs and soles on the ground', () => {

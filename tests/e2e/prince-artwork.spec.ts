@@ -39,18 +39,30 @@ test('painted prince stays connected and grounded through selection, walking, pa
       const svg = element as SVGSVGElement, scene = document.querySelector<HTMLElement>('.journey-scene')!;
       const point = (part: SVGSVGElement, p: { x: number; y: number }) =>
         new DOMPoint(part.viewBox.baseVal.x + p.x, part.viewBox.baseVal.y + p.y).matrixTransform(part.getScreenCTM()!);
+      const ownPaint = (group: SVGGElement, partName: string) =>
+        Array.from(group.querySelectorAll<SVGSVGElement>(`[data-painted-part="${partName}"]`)).find((part) => part.closest('[data-joint]') === group)!;
       const jointErrors: number[] = [];
       for (const side of ['front', 'back'] as const) {
         for (const [joint, partName, pivot] of [
-          [`${side}-thigh`, 'thigh', anatomy.thigh.pivot], [`${side}-shin`, 'shin', anatomy.shin.pivot],
+          [`${side}-thigh`, anatomy.trouserPart, anatomy.thigh.pivot], [`${side}-shin`, anatomy.trouserPart, anatomy.shin.pivot],
           [`${side}-foot`, 'boot', anatomy.boot.pivot],
           [`${side}-arm`, anatomy.arms[side].upperPart, anatomy.arms[side].upperArt.pivot],
           [`${side}-elbow`, anatomy.arms[side].lowerPart, anatomy.arms[side].lowerArt.pivot],
         ] as const) {
           const group = svg.querySelector<SVGGElement>(`[data-joint="${joint}"]`)!;
           const root = new DOMPoint(0, 0).matrixTransform(group.getScreenCTM()!);
-          const paint = point(group.querySelector<SVGSVGElement>(`[data-painted-part="${partName}"]`)!, pivot);
+          const paint = point(ownPaint(group, partName), pivot);
           jointErrors.push(Math.hypot(root.x - paint.x, root.y - paint.y));
+        }
+        // Test the actual painted endpoints against the next limb, not only each pivot in isolation.
+        for (const [parent, child, tip] of [
+          ['thigh', 'shin', anatomy.thigh.tip], ['shin', 'foot', anatomy.shin.tip],
+        ] as const) {
+          const parentGroup = svg.querySelector<SVGGElement>(`[data-joint="${side}-${parent}"]`)!;
+          const childGroup = svg.querySelector<SVGGElement>(`[data-joint="${side}-${child}"]`)!;
+          const paintTip = point(ownPaint(parentGroup, anatomy.trouserPart), tip);
+          const childRoot = new DOMPoint(0, 0).matrixTransform(childGroup.getScreenCTM()!);
+          jointErrors.push(Math.hypot(paintTip.x - childRoot.x, paintTip.y - childRoot.y));
         }
       }
       const feet = planted.map((side) => {
