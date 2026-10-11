@@ -5,7 +5,7 @@ import { motionProfile } from '../../src/lib/motionProfiles';
 import { animalActionPose, isAnimalId } from '../../src/lib/animalActionPose';
 import type { AnimalJoint } from '../../src/lib/animalMotion';
 import { princessPose } from '../../src/lib/princessMotion';
-import { paintedPrincePose } from '../../src/lib/paintedPrinceMotion';
+import { paintedPrincePose, princeCapePanelTransform } from '../../src/lib/paintedPrinceMotion';
 import type { JointName } from '../../src/lib/characterPose';
 
 async function readPoses(page: Page) {
@@ -16,6 +16,7 @@ async function readPoses(page: Page) {
         name: joint.getAttribute('data-joint') ?? joint.getAttribute('data-animal-joint'), transform: joint.getAttribute('transform'),
       })),
       body: root.querySelector('[data-animal-body], [data-prince-body]')?.getAttribute('transform') ?? null,
+      cape: Array.from(root.querySelectorAll('[data-prince-cape-panel]'), (panel) => panel.getAttribute('transform')),
     });
     return { main: read(document.querySelector('.traveler-body')!), miniature: read(document.querySelector('.progress-marker')!) };
   });
@@ -96,6 +97,7 @@ for (const character of characters) test(`${character.id}: progress artwork shar
   const expectedReduced = {
     frame: beforeReduced.frame === null ? null : '0',
     body: restingAnimal ? `translate(0 ${restingAnimal.bob.toFixed(5)})` : restingPrince ? `translate(0 ${restingPrince.bodyY.toFixed(5)})` : null,
+    cape: restingPrince ? beforeReduced.cape.map((_, index) => princeCapePanelTransform(restingPrince.cape, index)) : [],
     joints: beforeReduced.joints.map((joint) => ({ ...joint, transform: `rotate(${(restingAnimal
       ? restingAnimal.joints[joint.name as AnimalJoint] : restingHuman[joint.name as JointName]).toFixed(5)})` })),
   };

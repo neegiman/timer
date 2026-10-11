@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { princeAnatomy as anatomy, princeSole, PAINTED_PRINCE_GAIT as PRINCE_GAIT } from '../../src/lib/paintedPrinceMotion';
-import { animalFoot } from '../../src/lib/animalMotion';
+import { princeAnatomy as anatomy, princeSole, princeFoot, PAINTED_PRINCE_GAIT as PRINCE_GAIT } from '../../src/lib/paintedPrinceMotion';
 import { instrumentAudio } from './audio';
 import { finishPhaseStart } from '../../src/lib/animation';
 
@@ -33,7 +32,7 @@ test('painted prince stays connected and grounded through selection, walking, pa
   const frames: { html: string; planted: string[]; hands?: { x: number; y: number }[] }[] = [];
   const check = async (idle = false) => {
     const gait = Number(await page.locator('.character-wrapper').getAttribute('data-gait-time'));
-    const planted = (['front', 'back'] as const).filter((side) => idle || animalFoot(gait / PRINCE_GAIT.cycleMs + (side === 'back' ? .5 : 0), PRINCE_GAIT).planted);
+    const planted = (['front', 'back'] as const).filter((side) => idle || princeFoot(gait / PRINCE_GAIT.cycleMs + (side === 'back' ? .5 : 0)).planted);
     const frame = await page.locator('.traveler-body .painted-prince-artwork').evaluate((element, { anatomy, sole, planted }) => {
       const svg = element as SVGSVGElement, scene = document.querySelector<HTMLElement>('.journey-scene')!;
       const point = (part: SVGSVGElement, p: { x: number; y: number }) =>

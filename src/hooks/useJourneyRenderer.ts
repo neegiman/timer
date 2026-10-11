@@ -10,7 +10,7 @@ import type { AnimationInput, AnimationState } from '@/types/animation';
 import { animalActionPose, isAnimalId, settleAnimalPose } from '@/lib/animalActionPose';
 import { animalProfiles, type AnimalJoint } from '@/lib/animalMotion';
 import { PRINCESS_GAIT, princessPose, settlePrincessPose } from '@/lib/princessMotion';
-import { PAINTED_PRINCE_GAIT, paintedPrincePose, settlePaintedPrincePose } from '@/lib/paintedPrinceMotion';
+import { PAINTED_PRINCE_GAIT, paintedPrincePose, princeCapePanelTransform, settlePaintedPrincePose } from '@/lib/paintedPrinceMotion';
 import { isPixelVehicle, vehicleFrame, vehicleViewBox } from '@/lib/pixelVehicles';
 import { meteorGlimmerPose, sceneryEvent, sceneryParticle } from '@/lib/sceneryEvents';
 import type { Season } from '@/lib/seasons';
@@ -63,6 +63,8 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     const sprite = body.current;
     if (!element || !actor || !sprite) return;
     const progressPrinceBody = marker.current?.querySelector<SVGGElement>('[data-prince-body]');
+    const princeCape = Array.from(sprite.querySelectorAll<SVGGElement>('[data-prince-cape-panel]'));
+    const progressPrinceCape = Array.from(marker.current?.querySelectorAll<SVGGElement>('[data-prince-cape-panel]') ?? []);
     const progressVehicle = marker.current?.querySelector<SVGSVGElement>('[data-vehicle-sprite]');
     const progressAnimalBody = marker.current?.querySelector<SVGGElement>('[data-animal-body]');
     const progressAnimalJoints = Array.from(marker.current?.querySelectorAll<SVGGElement>('[data-animal-joint]') ?? [])
@@ -169,7 +171,10 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       }
       const prince = characterId === 'prince' ? (pose.phase === 'SETTLE' ? settlePaintedPrincePose(gait, pose.actionElapsedMs, reduced)
         : paintedPrincePose(pose.characterAction, animationTime, reduced)) : null;
-      if (prince) princeBody.current?.setAttribute('transform', `translate(0 ${prince.bodyY.toFixed(5)})`);
+      if (prince) {
+        princeBody.current?.setAttribute('transform', `translate(0 ${prince.bodyY.toFixed(5)})`);
+        for (const [index, panel] of princeCape.entries()) panel.setAttribute('transform', princeCapePanelTransform(prince.cape, index));
+      }
       let jointPose = prince ? prince.joints : characterId === 'princess' ? princessPose(pose.characterAction, animationTime, reduced)
         : getCharacterPose(pose.characterAction, animationTime, profile.cycleMs, reduced, bob);
       if (characterId === 'princess' && pose.phase === 'SETTLE') {
@@ -182,7 +187,10 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       for (const joint of joints.current) joint.element.setAttribute('transform', `rotate(${jointPose[joint.name].toFixed(5)})`);
       if (progressJoints.length > 0) {
         const miniaturePrince = prince ? (miniatureAction === 'walk' && walking ? prince : paintedPrincePose(miniatureAction, gait, reduced)) : null;
-        if (miniaturePrince) progressPrinceBody?.setAttribute('transform', `translate(0 ${miniaturePrince.bodyY.toFixed(5)})`);
+        if (miniaturePrince) {
+          progressPrinceBody?.setAttribute('transform', `translate(0 ${miniaturePrince.bodyY.toFixed(5)})`);
+          for (const [index, panel] of progressPrinceCape.entries()) panel.setAttribute('transform', princeCapePanelTransform(miniaturePrince.cape, index));
+        }
         const miniature = miniatureAction === 'walk' && walking ? jointPose
           : miniaturePrince ? miniaturePrince.joints
           : characterId === 'princess' ? princessPose(miniatureAction, gait, reduced)

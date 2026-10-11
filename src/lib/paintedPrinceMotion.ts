@@ -1,7 +1,7 @@
 import atlas from './princeAtlas.json';
 import bootAtlas from './princeBootAtlas.json';
 import clothingAtlas from './princeClothingAtlas.json';
-import { animalFoot, animalLeg, walkingFootPitch } from './animalMotion';
+import { animalLeg } from './animalMotion';
 import { smoothstep } from './journey';
 import { PRINCE_GAIT } from './princeMotion';
 import type { CharacterPose } from './characterPose';
@@ -12,7 +12,7 @@ export const PAINTED_PRINCE_OUTFIT_ASSET = '/characters/raster-v1/prince-long-pa
 export const PAINTED_PRINCE_BOOT_ASSET = '/characters/raster-v1/prince-boot-v3.webp';
 export const PAINTED_PRINCE_CLOTHING_ASSET = '/characters/raster-v1/prince-clothing-v3.webp';
 // This short-legged painted rig needs a shorter step than the legacy pixel rig.
-export const PAINTED_PRINCE_GAIT = { ...PRINCE_GAIT, travel: 28, support: .64, lift: 5 };
+export const PAINTED_PRINCE_GAIT = { ...PRINCE_GAIT, travel: 28, support: .56, lift: 4 };
 export type PrincePart = keyof typeof atlas.parts | keyof typeof clothingAtlas.parts;
 const fitted = (part: keyof typeof atlas.parts, x: number, y: number, width: number) => {
   const region = atlas.parts[part];
@@ -53,8 +53,33 @@ export const princeAnatomy = {
   },
 } as const;
 
-export interface PrincePose { joints: CharacterPose; bodyY: number }
-const softMaximum = (a: number, b: number) => (a + b + Math.sqrt((a - b) ** 2 + .15 ** 2)) / 2;
+// The collar stays pinned. Adjacent cloth panels share each displaced edge;
+// lower panels follow the stride later instead of rotating the entire painting.
+export const PRINCE_CAPE_ROWS = [0, .12, .28, .46, .64, .82, 1]
+  .map((height) => princeAnatomy.cape.y + height * princeAnatomy.cape.height);
+export interface PrincePose { joints: CharacterPose; bodyY: number; cape: number[] }
+const softMaximum = (a: number, b: number) => (a + b + Math.sqrt((a - b) ** 2 + .4 ** 2)) / 2;
+const smootherstep = (value: number) => { const t = Math.max(0, Math.min(1, value)); return t ** 3 * (10 - 15 * t + 6 * t * t); };
+
+/** A human step has a short double-support transfer, followed by a full swing.
+ * Position, velocity AND acceleration join at both ends of the return step.
+ * Unlike the standing pose, both walking ankles swing around their own hip. */
+export function princeFoot(phase: number) {
+  const { travel, support, lift } = PAINTED_PRINCE_GAIT;
+  const p = ((phase % 1) + 1) % 1, stride = travel * support / 2;
+  if (p < support) return { x: stride - travel * p, lift: 0, planted: true,
+    pitch: 3 * smootherstep((p / support - .72) / .28) };
+  const u = (p - support) / (1 - support);
+  return { x: -stride - travel * (1 - support) * u + travel * smootherstep(u),
+    lift: 64 * u ** 3 * (1 - u) ** 3 * lift, planted: false,
+    pitch: u < .4 ? 3 - 6.5 * smootherstep(u / .4) : -3.5 * (1 - smootherstep((u - .4) / .6)) };
+}
+
+export function princeCapePanelTransform(offsets: readonly number[], index: number) {
+  const top = PRINCE_CAPE_ROWS[index], bottom = PRINCE_CAPE_ROWS[index + 1];
+  const shear = (offsets[index + 1] - offsets[index]) / (bottom - top);
+  return `matrix(1 0 ${shear.toFixed(6)} 1 ${(offsets[index] - shear * top).toFixed(6)} 0)`;
+}
 
 /** Human support legs extend; only the returning leg folds. Feet and scenery
  * share one clock. Raised arms turn outward from the profile walking pose. */
@@ -67,14 +92,19 @@ export function paintedPrincePose(action: CharacterAction, elapsed: number, redu
   };
   const walking = !reduced && ['walk', 'fastWalk', 'run', 'sprint'].includes(action);
   const cycle = Math.max(0, elapsed) / PAINTED_PRINCE_GAIT.cycleMs;
+  const cape = PRINCE_CAPE_ROWS.map((y, index) => {
+    if (!walking || index <= 1) return 0;
+    const depth = (y - PRINCE_CAPE_ROWS[1]) / (PRINCE_CAPE_ROWS.at(-1)! - PRINCE_CAPE_ROWS[1]);
+    const lag = depth * 1.35, angle = cycle * Math.PI * 2;
+    return depth ** 1.5 * (-1.2 + 2.1 * Math.sin(angle - lag) + .45 * Math.sin(angle * 2 - lag * 1.6));
+  });
   const steps = walking ? (['front', 'back'] as const).map((side) => {
     const rig = princeAnatomy.legs[side], phase = cycle + (side === 'back' ? .5 : 0);
-    const foot = animalFoot(phase, PAINTED_PRINCE_GAIT);
-    const pitch = walkingFootPitch(phase, PAINTED_PRINCE_GAIT.support, false) * .45;
+    const foot = princeFoot(phase), pitch = foot.pitch;
     const radians = pitch * Math.PI / 180;
     const soleX = princeSole.x * Math.cos(radians) - princeSole.y * Math.sin(radians);
     const soleY = princeSole.x * Math.sin(radians) + princeSole.y * Math.cos(radians);
-    return { side, rig, foot, pitch, x: rig.restX + foot.x + princeSole.x - soleX,
+    return { side, rig, phase, pitch, x: foot.x + princeSole.x - soleX,
       y: PAINTED_PRINCE_GAIT.groundY - soleY - rig.y - foot.lift };
   }) : [];
   // Lower the pelvis only as far as the current step needs. A fixed 3.2px
@@ -82,17 +112,16 @@ export function paintedPrincePose(action: CharacterAction, elapsed: number, redu
   const bodyY = walking ? steps.reduce((drop, { rig, x, y }) => {
     const reachSquared = rig.upper ** 2 + rig.lower ** 2 + 2 * rig.upper * rig.lower * Math.cos(6 * Math.PI / 180);
     return softMaximum(drop, y - Math.sqrt(Math.max(0, reachSquared - x * x)));
-  }, .15) : 0;
-  if (walking) for (const { side, rig, foot, pitch, x, y } of steps) {
+  }, .25) : 0;
+  if (walking) for (const { side, rig, phase, pitch, x, y } of steps) {
     const leg = animalLeg(x, y - bodyY, rig);
     joints[`${side}-thigh`] = leg.hip; joints[`${side}-shin`] = leg.knee; joints[`${side}-foot`] = leg.ankle + pitch;
-    const reach = foot.x / (PAINTED_PRINCE_GAIT.travel * PAINTED_PRINCE_GAIT.support / 2);
-    joints[`${side}-arm`] = 4 + reach * 16;
-    joints[`${side}-elbow`] = -14 - 8 * smoothstep((1 - reach) / 2);
+    const swing = (phase - .03) * Math.PI * 2;
+    joints[`${side}-arm`] = 4 + Math.cos(swing) * 16;
+    joints[`${side}-elbow`] = -18 + 4 * Math.cos(swing - .35);
   }
   if (walking) {
     joints.head = Math.sin(cycle * Math.PI * 2) * .6;
-    joints.hair = Math.sin(cycle * Math.PI * 2 - .8) * 1.1; // Cape uses the spare soft-cloth joint.
   }
   if (!reduced && ['jump', 'hop', 'land', 'celebrate'].includes(action)) {
     const raise = action === 'celebrate' ? smoothstep(elapsed / 650)
@@ -109,7 +138,7 @@ export function paintedPrincePose(action: CharacterAction, elapsed: number, redu
     joints['back-elbow'] = -8 - opening * 17;
     joints.head = action === 'celebrate' ? Math.sin(elapsed / 500) * raise : 0;
   }
-  return { joints, bodyY };
+  return { joints, bodyY, cape };
 }
 
 export function settlePaintedPrincePose(gait: number, elapsed: number, reduced = false): PrincePose {
@@ -117,5 +146,6 @@ export function settlePaintedPrincePose(gait: number, elapsed: number, reduced =
   if (blend >= 1) return to;
   for (const name of Object.keys(to.joints) as (keyof CharacterPose)[]) to.joints[name] = from.joints[name] + (to.joints[name] - from.joints[name]) * blend;
   to.bodyY = from.bodyY * (1 - blend);
+  to.cape = from.cape.map((offset) => offset * (1 - blend));
   return to;
 }

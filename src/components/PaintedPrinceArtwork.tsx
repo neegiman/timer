@@ -3,7 +3,7 @@ import atlas from '@/lib/princeAtlas.json';
 import outfitAtlas from '@/lib/princeOutfitAtlas.json';
 import bootAtlas from '@/lib/princeBootAtlas.json';
 import clothingAtlas from '@/lib/princeClothingAtlas.json';
-import { PAINTED_PRINCE_ASSET, PAINTED_PRINCE_OUTFIT_ASSET, PAINTED_PRINCE_BOOT_ASSET, PAINTED_PRINCE_CLOTHING_ASSET, princeAnatomy as anatomy, paintedPrincePose, type PrincePart } from '@/lib/paintedPrinceMotion';
+import { PAINTED_PRINCE_ASSET, PAINTED_PRINCE_OUTFIT_ASSET, PAINTED_PRINCE_BOOT_ASSET, PAINTED_PRINCE_CLOTHING_ASSET, PRINCE_CAPE_ROWS, princeAnatomy as anatomy, paintedPrincePose, type PrincePart } from '@/lib/paintedPrinceMotion';
 import { assetPath } from '@/lib/assetPath';
 
 type Landmark = { pivot: { x: number; y: number }; tip: { x: number; y: number } };
@@ -73,6 +73,24 @@ function Arm({ side }: { side: 'front' | 'back' }) {
   </g>;
 }
 
+function Cape() {
+  const id = useId().replace(/:/g, '');
+  return <g data-prince-cape>
+    <defs>{PRINCE_CAPE_ROWS.slice(0, -1).map((top, index) =>
+      <clipPath key={index} id={`${id}-cape-${index}`} clipPathUnits="userSpaceOnUse">
+        {/* Overlap the raster edge slightly so antialiased clips cannot expose
+            a horizontal hairline through the otherwise continuous painting. */}
+        <rect x="10" y={top - .35} width="140" height={PRINCE_CAPE_ROWS[index + 1] - top + .7} />
+      </clipPath>)}</defs>
+    {PRINCE_CAPE_ROWS.slice(0, -1).map((_, index) =>
+      <g key={index} clipPath={`url(#${id}-cape-${index})`}>
+        <g data-prince-cape-panel={index} transform="matrix(1 0 0.000000 1 0.000000 0)">
+          <Part part="cape" {...anatomy.cape} />
+        </g>
+      </g>)}
+  </g>;
+}
+
 export function PaintedPrinceArtwork() {
   const hipBlendId = useId().replace(/:/g, '');
   return <svg viewBox="0 0 160 210" className="character-artwork painted-prince-artwork"
@@ -87,9 +105,7 @@ export function PaintedPrinceArtwork() {
       </mask>
     </defs>
     <g data-prince-body transform="translate(0 0)">
-      <g transform={`translate(${anatomy.capePivot.x} ${anatomy.capePivot.y})`}><g data-joint="hair">
-        <Part part="cape" x={anatomy.cape.x - anatomy.capePivot.x} y={anatomy.cape.y - anatomy.capePivot.y} width={anatomy.cape.width} height={anatomy.cape.height} />
-      </g></g>
+      <Cape />
       <Leg side="back" /><Leg side="front" /><Arm side="back" />
       <g mask={`url(#${hipBlendId}-hips-mask)`}><Part part="torso" {...anatomy.torso} /></g><Arm side="front" />
       <g transform={`translate(${anatomy.headPivot.x} ${anatomy.headPivot.y})`}><g data-joint="head">

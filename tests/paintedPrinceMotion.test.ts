@@ -5,8 +5,7 @@ import sharp from 'sharp';
 import atlas from '../src/lib/princeAtlas.json';
 import clothingAtlas from '../src/lib/princeClothingAtlas.json';
 import bootAtlas from '../src/lib/princeBootAtlas.json';
-import { PAINTED_PRINCE_ASSET, PAINTED_PRINCE_CLOTHING_ASSET, PAINTED_PRINCE_BOOT_ASSET, PAINTED_PRINCE_GAIT as PRINCE_GAIT, princeAnatomy as anatomy, princeSole, paintedPrincePose, settlePaintedPrincePose } from '../src/lib/paintedPrinceMotion';
-import { animalFoot } from '../src/lib/animalMotion';
+import { PAINTED_PRINCE_ASSET, PAINTED_PRINCE_CLOTHING_ASSET, PAINTED_PRINCE_BOOT_ASSET, PAINTED_PRINCE_GAIT as PRINCE_GAIT, PRINCE_CAPE_ROWS, princeAnatomy as anatomy, princeSole, princeFoot, princeCapePanelTransform, paintedPrincePose, settlePaintedPrincePose } from '../src/lib/paintedPrinceMotion';
 
 test('painted prince retains the original ImageGen alpha, and every joint is inside its painted root', async () => {
   const source = await sharp('docs/character-design/prince-v1/prince-atlas.png').ensureAlpha().raw().toBuffer({ resolveWithObject: true });
@@ -106,13 +105,13 @@ test('both prince feet reach their timestamp targets and planted soles match the
     assert.ok(bodyY >= 0 && bodyY <= 3.4, 'Pelvis must not crouch or bounce excessively');
     for (const side of ['front', 'back'] as const) {
       const rig = anatomy.legs[side], phase = time / PRINCE_GAIT.cycleMs + (side === 'back' ? .5 : 0);
-      const target = animalFoot(phase, PRINCE_GAIT), hip = (joints[`${side}-thigh`] + 90) * Math.PI / 180;
+      const target = princeFoot(phase), hip = (joints[`${side}-thigh`] + 90) * Math.PI / 180;
       const knee = joints[`${side}-shin`] * Math.PI / 180, pitch = (joints[`${side}-thigh`] + joints[`${side}-shin`] + joints[`${side}-foot`]) * Math.PI / 180;
       const x = rig.x + rig.upper * Math.cos(hip) + rig.lower * Math.cos(hip + knee) + princeSole.x * Math.cos(pitch) - princeSole.y * Math.sin(pitch);
       const y = bodyY + rig.y + rig.upper * Math.sin(hip) + rig.lower * Math.sin(hip + knee) + princeSole.x * Math.sin(pitch) + princeSole.y * Math.cos(pitch);
-      assert.ok(Math.abs(x - (rig.x + rig.restX + target.x + princeSole.x)) < 1e-6, `Unreachable stride at ${time}`);
+      assert.ok(Math.abs(x - (rig.x + target.x + princeSole.x)) < 1e-6, `Unreachable stride at ${time}`);
       assert.ok(Math.abs(y - (PRINCE_GAIT.groundY - target.lift)) < 1e-6, `Floating foot at ${time}`);
-      const next = animalFoot(phase + .0001, PRINCE_GAIT);
+      const next = princeFoot(phase + .0001);
       if (target.planted && next.planted) assert.ok(Math.abs(next.x - target.x + PRINCE_GAIT.travel * .0001) < 1e-8);
     }
   }
@@ -145,7 +144,7 @@ test('human prince support knees extend while the returning knee folds without r
     const { joints, bodyY } = paintedPrincePose('walk', time);
     assert.ok(bodyY < 2, 'Constant crouching is not a human walk');
     for (const side of ['front', 'back'] as const) {
-      const planted = animalFoot(time / PRINCE_GAIT.cycleMs + (side === 'back' ? .5 : 0), PRINCE_GAIT).planted;
+      const planted = princeFoot(time / PRINCE_GAIT.cycleMs + (side === 'back' ? .5 : 0)).planted;
       const hip = joints[`${side}-thigh`], knee = joints[`${side}-shin`];
       assert.ok(hip >= -35 && hip <= 20, 'The thigh must swing from its hip rather than twist around the pelvis');
       assert.ok(knee >= 0 && knee <= (planted ? 25 : 55), `${side}: support knee crouches or knee bends backward`);
@@ -185,4 +184,72 @@ test('both raised hands fold upward from their elbows instead of bending one arm
       assert.ok(hand.x >= 8 && hand.x <= 152, 'The hand must remain inside the artwork');
     }
   }
+});
+
+test('human foot transfers keep position, velocity and acceleration continuous at takeoff and landing', () => {
+  const epsilon = .00001;
+  for (const boundary of [PRINCE_GAIT.support, 1]) for (const key of ['x', 'lift', 'pitch'] as const) {
+    const before = princeFoot(boundary - epsilon)[key], at = princeFoot(boundary)[key], after = princeFoot(boundary + epsilon)[key];
+    assert.ok(Math.abs(after - before) < .001, `${key} jumps at contact`);
+    const v1 = (at - before) / epsilon, v2 = (after - at) / epsilon;
+    assert.ok(Math.abs(v1 - v2) < .03, `${key} changes velocity abruptly at contact`);
+    const a1 = (at - 2 * before + princeFoot(boundary - epsilon * 2)[key]) / epsilon ** 2;
+    const a2 = (princeFoot(boundary + epsilon * 2)[key] - 2 * after + at) / epsilon ** 2;
+    assert.ok(Math.abs(a1 - a2) < .5, `${key} changes acceleration abruptly at contact`);
+  }
+  // Each handover is brief; the previous animal-derived gait spent 168ms on
+  // both feet, then compressed the returning step into a noticeably fast burst.
+  assert.ok((PRINCE_GAIT.support - .5) * PRINCE_GAIT.cycleMs <= 80);
+  for (let sample = 0; sample < 1200; sample++) {
+    const phase = sample / 1200;
+    assert.ok(princeFoot(phase).planted || princeFoot(phase + .5).planted, 'Walking always retains a support foot');
+  }
+});
+
+test('human walk has no step-and-hold frames or abrupt knee snaps over a full cycle', () => {
+  const names = ['front-thigh', 'front-shin', 'back-thigh', 'back-shin'] as const;
+  for (let time = 0; time < PRINCE_GAIT.cycleMs; time++) {
+    const a = paintedPrincePose('walk', time), b = paintedPrincePose('walk', time + 16), c = paintedPrincePose('walk', time + 32);
+    let movement = 0;
+    for (const name of names) {
+      const delta = b.joints[name] - a.joints[name];
+      movement += Math.abs(delta);
+      assert.ok(Math.abs(delta) < 5, `${name} snaps at ${time}ms`);
+      assert.ok(Math.abs(c.joints[name] - 2 * b.joints[name] + a.joints[name]) < 2, `${name} accelerates abruptly at ${time}ms`);
+    }
+    assert.ok(movement > .25, 'Both legs must not hold a pose between steps');
+    assert.ok(a.bodyY < .8, 'Weight transfer must not bounce the entire body');
+    assert.ok(Math.abs(b.bodyY - a.bodyY) < .12, 'Pelvis must not drop abruptly to reach the next step');
+    // Continuous counter-swings, without holding arms during double support.
+    assert.ok(Math.abs(a.joints['front-arm'] + a.joints['back-arm'] - 8) < 1e-8);
+  }
+});
+
+test('prince cape stays pinned at the collar and flexes continuously with a delayed hem', () => {
+  const ranges = PRINCE_CAPE_ROWS.map(() => ({ min: Infinity, max: -Infinity }));
+  const matrix = (text: string) => text.slice(7, -1).split(' ').map(Number);
+  let delayedBend = 0;
+  for (let time = 0; time <= PRINCE_GAIT.cycleMs; time += 5) {
+    const pose = paintedPrincePose('walk', time), next = paintedPrincePose('walk', time + 16);
+    assert.equal(pose.cape[0], 0); assert.equal(pose.cape[1], 0);
+    assert.equal(pose.joints.hair, 0, 'The cape must flex instead of rotating as a rigid board');
+    for (const [index, offset] of pose.cape.entries()) {
+      ranges[index].min = Math.min(ranges[index].min, offset); ranges[index].max = Math.max(ranges[index].max, offset);
+      assert.ok(Math.abs(offset) < 4);
+      assert.ok(Math.abs(next.cape[index] - offset) < .3, 'The hem must not jump at a step boundary');
+    }
+    for (let index = 0; index < PRINCE_CAPE_ROWS.length - 2; index++) {
+      const a = matrix(princeCapePanelTransform(pose.cape, index)), b = matrix(princeCapePanelTransform(pose.cape, index + 1));
+      const y = PRINCE_CAPE_ROWS[index + 1];
+      assert.ok(Math.abs((a[2] - b[2]) * y + a[4] - b[4]) < .0002, 'Adjacent painted cloth panels must share their edge');
+    }
+    const mid = pose.cape[3], hem = pose.cape.at(-1)!;
+    delayedBend = Math.max(delayedBend, Math.abs(mid / .3 - hem));
+  }
+  assert.ok(ranges.at(-1)!.max - ranges.at(-1)!.min > 3, 'The painted hem must visibly move');
+  assert.ok(delayedBend > 1, 'The lower cape must trail rather than all panels moving in unison');
+  const first = paintedPrincePose('walk', 0).cape, last = paintedPrincePose('walk', PRINCE_GAIT.cycleMs).cape;
+  for (const [index, offset] of first.entries()) assert.ok(Math.abs(offset - last[index]) < 1e-12);
+  assert.ok(paintedPrincePose('walk', 600, true).cape.every((offset) => offset === 0));
+  assert.deepEqual(settlePaintedPrincePose(600, 350).cape, paintedPrincePose('idle', 0).cape);
 });
