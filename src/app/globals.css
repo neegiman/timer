@@ -196,10 +196,10 @@ h1:focus { outline: none; }
 .location-button:disabled { opacity: .65; cursor: wait; }
 .location-controls .text-button { display: flex; width: 100%; font-size: 16px; }
 .location-controls p { margin: 10px 0 0; font-size: 14px; line-height: 1.65; }
-.finish-point { position: absolute; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 2px; transform: translateX(-50%); padding-top: 12px; }
-.destination-icon { font-size: 64px; line-height: 1.12; }
-.endpoint-label { padding: 3px 10px; border-radius: 12px; font-size: 19px; font-weight: 800; background: #fffdf0e6; white-space: nowrap; }
-.finish-flag { position: absolute; z-index: 3; left: -2px; top: -47px; width: 36px; height: 48px; overflow: visible; pointer-events: none; }
+.finish-point { position: absolute; z-index: 2; left: 0; top: 12px; display: grid; justify-items: center; gap: 2px; transform: translateX(-50%); }
+.destination-icon { display: block; width: var(--finish-icon-size, 28px); height: var(--finish-icon-size, 28px); }
+.endpoint-label { padding: 0 8px; border-radius: 12px; font-size: 16px; line-height: 20px; font-weight: 800; background: #fffdf0e6; white-space: nowrap; }
+.finish-flag { position: absolute; z-index: 3; left: 0; top: -47px; width: 36px; height: 48px; transform: translateX(-50%); overflow: visible; pointer-events: none; }
 .character-wrapper { position: absolute; left: 0; top: 0; z-index: 4; width: min(clamp(104px, 27vw, 124px), var(--actor-limit, 124px)); --jump-height: 24px; }
 .character-anchor { position: relative; width: 100%; transform: translate(-50%, -94%); }
 .traveler-body { position: relative; z-index: 1; width: 100%; aspect-ratio: 160 / 210; transform-origin: 50% 95%; }
@@ -312,8 +312,6 @@ h1:focus { outline: none; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-scene { grid-column: 1; grid-row: 2; height: max(180px, calc(100svh - 135px)); }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-message { grid-column: 2; grid-row: 2; padding: 0 6px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) :is(.promise-reminder, .completion-promise) { flex-direction: column; gap: 6px; font-size: 22px; }
-  .app-shell:is([data-display="native"], [data-display="expanded"]) .destination-icon { font-size: 44px; }
-  .app-shell:is([data-display="native"], [data-display="expanded"]) .endpoint-label { font-size: 17px; padding: 2px 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .parallax-layer { transform: none !important; }
@@ -364,11 +362,9 @@ h1:focus { outline: none; }
 .traveler-body { transform-origin: 50% var(--foot-origin); }
 .sprite-motion:is([data-action="walk"], [data-action="idle"]) { animation: none; }
 .character-shadow { top: calc(var(--foot-origin) - 3px); bottom: auto; height: 7px; }
-.journey-goal { position: absolute; z-index: 3; left: var(--finish-x, 70%); top: 78%; opacity: 0; pointer-events: none; }
-.goal-line { position: absolute; left: -6px; top: -10px; width: 12px; height: 24px; border: 2px solid #fff9e9; border-radius: 3px; background: conic-gradient(#719064 25%, #fff9e9 0 50%, #719064 0 75%, #fff9e9 0); background-size: 10px 10px; }
-.journey-goal .finish-point { left: 0; top: 0; padding-top: 7px; flex-direction: row; gap: 4px; }
-.journey-goal .destination-icon { font-size: 28px; }
-.journey-goal .endpoint-label { font-size: 17px; padding: 2px 8px; }
+.journey-goal { position: absolute; z-index: 3; left: var(--finish-x, 70%); top: 78%; opacity: 0; pointer-events: none; --finish-icon-size: clamp(12px, calc(var(--scene-height, 300px) * .22 - 36px), 28px); }
+/* Line, pole, activity picture and label share the same fixed X anchor. */
+.goal-line { position: absolute; left: 0; top: -10px; width: 12px; height: 20px; transform: translateX(-50%); border: 2px solid #fff9e9; border-radius: 3px; background: conic-gradient(#719064 25%, #fff9e9 0 50%, #719064 0 75%, #fff9e9 0); background-size: 10px 10px; }
 .goal-arrived .endpoint-label { background: #fff4c7; }
 .paused-sign { position: absolute; z-index: 6; top: 18px; left: 50%; transform: translateX(-50%); padding: 10px 18px; border-radius: 18px; background: #fffaf0ed; color: var(--green); font-size: 24px; font-weight: 800; white-space: nowrap; }
 .midpoint-sparkle { left: 50%; top: 35%; font-size: 36px; animation: celebrateStar 1.6s ease-out both; }
@@ -406,7 +402,9 @@ h1:focus { outline: none; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .progress-endpoints { font-size: 16px; margin-bottom: 20px; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .progress-track { margin-bottom: 0; }
   .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-progress { padding: 0 2px; margin-top: 10px; }
-  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-goal .destination-icon { font-size: 28px; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .journey-goal { --finish-icon-size: clamp(12px, calc(var(--scene-height, 300px) * .22 - 31px), 28px); }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .finish-point { gap: 1px; }
+  .app-shell:is([data-display="native"], [data-display="expanded"]) .endpoint-label { font-size: 14px; line-height: 16px; padding: 0 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .arrival-sparkles i { display: none; }

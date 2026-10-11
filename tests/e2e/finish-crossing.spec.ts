@@ -49,7 +49,7 @@ test('princess crosses a stationary line before celebrating with two visible arm
   await expect(scene).toHaveAttribute('data-phase', 'CELEBRATE');
   // Compare actual paint with each forearm removed: a DOM limb behind the dress
   // is not a visible limb. Each hand/forearm must contribute visible pixels.
-  const visibleArmPixels = await page.locator('.painted-princess-artwork').evaluate(async (element, anatomy) => {
+  const visibleArmPixels = await page.locator('.traveler-body .painted-princess-artwork').evaluate(async (element, anatomy) => {
     const original = element.cloneNode(true) as SVGSVGElement;
     for (const image of original.querySelectorAll('image')) {
       const blob = await (await fetch(image.getAttribute('href')!)).blob();

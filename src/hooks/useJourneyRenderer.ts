@@ -85,6 +85,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     let progressWidth = track.current?.clientWidth ?? 0;
     let geometry = finishGeometry(width, actorWidth);
     element.style.setProperty('--finish-x', `${geometry.lineX}px`);
+    element.style.setProperty('--scene-height', `${height}px`);
 
     const draw = () => {
       const sample = snapshot.current;
@@ -206,6 +207,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       progressWidth = track.current?.clientWidth ?? 0;
       geometry = finishGeometry(width, actorWidth);
       element.style.setProperty('--finish-x', `${geometry.lineX}px`);
+      element.style.setProperty('--scene-height', `${height}px`);
       draw();
     });
     resize.observe(element); resize.observe(actor);
