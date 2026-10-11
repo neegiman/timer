@@ -126,7 +126,7 @@ test('prince walks independently of both fixed destinations, including pause and
   const moving = async () => ({
     ground: await page.locator('.ground-layer').getAttribute('style'),
     miniature: await page.locator('.progress-marker').getAttribute('style'),
-    frame: await page.locator('.traveler-body [data-prince-sprite]').getAttribute('data-frame'),
+    frame: await page.locator('.traveler-body [data-joint]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('transform')).join(',')),
   });
   const walking = await moving();
   await page.clock.runFor(350);

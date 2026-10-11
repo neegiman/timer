@@ -6,7 +6,7 @@ import { PRINCE_ASSET, PRINCE_GAIT, PRINCE_SHEET, princeFrame, princeViewBox } f
 import { characters, getCharacter } from '../src/lib/characters';
 import { motionProfile } from '../src/lib/motionProfiles';
 
-test('prince is selectable and uses its pixel artwork and shared gait clock', async () => {
+test('legacy pixel prince authoring source remains reproducible with the shared gait clock', async () => {
   assert.equal(characters.filter(({ id }) => id === 'prince').length, 1);
   assert.equal(getCharacter('prince').name, '왕자');
   assert.equal(motionProfile('prince').cycleMs, PRINCE_GAIT.cycleMs);

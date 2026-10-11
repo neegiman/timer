@@ -75,11 +75,11 @@ test('all nine friends share their full artwork in selection and journey, includ
       await expect(artwork.locator('[data-body]')).toHaveCount(1);
       expect(await artwork.locator('[data-animal-joint]').count()).toBeGreaterThanOrEqual(id === 'chick' ? 9 : 16);
       await expect(artwork).toHaveAttribute('data-artwork', 'imagegen');
-    } else if (id === 'princess') {
+    } else if (id === 'princess' || id === 'prince') {
       await expect(artwork).toHaveAttribute('data-artwork', 'imagegen');
       await expect(artwork.locator('[data-leg]')).toHaveCount(2);
       await expect(artwork.locator('[data-arm]')).toHaveCount(2);
-    } else if (['prince', 'car', 'train', 'rocket'].includes(id)) {
+    } else if (['car', 'train', 'rocket'].includes(id)) {
       await expect(artwork).toHaveAttribute('data-artwork', 'pixel');
       const before = await artwork.getAttribute('data-frame');
       await page.clock.runFor(350);

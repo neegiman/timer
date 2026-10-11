@@ -5,16 +5,17 @@ import { motionProfile } from '../../src/lib/motionProfiles';
 import { animalActionPose, isAnimalId } from '../../src/lib/animalActionPose';
 import type { AnimalJoint } from '../../src/lib/animalMotion';
 import { princessPose } from '../../src/lib/princessMotion';
+import { paintedPrincePose } from '../../src/lib/paintedPrinceMotion';
 import type { JointName } from '../../src/lib/characterPose';
 
 async function readPoses(page: Page) {
   return page.evaluate(() => {
     const read = (root: Element) => ({
-      frame: root.querySelector('[data-prince-sprite], [data-vehicle-sprite]')?.getAttribute('data-frame') ?? null,
+      frame: root.querySelector('[data-vehicle-sprite]')?.getAttribute('data-frame') ?? null,
       joints: Array.from(root.querySelectorAll('[data-joint], [data-animal-joint]')).map((joint) => ({
         name: joint.getAttribute('data-joint') ?? joint.getAttribute('data-animal-joint'), transform: joint.getAttribute('transform'),
       })),
-      body: root.querySelector('[data-animal-body]')?.getAttribute('transform') ?? null,
+      body: root.querySelector('[data-animal-body], [data-prince-body]')?.getAttribute('transform') ?? null,
     });
     return { main: read(document.querySelector('.traveler-body')!), miniature: read(document.querySelector('.progress-marker')!) };
   });
@@ -29,7 +30,7 @@ for (const character of characters) test(`${character.id}: progress artwork shar
   const choice = page.getByRole('button', { name: character.name, exact: true });
   for (let i = 0; i < 3; i++) await choice.click();
   // Static choice cards deliberately keep their mobile-safe crop.
-  if (['rabbit', 'dog', 'cat', 'chick', 'princess'].includes(character.id)) await expect(choice.locator('.painted-animal-thumbnail')).toHaveCount(1);
+  if (['rabbit', 'dog', 'cat', 'chick', 'princess', 'prince'].includes(character.id)) await expect(choice.locator('.painted-animal-thumbnail')).toHaveCount(1);
   await page.getByRole('button', { name: '출발!', exact: true }).click();
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   const session = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!));
@@ -84,10 +85,11 @@ for (const character of characters) test(`${character.id}: progress artwork shar
 
   const beforeReduced = (await readPoses(page)).miniature;
   const restingAnimal = isAnimalId(character.id) ? animalActionPose(character.id, 'idle', 0, true) : null;
-  const restingHuman = princessPose('idle', 0, true);
+  const restingPrince = character.id === 'prince' ? paintedPrincePose('idle', 0, true) : null;
+  const restingHuman = restingPrince?.joints ?? princessPose('idle', 0, true);
   const expectedReduced = {
     frame: beforeReduced.frame === null ? null : '0',
-    body: restingAnimal ? `translate(0 ${restingAnimal.bob.toFixed(5)})` : null,
+    body: restingAnimal ? `translate(0 ${restingAnimal.bob.toFixed(5)})` : restingPrince ? `translate(0 ${restingPrince.bodyY.toFixed(5)})` : null,
     joints: beforeReduced.joints.map((joint) => ({ ...joint, transform: `rotate(${(restingAnimal
       ? restingAnimal.joints[joint.name as AnimalJoint] : restingHuman[joint.name as JointName]).toFixed(5)})` })),
   };
