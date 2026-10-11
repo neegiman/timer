@@ -40,7 +40,7 @@ test('painted prince stays connected and grounded through selection, walking, pa
         new DOMPoint(part.viewBox.baseVal.x + p.x, part.viewBox.baseVal.y + p.y).matrixTransform(part.getScreenCTM()!);
       const ownPaint = (group: SVGGElement, partName: string) =>
         Array.from(group.querySelectorAll<SVGSVGElement>(`[data-painted-part="${partName}"]`)).find((part) => part.closest('[data-joint]') === group)!;
-      const jointErrors: number[] = [];
+      const jointErrors: number[] = [], armPoses: { side: 'front' | 'back'; cross: number; handRise: number }[] = [];
       for (const side of ['front', 'back'] as const) {
         const leg = anatomy.legs[side];
         for (const [joint, partName, pivot] of [
@@ -69,6 +69,13 @@ test('painted prince stays connected and grounded through selection, walking, pa
         const paintTip = point(ownPaint(upperArm, anatomy.arms[side].upperPart), anatomy.arms[side].upperArt.tip);
         const elbowRoot = new DOMPoint(0, 0).matrixTransform(elbow.getScreenCTM()!);
         jointErrors.push(Math.hypot(paintTip.x - elbowRoot.x, paintTip.y - elbowRoot.y));
+        // Measure the rendered shoulder/elbow/wrist, independent of rotation signs.
+        const toArt = svg.getScreenCTM()!.inverse();
+        const shoulder = new DOMPoint(0, 0).matrixTransform(upperArm.getScreenCTM()!).matrixTransform(toArt);
+        const bend = elbowRoot.matrixTransform(toArt);
+        const hand = point(ownPaint(elbow, anatomy.arms[side].lowerPart), anatomy.arms[side].lowerArt.tip).matrixTransform(toArt);
+        armPoses.push({ side, cross: (bend.x - shoulder.x) * (hand.y - bend.y) - (bend.y - shoulder.y) * (hand.x - bend.x),
+          handRise: bend.y - hand.y });
       }
       const feet = planted.map((side) => {
         const joint = svg.querySelector<SVGGElement>(`[data-joint="${side}-foot"]`)!;
@@ -79,13 +86,13 @@ test('painted prince stays connected and grounded through selection, walking, pa
         const matrix = joint.transform.baseVal.consolidate()!.matrix;
         return [joint.dataset.joint!, Math.atan2(matrix.b, matrix.a) * 180 / Math.PI];
       }));
-      return { html: svg.outerHTML, feet, jointErrors, angles, x: Number(scene.querySelector<HTMLElement>('.character-wrapper')!.dataset.position),
+      return { html: svg.outerHTML, feet, jointErrors, armPoses, angles, x: Number(scene.querySelector<HTMLElement>('.character-wrapper')!.dataset.position),
         ground: scene.getBoundingClientRect().y + Number(scene.dataset.groundY), distance: Number(scene.dataset.groundDistance) };
     }, { anatomy, sole: princeSole, planted });
     for (const error of frame.jointErrors) expect(error, 'Painted limb is detached from its joint').toBeLessThan(.01);
     for (const side of ['front', 'back'] as const) {
-      expect(frame.angles[`${side}-elbow`], 'Human elbow bends backward').toBeLessThanOrEqual(-8 + .001);
-      expect(frame.angles[`${side}-elbow`]).toBeGreaterThanOrEqual(-35);
+      expect(Math.abs(frame.angles[`${side}-elbow`]), 'Human elbow bends excessively').toBeLessThanOrEqual(30);
+      if (!idle) expect(frame.armPoses.find((arm) => arm.side === side)!.cross, 'Profile walking elbow bends backward').toBeLessThan(0);
       if (!idle) expect(frame.angles[`${side}-shin`]).toBeLessThanOrEqual(planted.includes(side) ? 25 : 55);
     }
     if (!idle) expect(frame.x).toBe(.42);
@@ -126,7 +133,11 @@ test('painted prince stays connected and grounded through selection, walking, pa
   await check(true);
   await page.clock.runFor(4000);
   await expect(page.locator('[data-status="completed"]')).toBeVisible();
-  await check(true);
+  const cheering = await check(true);
+  for (const arm of cheering.armPoses) {
+    expect(arm.handRise, 'Raised hand must be higher than its elbow').toBeGreaterThan(16);
+    expect(arm.side === 'front' ? arm.cross : -arm.cross, 'Raised elbows must flex in mirrored directions').toBeGreaterThan(0);
+  }
   const hands = await page.locator('.traveler-body .painted-prince-artwork').evaluate((element, arms) => {
     const svg = element as SVGSVGElement;
     return (['front', 'back'] as const).map((side) => {

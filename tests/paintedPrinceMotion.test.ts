@@ -156,13 +156,33 @@ test('human prince support knees extend while the returning knee folds without r
   for (const peak of Object.values(swingPeaks)) assert.ok(peak > 35, 'The returning foot must lift by bending its knee');
 });
 
-test('prince elbows retain their flexion direction from walking through jump, landing and cheering', () => {
-  for (const action of ['idle', 'walk', 'jump', 'land', 'celebrate'] as const) for (let time = 0; time <= 2400; time += 5) {
+test('prince profile walking and frontal raised arms use their own elbow planes without sudden flips', () => {
+  for (const action of ['idle', 'walk', 'fastWalk', 'run', 'sprint', 'hop', 'jump', 'land', 'celebrate'] as const) for (let time = 0; time <= 2400; time += 5) {
+    const { joints } = paintedPrincePose(action, time);
+    const next = paintedPrincePose(action, time + 1).joints;
+    for (const side of ['front', 'back'] as const) {
+      const elbow = joints[`${side}-elbow`];
+      assert.ok(Math.abs(elbow) <= 30, `${action} ${time}ms: excessive elbow flexion`);
+      if (['idle', 'walk', 'fastWalk', 'run', 'sprint'].includes(action)) assert.ok(elbow >= -22 && elbow <= -8);
+      assert.ok(Math.abs(next[`${side}-elbow`] - elbow) < .3, 'The projected elbow must change by less than 5 degrees per 60fps frame');
+      assert.ok(Math.abs(joints[`${side}-arm`]) <= 150, 'Shoulder must not spin around its socket');
+    }
+  }
+});
+
+test('both raised hands fold upward from their elbows instead of bending one arm backward', () => {
+  for (const [action, time] of [['jump', 300], ['hop', 300], ['celebrate', 650], ['celebrate', 1000], ['celebrate', 2400]] as const) {
     const { joints } = paintedPrincePose(action, time);
     for (const side of ['front', 'back'] as const) {
-      assert.ok(joints[`${side}-elbow`] >= -35 && joints[`${side}-elbow`] <= -8,
-        `${action} ${time}ms: ${side} elbow hyperextends through its straight position`);
-      assert.ok(Math.abs(joints[`${side}-arm`]) <= 150, 'Shoulder must not spin around its socket');
+      const rig = anatomy.arms[side], shoulder = joints[`${side}-arm`] * Math.PI / 180;
+      const forearm = shoulder + joints[`${side}-elbow`] * Math.PI / 180;
+      const elbow = { x: rig.x - rig.upper * Math.sin(shoulder), y: rig.y + rig.upper * Math.cos(shoulder) };
+      const hand = { x: elbow.x - rig.lower * Math.sin(forearm), y: elbow.y + rig.lower * Math.cos(forearm) };
+      const cross = (elbow.x - rig.x) * (hand.y - elbow.y) - (elbow.y - rig.y) * (hand.x - elbow.x);
+      assert.ok(side === 'front' ? cross > 0 : cross < 0, `${action}: raised elbows must flex in mirrored directions`);
+      assert.ok(hand.y < elbow.y - 16, `${action}: the hand must rise above its elbow`);
+      assert.ok(side === 'front' ? hand.x < anatomy.head.x - 8 : hand.x > anatomy.head.x + anatomy.head.width + 8);
+      assert.ok(hand.x >= 8 && hand.x <= 152, 'The hand must remain inside the artwork');
     }
   }
 });

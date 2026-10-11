@@ -57,7 +57,7 @@ export interface PrincePose { joints: CharacterPose; bodyY: number }
 const softMaximum = (a: number, b: number) => (a + b + Math.sqrt((a - b) ** 2 + .15 ** 2)) / 2;
 
 /** Human support legs extend; only the returning leg folds. Feet and scenery
- * share one clock, and elbows keep the same bend direction in every action. */
+ * share one clock. Raised arms turn outward from the profile walking pose. */
 export function paintedPrincePose(action: CharacterAction, elapsed: number, reduced = false): PrincePose {
   const joints: CharacterPose = {
     'front-thigh': princeAnatomy.legs.front.stance, 'front-shin': 0, 'front-foot': -princeAnatomy.legs.front.stance,
@@ -98,10 +98,15 @@ export function paintedPrincePose(action: CharacterAction, elapsed: number, redu
     const raise = action === 'celebrate' ? smoothstep(elapsed / 650)
       : Math.sin(Math.PI * Math.min(1, Math.max(0, elapsed) / (action === 'land' ? 400 : 600)));
     const balance = action === 'land' ? .15 : 1;
-    joints['front-arm'] = 8 + raise * balance * (137 + (action === 'celebrate' ? Math.sin(elapsed / 420) * 1.5 : 0));
-    joints['back-arm'] = -12 - raise * balance * (103 + (action === 'celebrate' ? Math.sin(elapsed / 450) * 1.5 : 0));
-    joints['front-elbow'] = -12 - raise * balance * 18;
-    joints['back-elbow'] = -8 - raise * balance * 17;
+    const opening = raise * balance;
+    joints['front-arm'] = 8 + opening * (117 + (action === 'celebrate' ? Math.sin(elapsed / 420) * 1.5 : 0));
+    joints['back-arm'] = -12 - opening * (103 + (action === 'celebrate' ? Math.sin(elapsed / 450) * 1.5 : 0));
+    // The viewer-left and viewer-right arms have opposite flexion directions
+    // when opened toward the viewer. Keeping both angles negative made the
+    // near forearm fold away from the head, visibly reversing its elbow.
+    // Blend the projected bend as the shoulder turns, instead of flipping it.
+    joints['front-elbow'] = -12 + smoothstep(opening) * 40;
+    joints['back-elbow'] = -8 - opening * 17;
     joints.head = action === 'celebrate' ? Math.sin(elapsed / 500) * raise : 0;
   }
   return { joints, bodyY };
