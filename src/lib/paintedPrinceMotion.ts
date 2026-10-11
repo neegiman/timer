@@ -22,6 +22,11 @@ const boot = { width: 34, height: 34, pivot: { x: 365, y: 86 }, sole: { x: 687, 
 const bootScaleX = boot.width / bootAtlas.parts.boot[2], bootScaleY = boot.height / bootAtlas.parts.boot[3];
 export const princeSole = { x: (boot.sole.x - boot.pivot.x) * bootScaleX, y: (boot.sole.y - boot.pivot.y) * bootScaleY };
 const upperLeg = 26.6, lowerLeg = 25;
+const shoulders = { front: { x: 61, y: 88 }, back: { x: 99, y: 88 } };
+// Actual upper shoulder edges in the cape painting, rather than its transparent
+// rectangle or the decorative buttons across the chest.
+const capePins = { front: { x: 134, y: 25 }, back: { x: 274, y: 25 } };
+const capeScale = (shoulders.back.x - shoulders.front.x) / (capePins.back.x - capePins.front.x);
 const leg = (x: number, stance: number) => ({
   x, y: PRINCE_GAIT.groundY - princeSole.y - (upperLeg + lowerLeg) * Math.cos(stance * Math.PI / 180),
   upper: upperLeg, lower: lowerLeg, bend: 1 as const, stance,
@@ -33,7 +38,9 @@ export const princeAnatomy = {
   head: fitted('head', 44, 12, 65), headPivot: { x: 80, y: 83 },
   // One continuous vest-and-trouser painting keeps the waist joined to both moving legs.
   torso: { x: 59.3, y: 77.4, width: 43, height: 62.85 },
-  cape: fitted('cape', 26, 80, 108), capePivot: { x: 80, y: 87 },
+  cape: fitted('cape', shoulders.front.x - capePins.front.x * capeScale,
+    shoulders.front.y - capePins.front.y * capeScale, atlas.parts.cape[2] * capeScale),
+  capePins, capeShoulders: shoulders,
   legs: {
     front: { ...leg(70, 7.8), part: 'frontTrouser',
       thigh: { pivot: { x: 199, y: 45 }, tip: { x: 155, y: 365 } },
@@ -44,10 +51,10 @@ export const princeAnatomy = {
   },
   boot,
   arms: {
-    front: { x: 61, y: 88, upper: 26, lower: 24, upperPart: 'upperArm', lowerPart: 'foreArm',
+    front: { ...shoulders.front, upper: 26, lower: 24, upperPart: 'upperArm', lowerPart: 'foreArm',
       upperArt: { pivot: { x: 67, y: 34 }, tip: { x: 111, y: 249 } },
       lowerArt: { pivot: { x: 60, y: 40 }, tip: { x: 75, y: 266 } }, crossScale: 1 },
-    back: { x: 99, y: 88, upper: 26, lower: 24, upperPart: 'backUpperArm', lowerPart: 'backForeArm',
+    back: { ...shoulders.back, upper: 26, lower: 24, upperPart: 'backUpperArm', lowerPart: 'backForeArm',
       upperArt: { pivot: { x: 102, y: 31 }, tip: { x: 45, y: 207 } },
       lowerArt: { pivot: { x: 85, y: 43 }, tip: { x: 62, y: 275 } }, crossScale: 1 },
   },
@@ -57,7 +64,8 @@ export const princeAnatomy = {
 // lower panels follow the stride later instead of rotating the entire painting.
 export const PRINCE_CAPE_ROWS = [0, .12, .28, .46, .64, .82, 1]
   .map((height) => princeAnatomy.cape.y + height * princeAnatomy.cape.height);
-export interface PrincePose { joints: CharacterPose; bodyY: number; cape: number[] }
+type CapeTransform = [number, number, number, number, number, number];
+export interface PrincePose { joints: CharacterPose; bodyY: number; cape: number[]; capeTransform: CapeTransform }
 const softMaximum = (a: number, b: number) => (a + b + Math.sqrt((a - b) ** 2 + .4 ** 2)) / 2;
 const smootherstep = (value: number) => { const t = Math.max(0, Math.min(1, value)); return t ** 3 * (10 - 15 * t + 6 * t * t); };
 
@@ -81,6 +89,23 @@ export function princeCapePanelTransform(offsets: readonly number[], index: numb
   return `matrix(1 0 ${shear.toFixed(6)} 1 ${(offsets[index] - shear * top).toFixed(6)} 0)`;
 }
 
+export const princeCapeRootTransform = (matrix: CapeTransform) => `matrix(${matrix.map((value) => value.toFixed(6)).join(' ')})`;
+
+/** The cape rests on the upper sleeves. Their small rotation lifts/spreads its
+ * shoulder line; cloth deformation below it retains the delayed hem motion. */
+function capeShoulderTransform(joints: CharacterPose): CapeTransform {
+  const points = (['front', 'back'] as const).map((side) => {
+    const rig = shoulders[side], rest = (side === 'front' ? 8 : -12) * Math.PI / 180;
+    const angle = joints[`${side}-arm`] * Math.PI / 180, radius = 3.5;
+    return { x: rig.x - radius * (Math.sin(angle) - Math.sin(rest)),
+      y: rig.y + radius * (Math.cos(angle) - Math.cos(rest)) };
+  });
+  const [front, back] = points, span = shoulders.back.x - shoulders.front.x;
+  const a = (back.x - front.x) / span, b = (back.y - front.y) / span;
+  return [a, b, -b, a, front.x - a * shoulders.front.x + b * shoulders.front.y,
+    front.y - b * shoulders.front.x - a * shoulders.front.y];
+}
+
 /** Human support legs extend; only the returning leg folds. Feet and scenery
  * share one clock. Raised arms turn outward from the profile walking pose. */
 export function paintedPrincePose(action: CharacterAction, elapsed: number, reduced = false): PrincePose {
@@ -92,12 +117,6 @@ export function paintedPrincePose(action: CharacterAction, elapsed: number, redu
   };
   const walking = !reduced && ['walk', 'fastWalk', 'run', 'sprint'].includes(action);
   const cycle = Math.max(0, elapsed) / PAINTED_PRINCE_GAIT.cycleMs;
-  const cape = PRINCE_CAPE_ROWS.map((y, index) => {
-    if (!walking || index <= 1) return 0;
-    const depth = (y - PRINCE_CAPE_ROWS[1]) / (PRINCE_CAPE_ROWS.at(-1)! - PRINCE_CAPE_ROWS[1]);
-    const lag = depth * 1.35, angle = cycle * Math.PI * 2;
-    return depth ** 1.5 * (-1.2 + 2.1 * Math.sin(angle - lag) + .45 * Math.sin(angle * 2 - lag * 1.6));
-  });
   const steps = walking ? (['front', 'back'] as const).map((side) => {
     const rig = princeAnatomy.legs[side], phase = cycle + (side === 'back' ? .5 : 0);
     const foot = princeFoot(phase), pitch = foot.pitch;
@@ -123,11 +142,13 @@ export function paintedPrincePose(action: CharacterAction, elapsed: number, redu
   if (walking) {
     joints.head = Math.sin(cycle * Math.PI * 2) * .6;
   }
+  let raisedCloth = 0;
   if (!reduced && ['jump', 'hop', 'land', 'celebrate'].includes(action)) {
     const raise = action === 'celebrate' ? smoothstep(elapsed / 650)
       : Math.sin(Math.PI * Math.min(1, Math.max(0, elapsed) / (action === 'land' ? 400 : 600)));
     const balance = action === 'land' ? .15 : 1;
     const opening = raise * balance;
+    raisedCloth = opening * .35;
     joints['front-arm'] = 8 + opening * (117 + (action === 'celebrate' ? Math.sin(elapsed / 420) * 1.5 : 0));
     joints['back-arm'] = -12 - opening * (103 + (action === 'celebrate' ? Math.sin(elapsed / 450) * 1.5 : 0));
     // The viewer-left and viewer-right arms have opposite flexion directions
@@ -138,7 +159,13 @@ export function paintedPrincePose(action: CharacterAction, elapsed: number, redu
     joints['back-elbow'] = -8 - opening * 17;
     joints.head = action === 'celebrate' ? Math.sin(elapsed / 500) * raise : 0;
   }
-  return { joints, bodyY, cape };
+  const cape = PRINCE_CAPE_ROWS.map((y, index) => {
+    if (reduced || index <= 1 || (!walking && raisedCloth === 0)) return 0;
+    const depth = (y - PRINCE_CAPE_ROWS[1]) / (PRINCE_CAPE_ROWS.at(-1)! - PRINCE_CAPE_ROWS[1]);
+    const lag = depth * 1.35, angle = cycle * Math.PI * 2, strength = walking ? 1 : raisedCloth;
+    return strength * depth ** 1.5 * (-1.2 + 2.1 * Math.sin(angle - lag) + .45 * Math.sin(angle * 2 - lag * 1.6));
+  });
+  return { joints, bodyY, cape, capeTransform: capeShoulderTransform(joints) };
 }
 
 export function settlePaintedPrincePose(gait: number, elapsed: number, reduced = false): PrincePose {
@@ -147,5 +174,6 @@ export function settlePaintedPrincePose(gait: number, elapsed: number, reduced =
   for (const name of Object.keys(to.joints) as (keyof CharacterPose)[]) to.joints[name] = from.joints[name] + (to.joints[name] - from.joints[name]) * blend;
   to.bodyY = from.bodyY * (1 - blend);
   to.cape = from.cape.map((offset) => offset * (1 - blend));
+  to.capeTransform = from.capeTransform.map((value, index) => value + (to.capeTransform[index] - value) * blend) as CapeTransform;
   return to;
 }

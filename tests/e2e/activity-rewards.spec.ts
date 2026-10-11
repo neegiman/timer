@@ -1,3 +1,4 @@
+import { finishWait } from './finish';
 import { test, expect, type Page } from '@playwright/test';
 import { createBackup, EMPTY_REWARDS, claimReward } from '../../src/lib/rewards';
 import type { TimerSession } from '../../src/types/timer';
@@ -14,7 +15,7 @@ async function prepare(page: Page, mode: 'after' | 'during') {
 }
 async function finish(page: Page) {
   await page.clock.fastForward(301_000);
-  await page.clock.fastForward(6000);
+  await page.clock.fastForward(await finishWait(page));
   await expect(page.locator('[data-status="completed"]')).toBeVisible();
 }
 async function openStars(page: Page) {
@@ -51,7 +52,7 @@ test('activity finish uses its own copy through halfway, pause, restart, refresh
   await expect(page.locator('.promise-reminder')).toHaveText('정리하기, 도착하면 마무리해요');
   await page.clock.fastForward(271_000);
   await expect(page.getByTestId('journey-message')).toHaveAttribute('data-message-id', /^tidy-during-near-/);
-  await page.clock.fastForward(30_000); await page.clock.fastForward(6000);
+  await page.clock.fastForward(30_000); await page.clock.fastForward(await finishWait(page));
   await expect(page.getByTestId('journey-message')).toHaveText('남은 장난감을 제자리에 놓아요. 🧺');
   await expect(page.locator('.journey-message')).toBeHidden();
   await expect(page.getByTestId('star-count')).toHaveText('0');

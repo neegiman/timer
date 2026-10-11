@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { CROSSING_DURATION_MS, FINISH_DURATION_MS, finishPhaseStart } from '../../src/lib/animation';
+import { finishDurationMs, finishPhaseStart } from '../../src/lib/animation';
+import { finishCrossingDuration } from '../../src/lib/finishTiming';
 import { princessAnatomy } from '../../src/lib/princessMotion';
 import { instrumentAudio } from './audio';
 
@@ -42,13 +43,13 @@ test('princess reaches the approaching destination, crosses, then celebrates wit
   const arrival = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).arrivalTimestamp);
   const ground = await scene.getAttribute('data-ground-distance');
   await expect(page.locator('.arrival-sparkles')).toHaveCount(0);
-  await seek(arrival + CROSSING_DURATION_MS + 50);
+  await seek(arrival + finishCrossingDuration('princess') + 50);
   await expect(scene).toHaveAttribute('data-phase', 'SETTLE');
   expect((await page.locator('.traveler-body .character-artwork').boundingBox())!.x).toBeGreaterThan(lineX + 4);
   expect(await scene.getAttribute('data-ground-distance')).toBe(ground);
   await expect(page.locator('.arrival-sparkles')).toHaveCount(0);
   if (testInfo.project.name === 'chromium') await scene.screenshot({ path: 'artifacts/princess-crossed-line-390.png' });
-  await seek(arrival + finishPhaseStart('CELEBRATE') + 1000);
+  await seek(arrival + finishPhaseStart('CELEBRATE', 'princess') + 1000);
   await expect(scene).toHaveAttribute('data-phase', 'CELEBRATE');
   // Compare actual paint with each forearm removed: a DOM limb behind the dress
   // is not a visible limb. Each hand/forearm must contribute visible pixels.
@@ -85,7 +86,7 @@ test('princess reaches the approaching destination, crosses, then celebrates wit
   }, princessAnatomy);
   for (const [side, pixels] of Object.entries(visibleArmPixels)) expect(pixels, `${side} forearm/hand is hidden by the dress`).toBeGreaterThan(200);
   if (testInfo.project.name === 'chromium') await scene.screenshot({ path: 'artifacts/princess-celebration-after-390.png' });
-  await seek(arrival + FINISH_DURATION_MS + 100);
+  await seek(arrival + finishDurationMs('princess') + 100);
   await expect(page.locator('[data-status="completed"]')).toBeVisible();
   if (await page.evaluate(() => typeof AudioContext !== 'undefined')) {
     await expect.poll(() => page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/finish.mp3')).length)).toBe(1);

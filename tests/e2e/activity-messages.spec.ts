@@ -1,3 +1,4 @@
+import { finishWait } from './finish';
 import { test, expect, type Page } from '@playwright/test';
 import { activityMessageOptions } from '../../src/lib/activityMessages';
 import { promises } from '../../src/lib/promises';
@@ -58,7 +59,7 @@ for (const mode of ['after', 'during'] as const) for (const promise of [promises
     if (testInfo.project.name === 'chromium') await page.screenshot({ path: `artifacts/activity-message-${promise.id}-${mode}-320.png`, fullPage: true });
     await seek(page, 540_000); await check('near');
     await seek(page, 600_000); await check('arrived'); await expect(message).toBeVisible();
-    await page.clock.runFor(6000); await expect(page.locator('[data-status="completed"]')).toBeVisible();
+    await page.clock.runFor(await finishWait(page)); await expect(page.locator('[data-status="completed"]')).toBeVisible();
     await check('arrived');
     await expect(message).not.toContainText(/도착|마무리|수고|잘했/);
     await expect(page.locator('.journey-message')).toBeHidden();

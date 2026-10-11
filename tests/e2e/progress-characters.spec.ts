@@ -1,3 +1,4 @@
+import { finishWait } from './finish';
 import { test, expect, type Page } from '@playwright/test';
 import sharp from 'sharp';
 import { characters } from '../../src/lib/characters';
@@ -5,7 +6,7 @@ import { motionProfile } from '../../src/lib/motionProfiles';
 import { animalActionPose, isAnimalId } from '../../src/lib/animalActionPose';
 import type { AnimalJoint } from '../../src/lib/animalMotion';
 import { princessPose } from '../../src/lib/princessMotion';
-import { paintedPrincePose, princeCapePanelTransform } from '../../src/lib/paintedPrinceMotion';
+import { paintedPrincePose, princeCapePanelTransform, princeCapeRootTransform } from '../../src/lib/paintedPrinceMotion';
 import type { JointName } from '../../src/lib/characterPose';
 
 async function readPoses(page: Page) {
@@ -17,6 +18,7 @@ async function readPoses(page: Page) {
       })),
       body: root.querySelector('[data-animal-body], [data-prince-body]')?.getAttribute('transform') ?? null,
       cape: Array.from(root.querySelectorAll('[data-prince-cape-panel]'), (panel) => panel.getAttribute('transform')),
+      capeRoot: root.querySelector('[data-prince-cape]')?.getAttribute('transform') ?? null,
     });
     return { main: read(document.querySelector('.traveler-body')!), miniature: read(document.querySelector('.progress-marker')!) };
   });
@@ -98,6 +100,7 @@ for (const character of characters) test(`${character.id}: progress artwork shar
     frame: beforeReduced.frame === null ? null : '0',
     body: restingAnimal ? `translate(0 ${restingAnimal.bob.toFixed(5)})` : restingPrince ? `translate(0 ${restingPrince.bodyY.toFixed(5)})` : null,
     cape: restingPrince ? beforeReduced.cape.map((_, index) => princeCapePanelTransform(restingPrince.cape, index)) : [],
+    capeRoot: restingPrince ? princeCapeRootTransform(restingPrince.capeTransform) : null,
     joints: beforeReduced.joints.map((joint) => ({ ...joint, transform: `rotate(${(restingAnimal
       ? restingAnimal.joints[joint.name as AnimalJoint] : restingHuman[joint.name as JointName]).toFixed(5)})` })),
   };
@@ -114,7 +117,7 @@ for (const character of characters) test(`${character.id}: progress artwork shar
   await expect(miniature).toHaveAttribute('data-progress', '1.000000');
   await expect(miniature).toHaveAttribute('data-action', 'idle');
   const arrived = (await readPoses(page)).miniature;
-  await page.clock.runFor(6000); expect((await readPoses(page)).miniature).toEqual(arrived);
+  await page.clock.runFor(await finishWait(page)); expect((await readPoses(page)).miniature).toEqual(arrived);
   await expect(page.locator('[data-status="completed"]')).toBeVisible();
   await expect(page.getByRole('button', { name: '⭐ 약속 지켰어요' })).toBeEnabled();
   expect(errors).toEqual([]); expect(failed).toEqual([]);

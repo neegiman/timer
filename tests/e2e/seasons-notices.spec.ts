@@ -1,3 +1,4 @@
+import { finishWait } from './finish';
 import { test, expect, type Page } from '@playwright/test';
 
 async function start(page: Page) {
@@ -97,7 +98,7 @@ test('notices appear briefly, repeat every thirty seconds, preserve pause and le
   await seek(page, 540_000); await expect(message).toHaveAttribute('data-visible', 'true');
   await seek(page, 550_000); await expect(message).toHaveAttribute('data-visible', 'false');
   await seek(page, 595_000); await expect(message).toHaveAttribute('data-cue', 'last-seconds');
-  await seek(page, 600_000); await page.clock.fastForward(6000);
+  await seek(page, 600_000); await page.clock.fastForward(await finishWait(page));
   await expect(message).toHaveAttribute('data-cue', 'arrived'); await expect(message).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
@@ -120,7 +121,7 @@ test('seasonal visitors move on the shared clock and reduced motion removes them
   await expect(quiet).toBeVisible();
   await expect(quiet.locator('.quiet-star').first()).toHaveCSS('animation-name', 'none');
   expect(await quiet.locator('.quiet-promise').evaluate((element) => getComputedStyle(element, '::before').animationName)).toBe('none');
-  await seek(page, 600_000); await page.clock.fastForward(6000);
+  await seek(page, 600_000); await page.clock.fastForward(await finishWait(page));
   const stopped = await visitor.getAttribute('style'); await page.clock.runFor(2000);
   await expect(visitor).toHaveAttribute('style', stopped!);
 });
@@ -221,7 +222,7 @@ test('night glimmers flash briefly, fade, pause in place and stop with the finis
   await seek(page, 10_800); await expect(visitor).toHaveCSS('opacity', '0');
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/meteor-glimmer-gone.png', fullPage: true });
   await seek(page, 58_120); await expect(visitor).toHaveAttribute('data-event', 'shooting-star'); await expect(visitor).toHaveCSS('opacity', '1');
-  await seek(page, 600_000); await page.clock.fastForward(6000);
+  await seek(page, 600_000); await page.clock.fastForward(await finishWait(page));
   const stopped = await visitor.getAttribute('style'); await page.clock.runFor(2000);
   await expect(visitor).toHaveAttribute('style', stopped!);
 });
@@ -290,7 +291,7 @@ test('rocket has planets and a UFO that appears, drifts, pauses, disappears and 
   })).toEqual([0, 0]);
   const still = await planets.first().getAttribute('style'); await page.clock.runFor(1000); await expect(planets.first()).toHaveAttribute('style', still!);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await seek(page, 600_000); await page.clock.fastForward(6000);
+  await seek(page, 600_000); await page.clock.fastForward(await finishWait(page));
   const stopped = await planets.first().getAttribute('style'); await page.clock.runFor(1000); await expect(planets.first()).toHaveAttribute('style', stopped!);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

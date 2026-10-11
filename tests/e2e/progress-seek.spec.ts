@@ -1,3 +1,4 @@
+import { finishWait } from './finish';
 import { test, expect, type Page } from '@playwright/test';
 import { instrumentAudio } from './audio';
 import { formatRemaining } from '../../src/lib/timer';
@@ -106,7 +107,7 @@ test('paused touch seek, cancellation, keyboard controls and endpoint finish exa
   await touch(page, 'pointerup', 1.2);
   await expect(page.locator('[data-status="arriving"]')).toBeVisible();
   await expect(slider(page)).toHaveAttribute('aria-disabled', 'true');
-  await page.clock.runFor(6000);
+  await page.clock.runFor(await finishWait(page));
   await expect(page.locator('[data-status="completed"]')).toBeVisible();
   const supportsAudio = await page.evaluate(() => typeof AudioContext !== 'undefined');
   if (supportsAudio) await expect.poll(() => page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/finish.mp3')).length)).toBe(1);

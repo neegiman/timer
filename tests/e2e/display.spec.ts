@@ -1,3 +1,4 @@
+import { finishWait } from './finish';
 import { test, expect, type Page } from '@playwright/test';
 import { finishPhaseStart } from '../../src/lib/animation';
 import { destinationLandmarks } from './destination';
@@ -114,7 +115,7 @@ test('unsupported fullscreen uses a large page view, including landscape finish 
   await page.clock.runFor(finishPhaseStart('JUMP') + 150);
   await expect(page.locator('.journey-scene')).toHaveAttribute('data-phase', 'JUMP');
   await assertInsideTrack(page);
-  await page.clock.fastForward(6000);
+  await page.clock.fastForward(await finishWait(page));
   await expect(page.locator('[data-status="completed"]')).toBeVisible();
   await assertInsideTrack(page);
   await page.getByRole('button', { name: '⭐ 약속 지켰어요' }).click();

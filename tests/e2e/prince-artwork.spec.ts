@@ -64,6 +64,16 @@ test('painted prince stays connected and grounded through selection, walking, pa
           jointErrors.push(Math.hypot(paintTip.x - childRoot.x, paintTip.y - childRoot.y));
         }
         const upperArm = svg.querySelector<SVGGElement>(`[data-joint="${side}-arm"]`)!;
+        // The cape's painted shoulder edge must follow the actual upper sleeve,
+        // including walking, settling and both raised celebration arms.
+        const cape = svg.querySelector<SVGSVGElement>('[data-prince-cape-panel="0"] [data-painted-part="cape"]')!;
+        const pin = point(cape, anatomy.capePins[side]);
+        const sleeve = new DOMPoint(0, 3.5).matrixTransform(upperArm.getScreenCTM()!);
+        const rest = (side === 'front' ? 8 : -12) * Math.PI / 180;
+        const bodyMatrix = svg.querySelector<SVGGElement>('[data-prince-body]')!.getScreenCTM()!;
+        const origin = new DOMPoint(0, 0).matrixTransform(bodyMatrix);
+        const restingSleeve = new DOMPoint(-3.5 * Math.sin(rest), 3.5 * Math.cos(rest)).matrixTransform(bodyMatrix);
+        jointErrors.push(Math.hypot(pin.x - sleeve.x + restingSleeve.x - origin.x, pin.y - sleeve.y + restingSleeve.y - origin.y));
         const elbow = svg.querySelector<SVGGElement>(`[data-joint="${side}-elbow"]`)!;
         const paintTip = point(ownPaint(upperArm, anatomy.arms[side].upperPart), anatomy.arms[side].upperArt.tip);
         const elbowRoot = new DOMPoint(0, 0).matrixTransform(elbow.getScreenCTM()!);
@@ -127,7 +137,7 @@ test('painted prince stays connected and grounded through selection, walking, pa
   const reduced = await joints(); await page.clock.runFor(200); expect(await joints()).toEqual(reduced);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const target = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).targetTimestamp);
-  await seek(target); await page.clock.runFor(finishPhaseStart('CELEBRATE') + 150);
+  await seek(target); await page.clock.runFor(finishPhaseStart('CELEBRATE', 'prince') + 150);
   await expect(page.locator('.sprite-motion')).toHaveAttribute('data-action', 'celebrate');
   await check(true);
   await page.clock.runFor(4000);

@@ -5,6 +5,7 @@ export type AnimationSound = 'start' | 'almost' | 'finish' | 'success' | 'midpoi
 
 /** All time values use milliseconds. The animation never owns or extends the timer. */
 export interface AnimationInput {
+  characterId?: string;
   totalDuration: number;
   remainingTime: number;
   progress: number;

@@ -1,3 +1,4 @@
+import { finishWait } from './finish';
 import { test, expect } from '@playwright/test';
 import { chickAnatomy } from '../../src/lib/chickAnatomy';
 import { animalPose } from '../../src/lib/animalMotion';
@@ -64,7 +65,7 @@ test('chick feathers point backward and its actual painted feet touch the ground
   await page.emulateMedia({ reducedMotion: 'reduce' }); await page.clock.runFor(32); await check(true);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const target = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).targetTimestamp);
-  await seek(target); await page.clock.runFor(5000);
+  await seek(target); await page.clock.runFor(await finishWait(page));
   await expect(page.locator('[data-status="completed"]')).toBeVisible(); await check(true);
   // Rasterize each actual planted foot: a correct mathematical pivot alone cannot catch transparent padding.
   const bottoms = await page.evaluate(async (frames) => {

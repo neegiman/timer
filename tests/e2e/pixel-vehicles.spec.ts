@@ -107,7 +107,7 @@ for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and prese
   }).toBeGreaterThan(0);
   await seek(latest.targetTimestamp);
   const stopped = await page.locator('.journey-scene').getAttribute('data-ground-distance');
-  await page.clock.runFor(finishPhaseStart('JUMP') + 150); await expect(sprite).toHaveAttribute('data-frame', '9');
+  await page.clock.runFor(finishPhaseStart('JUMP', id) + 150); await expect(sprite).toHaveAttribute('data-frame', '9');
   await page.clock.runFor(600); await expect(sprite).toHaveAttribute('data-frame', '10');
   await page.clock.runFor(400); expect(Number(await sprite.getAttribute('data-frame'))).toBeGreaterThanOrEqual(11);
   await page.clock.runFor(4000); await expect(page.locator('[data-status="completed"]')).toBeVisible();

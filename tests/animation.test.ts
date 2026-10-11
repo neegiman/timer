@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FINISH_DURATION_MS, FINISH_SEQUENCE, getAnimationState, getFinishAnimationState, JOURNEY_MESSAGES } from '../src/lib/animation';
+import { FINISH_DURATION_MS, FINISH_SEQUENCE, finishDurationMs, finishPhaseStart, getAnimationState, getFinishAnimationState, JOURNEY_MESSAGES } from '../src/lib/animation';
+import { motionProfiles } from '../src/lib/motionProfiles';
+import { finishCrossingDuration } from '../src/lib/finishTiming';
 import type { AnimationInput } from '../src/types/animation';
 
 function input(elapsed: number, total = 600_000): AnimationInput {
@@ -68,4 +70,17 @@ test('drag preview updates scenery and milestones without arrival or sounds unti
     assert.notEqual(preview.messageStage, 'arrived');
   }
   assert.equal(getAnimationState(input(600_000)).phase, 'CROSS_FINISH');
+});
+
+test('finish phases follow each friend’s natural crossing and never jump or celebrate before stopping', () => {
+  for (const id of Object.keys(motionProfiles)) {
+    const crossing = finishCrossingDuration(id);
+    assert.equal(getFinishAnimationState(2000, id).characterAction, 'walk', 'Slow walkers must not rush to fit a two-second finish');
+    assert.equal(getFinishAnimationState(crossing - .001, id).phase, 'BRAKE');
+    assert.equal(getFinishAnimationState(crossing, id).phase, 'SETTLE');
+    assert.equal(getFinishAnimationState(finishPhaseStart('JUMP', id), id).phase, 'JUMP');
+    assert.equal(getFinishAnimationState(finishPhaseStart('CELEBRATE', id), id).sound, 'finish');
+    const end = getAnimationState({ ...input(600_000), characterId: id, isFinished: true, finishElapsedMs: finishDurationMs(id) });
+    assert.equal(end.phase, 'CELEBRATE');
+  }
 });

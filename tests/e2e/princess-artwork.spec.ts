@@ -90,7 +90,7 @@ test('painted princess stays connected and grounded through selection, walking, 
   const reduced = await joints(); await page.clock.runFor(200); expect(await joints()).toEqual(reduced);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const target = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).targetTimestamp);
-  await seek(target); await page.clock.runFor(finishPhaseStart('CELEBRATE') + 150);
+  await seek(target); await page.clock.runFor(finishPhaseStart('CELEBRATE', 'princess') + 150);
   await expect(page.locator('.sprite-motion')).toHaveAttribute('data-action', 'celebrate');
   await check(true);
   await page.clock.runFor(4000);

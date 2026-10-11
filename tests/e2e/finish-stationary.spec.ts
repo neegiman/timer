@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { FINISH_DURATION_MS, finishPhaseStart } from '../../src/lib/animation';
+import { FINISH_DURATION_MS, finishDurationMs, finishPhaseStart } from '../../src/lib/animation';
 import { destinationLandmarks } from './destination';
 
 async function start(page: Page, display: 'window' | 'expanded', sound = false, character?: string, minutes = 10) {
@@ -66,7 +66,7 @@ for (const display of ['window', 'expanded'] as const) {
       // and progress endpoint must still stay completely stable at zero.
       await page.evaluate(destinationLandmarks, { monitor: true, layoutOnly: true });
       for (const remaining of [20_000, 1000, 0]) await seek(page, session.targetTimestamp - remaining);
-      await page.clock.runFor(FINISH_DURATION_MS + 500);
+      await page.clock.runFor(finishDurationMs('prince') + 500);
       await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'completed');
       await page.getByRole('button', { name: '⭐ 약속 지켰어요' }).evaluate((button: HTMLButtonElement) => button.click());
       await page.clock.runFor(128);

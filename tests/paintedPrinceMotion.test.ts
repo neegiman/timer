@@ -26,6 +26,12 @@ test('painted prince retains the original ImageGen alpha, and every joint is ins
     check(rig.upperPart, rig.upperArt.pivot); check(rig.upperPart, rig.upperArt.tip);
     check(rig.lowerPart, rig.lowerArt.pivot); check(rig.lowerPart, rig.lowerArt.tip);
   }
+  for (const side of ['front', 'back'] as const) {
+    const pin = anatomy.capePins[side]; check('cape', pin);
+    const scale = anatomy.cape.width / atlas.parts.cape[2];
+    assert.ok(Math.abs(anatomy.cape.x + pin.x * scale - anatomy.arms[side].x) < 1e-8);
+    assert.ok(Math.abs(anatomy.cape.y + pin.y * scale - anatomy.arms[side].y) < 1e-8);
+  }
   assert.ok((await readFile(`public${PAINTED_PRINCE_ASSET}`)).length < 1_000_000);
 });
 
@@ -252,4 +258,27 @@ test('prince cape stays pinned at the collar and flexes continuously with a dela
   for (const [index, offset] of first.entries()) assert.ok(Math.abs(offset - last[index]) < 1e-12);
   assert.ok(paintedPrincePose('walk', 600, true).cape.every((offset) => offset === 0));
   assert.deepEqual(settlePaintedPrincePose(600, 350).cape, paintedPrincePose('idle', 0).cape);
+});
+
+test('painted cape follows both upper sleeves instead of floating behind the shoulder line', () => {
+  for (const action of ['idle', 'walk', 'jump', 'land', 'celebrate'] as const) for (let time = 0; time < 2400; time += 10) {
+    const pose = paintedPrincePose(action, time), [a, b, c, d, e, f] = pose.capeTransform;
+    for (const side of ['front', 'back'] as const) {
+      const shoulder = anatomy.arms[side], rest = (side === 'front' ? 8 : -12) * Math.PI / 180;
+      const angle = pose.joints[`${side}-arm`] * Math.PI / 180;
+      const expected = { x: shoulder.x - 3.5 * (Math.sin(angle) - Math.sin(rest)),
+        y: shoulder.y + 3.5 * (Math.cos(angle) - Math.cos(rest)) };
+      assert.ok(Math.abs(a * shoulder.x + c * shoulder.y + e - expected.x) < 1e-8);
+      assert.ok(Math.abs(b * shoulder.x + d * shoulder.y + f - expected.y) < 1e-8);
+    }
+    const next = paintedPrincePose(action, time + 16).capeTransform;
+    for (const shoulder of Object.values(anatomy.capeShoulders)) {
+      const dx = (next[0] - a) * shoulder.x + (next[2] - c) * shoulder.y + next[4] - e;
+      const dy = (next[1] - b) * shoulder.x + (next[3] - d) * shoulder.y + next[5] - f;
+      assert.ok(Math.hypot(dx, dy) < .8, 'The attachment must follow shoulders smoothly');
+    }
+  }
+  assert.notDeepEqual(paintedPrincePose('walk', 0).capeTransform, paintedPrincePose('walk', 600).capeTransform);
+  assert.notDeepEqual(paintedPrincePose('celebrate', 1000).capeTransform, paintedPrincePose('idle', 0).capeTransform);
+  assert.deepEqual(settlePaintedPrincePose(600, 350).capeTransform, paintedPrincePose('idle', 0).capeTransform);
 });

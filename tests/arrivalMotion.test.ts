@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { arrivalMotion, finishGeometry } from '../src/lib/arrivalMotion';
 import { CROSSING_DURATION_MS } from '../src/lib/animation';
+import { motionProfiles, gaitPixelsPerMs } from '../src/lib/motionProfiles';
+import { finishCrossingDuration } from '../src/lib/finishTiming';
 
 test('fixed finish reserves space for the entire character beyond the line', () => {
   for (const [width, actorWidth] of [[288, 102.4], [358, 124.8], [556, 90], [840, 168]]) {
@@ -57,7 +59,8 @@ test('approach and crossing share the foot clock and never cross before zero', (
     }
     assert.ok(Math.abs(previous.x - geometry.lineX) < 1e-8);
     const ground = previous.backgroundDistance;
-    for (let finish = 0; finish <= CROSSING_DURATION_MS + 1000; finish += 5) {
+    const duration = previous.crossingDuration;
+    for (let finish = 0; finish <= duration + 1000; finish += 5) {
       const motion = arrivalMotion(total, total, finish, geometry, speed);
       assert.ok(motion.x >= previous.x - 1e-8 && motion.x <= geometry.stopX + 1e-8);
       assert.equal(motion.backgroundDistance, ground);
@@ -65,8 +68,29 @@ test('approach and crossing share the foot clock and never cross before zero', (
       previous = motion;
     }
     assert.ok(Math.abs(previous.x - geometry.stopX) < 1e-8);
-    const before = arrivalMotion(total, total, CROSSING_DURATION_MS - 1, geometry, speed);
+    const before = arrivalMotion(total, total, duration - 1, geometry, speed);
     assert.ok(geometry.stopX - before.x < .0001, 'Braking must finish with zero velocity');
+  }
+});
+
+test('every friend crosses at its existing speed then only slows down, independently of viewport size', () => {
+  for (const id of Object.keys(motionProfiles)) for (const [width, actorWidth] of [[288, 90], [358, 124.8], [840, 168]]) {
+    const geometry = finishGeometry(width, actorWidth), speed = gaitPixelsPerMs(id) * actorWidth / 160;
+    let previous = arrivalMotion(600_000, 600_000, 0, geometry, speed), previousSpeed = speed;
+    const duration = previous.crossingDuration;
+    assert.ok(Math.abs(duration - finishCrossingDuration(id)) < 1e-7, 'The renderer and finish phases must share one crossing clock');
+    for (let time = 5; time < duration; time += 5) {
+      const motion = arrivalMotion(600_000, 600_000, time, geometry, speed);
+      const velocity = (motion.x - previous.x) / 5;
+      assert.ok(velocity <= previousSpeed + 1e-8, `${id}: accelerates after crossing the finish`);
+      assert.ok(velocity >= 0 && velocity <= speed + 1e-8);
+      assert.ok(Math.abs((motion.gait - previous.gait) / 5 - velocity / speed) < 1e-7, 'Foot cadence must slow with the body');
+      previous = motion; previousSpeed = velocity;
+    }
+    const end = arrivalMotion(600_000, 600_000, duration, geometry, speed);
+    assert.ok(Math.abs(end.x - geometry.stopX) < 1e-8);
+    assert.ok(end.x - actorWidth / 2 > geometry.lineX, 'Stop only after the entire artwork has crossed');
+    assert.ok(previousSpeed < .00001, 'The final step must settle to zero velocity');
   }
 });
 

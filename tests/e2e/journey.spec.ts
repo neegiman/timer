@@ -1,3 +1,4 @@
+import { finishWait } from './finish';
 import { test, expect, type Page } from '@playwright/test';
 
 import { instrumentAudio } from './audio';
@@ -41,7 +42,7 @@ test('10-minute bath journey, arrival sound once, reward persists across refresh
   await expect(page.getByTestId('traveler')).toHaveAttribute('data-progress', '1');
   await page.clock.fastForward(800);
   if (supportsAudio) expect(await page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/finish.mp3')).length)).toBe(0);
-  await page.clock.fastForward(5000);
+  await page.clock.fastForward(await finishWait(page));
   await expect(page.locator('[data-status="completed"]')).toBeVisible();
   if (supportsAudio) await expect.poll(() => page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/finish.mp3')).length)).toBe(1);
   await expect(page.getByTestId('journey-message')).toHaveText('목욕하러 가요. 🛁');
@@ -93,7 +94,7 @@ test('pause/resume, confirmation cancellation, refresh and background expiry', a
   await page.clock.setSystemTime(new Date(Date.now() + 3_600_000));
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await expect(page.locator('[data-status="arriving"]')).toBeVisible();
-  await page.clock.fastForward(6000);
+  await page.clock.fastForward(await finishWait(page));
   await expect(page.locator('[data-status="completed"]')).toBeVisible();
 });
 
@@ -171,7 +172,7 @@ test('320px, phone, tablet and landscape have no horizontal overflow', async ({ 
     if (testInfo.project.name === 'chromium' && width === 390) await page.screenshot({ path: 'artifacts/timer-mobile.png', fullPage: true });
   }
   await page.clock.fastForward(603_000);
-  await page.clock.fastForward(6000);
+  await page.clock.fastForward(await finishWait(page));
   await expect(page.getByTestId('journey-message')).toHaveCSS('opacity', '1');
   for (const [width, height] of [[320, 740], [390, 844], [844, 390]]) {
     await page.setViewportSize({ width, height });

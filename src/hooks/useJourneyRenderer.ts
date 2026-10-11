@@ -1,16 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { getAnimationState } from '@/lib/animation';
-import { clamp, groundDistance, loopOffset, smoothstep, TILE_WIDTH } from '@/lib/journey';
+import { clamp, loopOffset, smoothstep, TILE_WIDTH } from '@/lib/journey';
 import { arrivalMotion, finishGeometry } from '@/lib/arrivalMotion';
+import { ARRIVAL_CATCHUP_MS } from '@/lib/finishTiming';
 import { destinationLayout } from '@/lib/destinationBackground';
 import destinationArt from '@/lib/destinationScenery.json';
 import { getCharacterPose, type JointName } from '@/lib/characterPose';
-import { motionProfile } from '@/lib/motionProfiles';
+import { gaitPixelsPerMs, motionProfile } from '@/lib/motionProfiles';
 import type { AnimationInput, AnimationState } from '@/types/animation';
 import { animalActionPose, isAnimalId, settleAnimalPose } from '@/lib/animalActionPose';
-import { animalProfiles, type AnimalJoint } from '@/lib/animalMotion';
-import { PRINCESS_GAIT, princessPose, settlePrincessPose } from '@/lib/princessMotion';
-import { PAINTED_PRINCE_GAIT, paintedPrincePose, princeCapePanelTransform, settlePaintedPrincePose } from '@/lib/paintedPrinceMotion';
+import type { AnimalJoint } from '@/lib/animalMotion';
+import { princessPose, settlePrincessPose } from '@/lib/princessMotion';
+import { paintedPrincePose, princeCapePanelTransform, princeCapeRootTransform, settlePaintedPrincePose } from '@/lib/paintedPrinceMotion';
 import { isPixelVehicle, vehicleFrame, vehicleViewBox } from '@/lib/pixelVehicles';
 import { meteorGlimmerPose, sceneryEvent, sceneryParticle } from '@/lib/sceneryEvents';
 import type { Season } from '@/lib/seasons';
@@ -63,6 +64,8 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     const sprite = body.current;
     if (!element || !actor || !sprite) return;
     const progressPrinceBody = marker.current?.querySelector<SVGGElement>('[data-prince-body]');
+    const princeCapeRoot = sprite.querySelector<SVGGElement>('[data-prince-cape]');
+    const progressPrinceCapeRoot = marker.current?.querySelector<SVGGElement>('[data-prince-cape]');
     const princeCape = Array.from(sprite.querySelectorAll<SVGGElement>('[data-prince-cape-panel]'));
     const progressPrinceCape = Array.from(marker.current?.querySelectorAll<SVGGElement>('[data-prince-cape-panel]') ?? []);
     const progressVehicle = marker.current?.querySelector<SVGSVGElement>('[data-vehicle-sprite]');
@@ -113,16 +116,17 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       const sample = snapshot.current;
       const frozen = sample.input.isPaused;
       const delta = sample.sampledAt > 0 ? Math.max(0, Date.now() - sample.sampledAt) : 0;
+      const overdue = delta - sample.input.remainingTime;
+      const inferredFinish = sample.input.hasStarted && !sample.input.isFinished && !frozen
+        && overdue >= 0 && overdue <= ARRIVAL_CATCHUP_MS ? overdue : 0;
       const next = { ...sample.input,
         remainingTime: frozen || sample.input.isFinished ? sample.input.remainingTime : Math.max(0, sample.input.remainingTime - delta),
-        finishElapsedMs: sample.input.finishElapsedMs + (sample.input.isFinished && !frozen ? delta : 0),
+        finishElapsedMs: sample.input.isFinished ? sample.input.finishElapsedMs + (!frozen ? delta : 0) : inferredFinish,
       };
       const pose = getAnimationState(next);
       const elapsed = clamp(next.totalDuration - next.remainingTime, 0, next.totalDuration);
       const scale = actorWidth / 160;
-      const speed = (animalId ? animalProfiles[animalId].travel / profile.cycleMs
-        : characterId === 'princess' ? PRINCESS_GAIT.travel / profile.cycleMs
-        : characterId === 'prince' ? PAINTED_PRINCE_GAIT.travel / profile.cycleMs : groundDistance(1, profile.cycleMs)) * scale;
+      const speed = gaitPixelsPerMs(characterId) * scale;
       const motion = arrivalMotion(elapsed, next.totalDuration, next.finishElapsedMs, geometry, speed);
       const gait = motion.gait, distance = motion.backgroundDistance, x = motion.x;
       const groundY = height * .78;
@@ -173,6 +177,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         : paintedPrincePose(pose.characterAction, animationTime, reduced)) : null;
       if (prince) {
         princeBody.current?.setAttribute('transform', `translate(0 ${prince.bodyY.toFixed(5)})`);
+        princeCapeRoot?.setAttribute('transform', princeCapeRootTransform(prince.capeTransform));
         for (const [index, panel] of princeCape.entries()) panel.setAttribute('transform', princeCapePanelTransform(prince.cape, index));
       }
       let jointPose = prince ? prince.joints : characterId === 'princess' ? princessPose(pose.characterAction, animationTime, reduced)
@@ -189,6 +194,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         const miniaturePrince = prince ? (miniatureAction === 'walk' && walking ? prince : paintedPrincePose(miniatureAction, gait, reduced)) : null;
         if (miniaturePrince) {
           progressPrinceBody?.setAttribute('transform', `translate(0 ${miniaturePrince.bodyY.toFixed(5)})`);
+          progressPrinceCapeRoot?.setAttribute('transform', princeCapeRootTransform(miniaturePrince.capeTransform));
           for (const [index, panel] of progressPrinceCape.entries()) panel.setAttribute('transform', princeCapePanelTransform(miniaturePrince.cape, index));
         }
         const miniature = miniatureAction === 'walk' && walking ? jointPose

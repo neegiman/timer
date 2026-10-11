@@ -1,5 +1,5 @@
-import { CROSSING_DURATION_MS } from './animation';
 import { clamp, locomotionTime, MOTION_RAMP_MS } from './journey';
+import { FINISH_RUNOUT_FRACTION } from './finishTiming';
 
 const rampDistance = (time: number, duration: number) => {
   const t = clamp(time / duration);
@@ -10,7 +10,7 @@ const rampDistance = (time: number, duration: number) => {
 export function finishGeometry(width: number, actorWidth: number) {
   const startX = width * .42;
   const lineX = Math.max(startX + 8, Math.min(width * .7, width - actorWidth - 24));
-  return { startX, lineX, stopX: lineX + actorWidth / 2 + 8 };
+  return { startX, lineX, stopX: lineX + actorWidth * FINISH_RUNOUT_FRACTION };
 }
 
 /** Spread the approach over the final tenth instead of waiting until the last
@@ -33,9 +33,12 @@ export function arrivalMotion(elapsed: number, total: number, finishElapsed: num
   // eased to a stop as the character approaches the line.
   const baseGait = locomotionTime(clamp(elapsed, 0, total), total + MOTION_RAMP_MS);
   const runout = geometry.stopX - geometry.lineX;
-  const u = clamp(finishElapsed / CROSSING_DURATION_MS);
-  const tangent = Math.min(speed * CROSSING_DURATION_MS, 2 * runout);
-  const crossing = tangent * u + (3 * runout - 2 * tangent) * u ** 2 + (tangent - 2 * runout) * u ** 3;
+  const crossingDuration = 2 * runout / speed;
+  const u = clamp(finishElapsed / crossingDuration);
+  // Integrate speed * (1 - smoothstep(u)). Velocity starts at the existing
+  // walking speed and only decreases; acceleration is zero at both ends.
+  // A fixed two-second cubic previously sped up slow walkers to cover runout.
+  const crossing = speed * crossingDuration * (u - u ** 3 + u ** 4 / 2);
   const backgroundDistance = Math.max(0, baseGait * speed - approach);
   // A single landmark is fixed in world space at the timer's end position.
   // Subtract the unwrapped camera distance, never a repeating walk phase or
@@ -48,5 +51,6 @@ export function arrivalMotion(elapsed: number, total: number, finishElapsed: num
     backgroundDistance,
     destinationX,
     crossing,
+    crossingDuration,
   };
 }

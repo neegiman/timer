@@ -75,7 +75,7 @@ function Arm({ side }: { side: 'front' | 'back' }) {
 
 function Cape() {
   const id = useId().replace(/:/g, '');
-  return <g data-prince-cape>
+  return <g data-prince-cape transform="matrix(1.000000 0.000000 0.000000 1.000000 0.000000 0.000000)">
     <defs>{PRINCE_CAPE_ROWS.slice(0, -1).map((top, index) =>
       <clipPath key={index} id={`${id}-cape-${index}`} clipPathUnits="userSpaceOnUse">
         {/* Overlap the raster edge slightly so antialiased clips cannot expose

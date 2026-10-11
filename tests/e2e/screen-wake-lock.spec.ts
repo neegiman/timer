@@ -1,3 +1,4 @@
+import { finishWait } from './finish';
 import { test, expect, type Page } from '@playwright/test';
 
 declare global {
@@ -78,7 +79,7 @@ test('running journey stays awake; pause, resume, background, arrival and comple
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'arriving');
   expect((await stats(page)).active).toBe(1);
-  await page.clock.fastForward(6000);
+  await page.clock.fastForward(await finishWait(page));
   await expect(page.locator('.app-shell')).toHaveAttribute('data-status', 'completed');
   await expect.poll(async () => (await stats(page)).active).toBe(0);
 });

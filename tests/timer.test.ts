@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { advanceSession, ARRIVAL_DURATION_MS, awardStar, formatRemaining, isSession, pauseSession, resumeSession, seekSession, timerProgress } from '../src/lib/timer';
 import { assetPath } from '../src/lib/assetPath';
+import { finishDurationMs } from '../src/lib/animation';
+import { motionProfiles } from '../src/lib/motionProfiles';
 import type { TimerSession } from '../src/types/timer';
 
 const start = 1_000_000;
@@ -38,6 +40,23 @@ test('countdown rounds up and never displays negative time', () => {
   assert.equal(formatRemaining(1), '00:01');
   assert.equal(formatRemaining(600_000), '10:00');
   assert.equal(formatRemaining(-100), '00:00');
+});
+
+test('rewards wait for this friend to cross and celebrate while the countdown stays at zero', () => {
+  for (const characterId of Object.keys(motionProfiles)) {
+    const arrived = advanceSession({ ...session, characterId }, session.targetTimestamp);
+    const duration = finishDurationMs(characterId);
+    assert.equal(timerProgress(arrived, session.targetTimestamp + 2000).remaining, 0);
+    assert.equal(advanceSession(arrived, session.targetTimestamp + duration - 1).status, 'arriving');
+    assert.equal(advanceSession(arrived, session.targetTimestamp + duration + 1).status, 'completed');
+  }
+});
+
+test('foreground expiry keeps the deadline clock across a delayed UI tick; suspension still replays arrival', () => {
+  for (const lag of [0, 16, 249, 500, 1000]) {
+    assert.equal(advanceSession(session, session.targetTimestamp + lag).arrivalTimestamp, session.targetTimestamp);
+  }
+  assert.equal(advanceSession(session, session.targetTimestamp + 120_000).arrivalTimestamp, session.targetTimestamp + 120_000);
 });
 
 test('seeking forward and backward rebases timestamps without changing duration or reward identity', () => {
