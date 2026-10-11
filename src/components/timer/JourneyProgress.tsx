@@ -72,7 +72,11 @@ export function JourneyProgress({ character, progress, remaining, durationMs, en
 
   return <div className="journey-progress" data-adjusting={isAdjusting}>
     <div className="sr-only" role="progressbar" aria-label="출발에서 도착까지의 여행" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} />
-    <div className="progress-endpoints" aria-hidden="true"><span><StoryIcon name="home" size={34} /> 출발</span><span>도착 <StoryIcon name="flag" size={34} /></span></div>
+    <div className="progress-endpoints">
+      <span aria-hidden="true"><StoryIcon name="home" size={34} /> 출발</span>
+      <span className="progress-time" role="timer" aria-label="남은 시간" aria-live="off">{formatRemaining(remaining)}</span>
+      <span aria-hidden="true">도착 <StoryIcon name="flag" size={34} /></span>
+    </div>
     <div ref={trackRef} className="progress-track">
       <div className="progress-paint" style={{ backgroundImage: `url("${assetPath('/images/progress-v1/trail.webp')}")` }} aria-hidden="true" />
       <div ref={fillRef} className="progress-fill" style={{ clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)`, backgroundImage: `url("${assetPath('/images/progress-v1/trail.webp')}")` }} aria-hidden="true" />

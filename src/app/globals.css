@@ -313,8 +313,10 @@ h1:focus { outline: none; }
 @keyframes quietTwinkle { 0%, 100% { opacity: .45; transform: translateY(1px); } 50% { opacity: .95; transform: translateY(-2px); } }
 @keyframes quietHalo { 0%, 100% { opacity: .35; transform: scale(.97); } 50% { opacity: .65; transform: scale(1.04); } }
 .journey-progress { max-width: 650px; margin: 14px auto 0; padding: 0 20px; }
-.progress-endpoints { display: flex; justify-content: space-between; gap: 12px; font-size: 18px; font-weight: 800; margin-bottom: 26px; }
+.progress-endpoints { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; font-size: 18px; font-weight: 800; margin-bottom: 26px; }
 .progress-endpoints > span { display: inline-flex; align-items: center; gap: 4px; }
+.progress-endpoints > span:last-child { justify-self: end; }
+.progress-time { justify-self: center; font-size: inherit; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .progress-track { position: relative; height: 22px; margin: 0 14px 20px; }
 .progress-paint, .progress-fill { position: absolute; inset: 0; background-size: 100% 100%; background-repeat: no-repeat; pointer-events: none; }
 .progress-fill { filter: sepia(.25) saturate(1.55) hue-rotate(45deg) brightness(.87); will-change: clip-path; }
