@@ -4,8 +4,8 @@ import walkingTorsoArt from './walkingTorsoArt.json';
 type WalkerId = 'dog' | 'cat';
 type Point = { x: number; y: number };
 export interface LimbArtwork {
-  upper: { pivot: Point; tip: Point };
-  lower: { pivot: Point; tip: Point };
+  upper: { pivot: Point; tip: Point; widthScale?: number };
+  lower: { pivot: Point; tip: Point; widthScale?: number };
   paw: { pivot: Point; sole: Point; width: number };
 }
 function fittedPart(id: WalkerId, part: 'torso' | 'head', x: number, y: number, width: number) {
@@ -34,13 +34,13 @@ export const walkingAnatomy = {
       farFore: { x: 116, y: 156, upper: 21, lower: 22, bend: -1 },
     },
     hindArtwork: {
-      upper: { pivot: { x: 88, y: 48 }, tip: { x: 88, y: 262 } },
-      lower: { pivot: { x: 65, y: 30 }, tip: { x: 67, y: 247 } },
+      upper: { pivot: { x: 88, y: 48 }, tip: { x: 88, y: 262 }, widthScale: 1.18 },
+      lower: { pivot: { x: 65, y: 30 }, tip: { x: 67, y: 247 }, widthScale: 1.3 },
       paw: { pivot: { x: 59, y: 42 }, sole: { x: 180, y: 153 }, width: 21 },
     },
     foreArtwork: {
-      upper: { pivot: { x: 75, y: 45 }, tip: { x: 75, y: 276 } },
-      lower: { pivot: { x: 63, y: 32 }, tip: { x: 65, y: 257 } },
+      upper: { pivot: { x: 75, y: 45 }, tip: { x: 75, y: 276 }, widthScale: 1.18 },
+      lower: { pivot: { x: 63, y: 32 }, tip: { x: 65, y: 257 }, widthScale: 1.3 },
       paw: { pivot: { x: 46, y: 36 }, sole: { x: 140, y: 126 }, width: 19 },
     },
   },
@@ -56,13 +56,13 @@ export const walkingAnatomy = {
       farFore: { x: 109, y: 154, upper: 24, lower: 25, bend: -1 },
     },
     hindArtwork: {
-      upper: { pivot: { x: 88, y: 42 }, tip: { x: 88, y: 244 } },
-      lower: { pivot: { x: 70, y: 28 }, tip: { x: 70, y: 238 } },
+      upper: { pivot: { x: 88, y: 42 }, tip: { x: 88, y: 244 }, widthScale: 1.16 },
+      lower: { pivot: { x: 70, y: 28 }, tip: { x: 70, y: 238 }, widthScale: 1.28 },
       paw: { pivot: { x: 43, y: 28 }, sole: { x: 141, y: 112 }, width: 19 },
     },
     foreArtwork: {
-      upper: { pivot: { x: 70, y: 42 }, tip: { x: 70, y: 273 } },
-      lower: { pivot: { x: 64, y: 28 }, tip: { x: 68, y: 249 } },
+      upper: { pivot: { x: 70, y: 42 }, tip: { x: 70, y: 273 }, widthScale: 1.16 },
+      lower: { pivot: { x: 64, y: 28 }, tip: { x: 68, y: 249 }, widthScale: 1.28 },
       paw: { pivot: { x: 44, y: 35 }, sole: { x: 142, y: 118 }, width: 19 },
     },
   },

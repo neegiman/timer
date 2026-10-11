@@ -33,7 +33,7 @@ for (const [id, label] of [['dog', '강아지'], ['cat', '고양이']]) {
 }
 
 test('an unavailable gait image retains the fully articulated animal', async ({ page }) => {
-  await page.route('**/characters/walk-v12/*.webp', route => route.abort());
+  await page.route('**/characters/walk-*/*.webp', route => route.abort());
   await page.clock.install(); await page.goto('./');
   await page.getByRole('button', { name: '친구', exact: true }).click();
   await page.getByRole('button', { name: '고양이', exact: true }).click();

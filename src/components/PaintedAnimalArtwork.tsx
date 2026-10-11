@@ -38,8 +38,8 @@ function Part({ id, part, x, y, width, height, contain = false }: {
   </svg>;
 }
 
-/** Match painted joint landmarks to the bone; padding is never a rotation pivot. */
-function PaintedBone({ id, part, length, landmarks, crossScale = 1 }: { id: AnimalId; part: PartName; length: number; landmarks: LimbArtwork['upper']; crossScale?: number }) {
+/** Widen the existing painted fur across the bone, keeping both joint centers fixed. */
+function PaintedBone({ id, part, length, landmarks, crossScale = landmarks.widthScale ?? 1 }: { id: AnimalId; part: PartName; length: number; landmarks: LimbArtwork['upper']; crossScale?: number }) {
   const dx = landmarks.tip.x - landmarks.pivot.x, dy = landmarks.tip.y - landmarks.pivot.y;
   const scale = length / Math.hypot(dx, dy), [, , width, height] = atlases[id].parts[part];
   const angle = 90 - Math.atan2(dy, dx) * 180 / Math.PI;
@@ -109,7 +109,7 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
         ? <PaintedBone id={id} part={upperPart} length={rig.upper} landmarks={artwork.upper} />
         : <Part id={id} part={upperPart} x={-upperWidth / 2} y={-overlap} width={upperWidth} height={upperHeight} />}</g> : null}
       <g transform={`translate(0 ${rig.upper})`}><g data-animal-joint={`${name}Knee`} transform={`rotate(${rest[`${name}Knee`]})`}>
-        {artwork ? <PaintedBone id={id} part={lowerPart} length={rig.lower} landmarks={artwork.lower} crossScale={bird ? chickAnatomy.legArtwork.lower.widthScale : 1} />
+        {artwork ? <PaintedBone id={id} part={lowerPart} length={rig.lower} landmarks={artwork.lower} />
           : <Part id={id} part={lowerPart} x={-lowerWidth / 2} y={-overlap} width={lowerWidth} height={lowerHeight} />}
         <g transform={`translate(0 ${rig.lower})`}><g data-animal-joint={`${name}Ankle`} transform={`rotate(${rest[`${name}Ankle`]})`}>
           {bird ? <g data-chick-foot>

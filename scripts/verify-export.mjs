@@ -15,8 +15,8 @@ assert.ok(html.includes('https://neegiman.github.io/timer/'), 'Canonical product
 const preview = await readFile(path.join(root, 'animal-preview', 'index.html'), 'utf8');
 for (const id of ['rabbit', 'dog', 'cat', 'chick']) assert.ok(preview.includes(`/timer/characters/raster-v1/${id}.webp`), `Missing /timer-aware ${id} artwork`);
 for (const id of ['dog', 'cat']) {
-  assert.ok(preview.includes(`/timer/characters/walk-v12/${id}.webp`), `Missing /timer-aware ${id} gait sheet`);
-  assert.ok((await stat(path.join(root, 'characters/walk-v12', `${id}.webp`))).size > 100_000, `Missing ${id} gait sheet`);
+  assert.ok(preview.includes(`/timer/characters/walk-v13/${id}.webp`), `Missing /timer-aware ${id} gait sheet`);
+  assert.ok((await stat(path.join(root, 'characters/walk-v13', `${id}.webp`))).size > 100_000, `Missing ${id} gait sheet`);
 }
 assert.ok(!preview.includes('data-animal-scene="bear"'), 'Removed bear still appears in preview');
 assert.ok(preview.includes('https://neegiman.github.io/timer/animal-preview/'), 'Animal preview canonical mismatch');

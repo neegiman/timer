@@ -9,4 +9,5 @@ export function walkingFrame(id: 'dog' | 'cat', elapsedMs: number) {
 export function walkingFrameViewBox(frame: number) {
   return `${frame % WALK_SPRITE.columns * WALK_SPRITE.width} ${Math.floor(frame / WALK_SPRITE.columns) * WALK_SPRITE.height} ${WALK_SPRITE.width} ${WALK_SPRITE.height}`;
 }
-export const walkingSpritePath = (id: 'dog' | 'cat') => `/characters/walk-v12/${id}.webp`;
+export const WALK_SPRITE_DIRECTORY = '/characters/walk-v13';
+export const walkingSpritePath = (id: 'dog' | 'cat') => `${WALK_SPRITE_DIRECTORY}/${id}.webp`;

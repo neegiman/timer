@@ -6,13 +6,14 @@ import { PaintedAnimalArtwork } from '../src/components/PaintedAnimalArtwork';
 import { animalPose } from '../src/lib/animalMotion';
 import { createAnimalRenderer } from '../src/lib/renderAnimalPose';
 import { animalProfiles } from '../src/lib/animalMotion';
-import { WALK_SPRITE } from '../src/lib/walkingSprites';
+import { WALK_SPRITE, WALK_SPRITE_DIRECTORY } from '../src/lib/walkingSprites';
 import { walkingArtDigest } from './walking-art-inputs.mjs';
 
 // Rasterize the actual attached rig offline, never generate motion by stretching
 // a bitmap in the browser. This uses the same renderer as the joint diagnostics.
 async function main() {
-const directory = 'public/characters/walk-v12';
+const preview = process.argv.includes('--preview');
+const directory = preview ? 'artifacts/limb-study-v13' : `public${WALK_SPRITE_DIRECTORY}`;
 await mkdir(directory, { recursive: true });
 const browser = await chromium.launch();
 const selector = '[data-animal-body], [data-animal-joint], [data-paw], [data-animal-torso-panel], [data-animal-tail-panel], [data-animal-limb-skin], [data-animal-head-root], [data-animal-tail-root]';
@@ -48,20 +49,23 @@ try {
     const root = { querySelector: (selector: string) => matches(selector)[0], querySelectorAll: matches } as unknown as Element;
     const draw = createAnimalRenderer(root, id);
     const cells: OverlayOptions[] = [];
-    for (let frame = 0; frame < frames; frame++) {
+    const samples = preview ? [0, 32, 64, 96] : Array.from({ length: frames }, (_, index) => index);
+    for (const frame of samples) {
       draw(animalPose(id, frame / frames * animalProfiles[id].cycleMs));
       await page.evaluate(({ selector, updates }) => {
         const nodes = document.querySelectorAll(selector);
         for (const [index, value] of updates) nodes[index].setAttribute('transform', value);
       }, { selector, updates: [...updates] });
-      cells.push({ input: await page.screenshot({ omitBackground: true }), left: frame % columns * width * scale, top: Math.floor(frame / columns) * height * scale });
+      const index = preview ? cells.length : frame;
+      cells.push({ input: await page.screenshot({ omitBackground: true }), left: index % (preview ? 2 : columns) * width * scale, top: Math.floor(index / (preview ? 2 : columns)) * height * scale });
     }
-    await sharp({ create: { width: width * scale * columns, height: height * scale * Math.ceil(frames / columns), channels: 4, background: '#00000000' } })
-      .composite(cells).webp({ quality: 94, alphaQuality: 100, effort: 6 }).toFile(`${directory}/${id}.webp`);
+    const sheet = sharp({ create: { width: width * scale * (preview ? 2 : columns), height: height * scale * (preview ? 2 : Math.ceil(frames / columns)), channels: 4, background: preview ? '#e6eee0' : '#00000000' } }).composite(cells);
+    if (preview) await sheet.png().toFile(`${directory}/${id}.png`);
+    else await sheet.webp({ quality: 94, alphaQuality: 100, effort: 6 }).toFile(`${directory}/${id}.webp`);
     await page.close();
-    console.log(`${id}: ${frames} attached gait frames, ${width * scale}×${height * scale}px`);
+    console.log(`${id}: ${samples.length} attached gait frames, ${width * scale}×${height * scale}px`);
   }
 } finally { await browser.close(); }
-await writeFile(`${directory}/manifest.json`, JSON.stringify({ sources: await walkingArtDigest(), ...WALK_SPRITE }, null, 2) + '\n');
+if (!preview) await writeFile(`${directory}/manifest.json`, JSON.stringify({ sources: await walkingArtDigest(), ...WALK_SPRITE }, null, 2) + '\n');
 }
 void main();

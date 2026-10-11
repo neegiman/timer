@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import { stat, readFile } from 'node:fs/promises';
 import sharp from 'sharp';
 import { animalPose, animalProfiles } from '../src/lib/animalMotion';
-import { WALK_SPRITE, walkingFrame, walkingFrameViewBox, walkingSpritePath } from '../src/lib/walkingSprites';
+import { WALK_SPRITE, WALK_SPRITE_DIRECTORY, walkingFrame, walkingFrameViewBox, walkingSpritePath } from '../src/lib/walkingSprites';
 import { walkingArtDigest } from '../scripts/walking-art-inputs.mjs';
 
 test('exported motion was baked from the current paintings, anatomy and joint renderer', async () => {
-  const { sources, ...spec } = JSON.parse(await readFile('public/characters/walk-v12/manifest.json', 'utf8'));
+  const { sources, ...spec } = JSON.parse(await readFile(`public${WALK_SPRITE_DIRECTORY}/manifest.json`, 'utf8'));
   assert.deepEqual(spec, WALK_SPRITE);
   assert.equal(sources, await walkingArtDigest(), 'Stale walking artwork: run npm run walking-art');
 });
