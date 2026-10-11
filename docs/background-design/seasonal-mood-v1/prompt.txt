@@ -1,0 +1,23 @@
+Use case: illustration-story.
+Asset type: one polished four-season environment concept board for a Korean preschool visual journey timer. This is background art for review, not a finished app screen.
+
+Create ONE beautiful 2×2 contact sheet with four equally sized wide landscape panels. Use a quiet warm ivory page, generous clean gutters, a small tasteful Korean heading "약속 여행 · 사계절 배경 시안", and clear Korean labels for the four panels in reading order: "봄", "여름", "가을", "겨울". Below each landscape include only its exact corresponding Korean emotional caption:
+봄: "꽃잎 끝에 실려 온 따스한 바람"
+여름: "햇살 아래 짙어지는 푸른 초록"
+가을: "시원한 바람 따라 깊어지는 색채"
+겨울: "고요한 하얀 세상 속 따스한 온기"
+Make the four landscapes the dominant content and the typography understated, crisp and legible.
+
+Shared visual direction: a gentle premium children's picture book, hand-painted gouache and soft watercolor with subtle paper grain, softly modeled organic forms, delicate atmospheric light, natural Korean seasonal scenery, friendly and comforting. A richer painted environment than flat geometric vector hills, yet calm enough that a walking animal character would remain the focus. No animals or people are drawn. Avoid photorealism, 3D rendering, hard outlines, neon color and visual clutter.
+
+Keep the SAME side-scrolling game composition in every panel: airy sky in the upper third, distant hills and mountains, a middle layer of trees, low flowers/grass along the verge, and a continuous WALKABLE HORIZONTAL PATH across the whole bottom at approximately 78% image height. The path is level from left to right, never recedes toward the horizon or snakes away into the distance. It has a soft warm sand tone, with a pale warm ivory path in winter. Keep the central-left region above the path clear for the app's existing walking character. Trees frame the edges and mid-distance; distinguish distant and near scenery so cloud, hills, trees and ground could later become parallax layers. No UI, timer, progress bars, finish flags, signs or route labels inside the landscapes.
+
+SPRING / top left: warm breeze carried on cherry-blossom petals, blush pink blossoms on naturally shaped branches, a few drifting petals with subtle direction, tender fresh green grass and tiny wildflowers, hazy mint hills, pale peach sunlight and warm cream sky. Gentle movement and new life, not an oversaturated pink forest.
+
+SUMMER / top right: sunlit green deepens, lush layered emerald and jade trees with rounded natural canopies, refreshing pale blue sky, soft dappled golden sunlight and gentle sunbeams, distant bluish-green hills, lively leafy verge with restrained tiny flowers. Rich green depth balanced by an open bright path, no harsh noon glare.
+
+AUTUMN / bottom left: fresh cool breeze and deeper color, warm amber, muted coral, copper and burgundy foliage against a clear cool pale blue sky, layered wooded hills, a handful of drifting leaves, quiet golden grasses and a clean warm tan path. Sophisticated gentle colors, not gloomy or stormy.
+
+WINTER / bottom right: still white world with a feeling of warmth, powdery snow on pines and softly rounded hills, blue-lavender shadows and luminous creamy white snow, very sparse delicate snowflakes, a small distant cottage at one side with softly glowing amber windows and a thin thread of chimney smoke, subtle late-afternoon peach light in the sky. The cottage remains a small background detail, never a foreground obstacle. Keep the walking path gently warm-toned and visibly distinct from the snow. Serene and cozy, not dark, lonely or Christmas-themed.
+
+Maintain consistent painting quality, camera scale, path baseline, comfortable lighting and child-friendly mood across all four panels. Deliver a high-resolution, carefully composed art direction sheet. No additional words, logos, decorative app controls or watermarks.

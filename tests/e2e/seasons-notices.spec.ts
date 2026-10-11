@@ -27,7 +27,7 @@ test.describe('Korean calendar scenery', () => {
     await start(page); await seek(page, 13_000); await menu(page);
     await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
     const remaining = await page.getByTestId('countdown').textContent();
-    const colors = new Set<string>();
+    const paintings = new Set<string>();
     for (const [season, date] of [['spring', '2026-03-15'], ['summer', '2026-06-15'], ['autumn', '2026-09-15'], ['winter', '2026-12-15']] as const) {
       await page.clock.setSystemTime(new Date(`${date}T12:00:00+09:00`));
       await page.evaluate(() => window.dispatchEvent(new Event('pageshow'))); await page.clock.runFor(32);
@@ -37,7 +37,9 @@ test.describe('Korean calendar scenery', () => {
         await page.getByRole('button', { name: '닫기', exact: true }).click(); await page.clock.runFor(32);
         await expect(page.locator('.journey-scene')).toHaveAttribute('data-theme', theme);
         await expect(page.getByTestId('countdown')).toHaveText(remaining!);
-        colors.add(await page.locator('.journey-scene').evaluate((element) => getComputedStyle(element).getPropertyValue('--scene-leaf').trim()));
+        const painting = await page.locator(theme === 'day' ? '.scene-day' : '.scene-night').getAttribute('data-scenery-src');
+        expect(painting).toContain(`/timer/images/scenery-v1/${season}-${theme}-landscape.webp`);
+        paintings.add(painting!);
         if (testInfo.project.name === 'chromium') {
           // Let only color transitions finish; the active journey and visitors remain paused.
           await page.waitForTimeout(1250);
@@ -45,7 +47,7 @@ test.describe('Korean calendar scenery', () => {
         }
       }
     }
-    expect(colors.size).toBe(8);
+    expect(paintings.size).toBe(8);
     await page.reload(); await page.clock.runFor(32);
     await expect(page.locator('.journey-scene')).toHaveAttribute('data-season', 'winter');
     await expect(page.locator('[data-status="paused"]')).toBeVisible();

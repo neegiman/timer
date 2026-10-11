@@ -192,7 +192,7 @@ test('unavailable location and reduced motion still provide a readable night sky
   await page.goto('./');
   await start(page);
   await expect(page.locator('.scene-night')).toHaveCSS('opacity', '1');
-  await expect(page.locator('.scene-night')).toHaveAttribute('src', '/timer/images/meadow-night.svg');
+  await expect(page.locator('.scene-night')).toHaveAttribute('data-scenery-src', '/timer/images/scenery-v1/autumn-night-landscape.webp');
   await menu(page);
   await page.getByRole('button', { name: '현재 위치로 맞추기', exact: true }).click();
   await expect(page.getByTestId('location-status')).toContainText('위치를 확인할 수 없어');

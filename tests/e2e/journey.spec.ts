@@ -44,7 +44,7 @@ test('10-minute bath journey, arrival sound once, reward persists across refresh
   await page.clock.fastForward(5000);
   await expect(page.locator('[data-status="completed"]')).toBeVisible();
   if (supportsAudio) await expect.poll(() => page.evaluate(() => window.playedSounds.filter((url) => url.endsWith('/finish.mp3')).length)).toBe(1);
-  await expect(page.getByText('목욕하러 가요!', { exact: false })).toBeVisible();
+  await expect(page.getByTestId('journey-message')).toHaveText('목욕하러 가요. 🛁');
   await page.getByRole('button', { name: '⭐ 약속 지켰어요' }).click();
   await expect(page.getByTestId('star-count')).toHaveText('1');
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
@@ -59,7 +59,7 @@ test('10-minute bath journey, arrival sound once, reward persists across refresh
   expect(errors).toEqual([]);
   expect(failedAssets).toEqual([]);
   expect([...assetUrls].some((url) => url.includes('/timer/_next/'))).toBe(true);
-  expect([...assetUrls].some((url) => url.includes('/timer/images/meadow.svg'))).toBe(true);
+  expect([...assetUrls].some((url) => url.includes('/timer/images/scenery-v1/'))).toBe(true);
   expect([...assetUrls].filter((url) => /\/(?:_next|sounds|images)\//.test(url)).every((url) => new URL(url).pathname.startsWith('/timer/'))).toBe(true);
 });
 

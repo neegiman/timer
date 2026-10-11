@@ -1,6 +1,4 @@
-import Image from 'next/image';
 import type { CSSProperties, RefObject } from 'react';
-import { assetPath } from '@/lib/assetPath';
 import { motionProfile } from '@/lib/motionProfiles';
 import { CharacterSprite } from './CharacterSprite';
 import { ScrollingScenery } from './ScrollingScenery';
@@ -22,9 +20,6 @@ export function JourneyPath({ character, promise, animation, input, theme, seaso
   const variables = { '--cycle': `${profile.cycleMs}ms`, '--foot-origin': `${profile.groundY / 210 * 100}%` } as CSSProperties;
   return <div ref={sceneRef} className={`journey-scene ${input.isPaused ? 'is-paused' : ''}`} data-phase={animation.phase} data-stage={animation.messageStage} data-theme={theme} data-season={season}
     role="img" aria-label={`${SEASONS[season].name} ${theme === 'day' ? '낮' : '밤'} 풍경에서 ${character.name}와 함께 ${promise.name}까지 즐겁게 걸어요`}>
-    <Image className="scene-backdrop scene-day" src={assetPath('/images/meadow.svg')} alt="" width={800} height={600} priority />
-    <Image className="scene-backdrop scene-night" src={assetPath('/images/meadow-night.svg')} alt="" width={800} height={600} loading="eager" />
-    <div className="season-sky-tint" aria-hidden="true" />
     <ScrollingScenery season={season} />
     <SeasonalAtmosphere season={season} />
     {animation.position >= .9 ? <div ref={goalRef} className={`journey-goal ${arrived ? 'goal-arrived' : ''}`} data-testid="journey-goal" aria-hidden="true">

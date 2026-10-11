@@ -1,0 +1,110 @@
+{
+  "spring": {
+    "day": {
+      "src": "/images/scenery-v1/spring-day-landscape.webp",
+      "width": 2048,
+      "height": 383
+    },
+    "dayGround": {
+      "src": "/images/scenery-v1/spring-day-ground.webp",
+      "width": 480,
+      "height": 80
+    },
+    "night": {
+      "src": "/images/scenery-v1/spring-night-landscape.webp",
+      "width": 2048,
+      "height": 383
+    },
+    "nightGround": {
+      "src": "/images/scenery-v1/spring-night-ground.webp",
+      "width": 480,
+      "height": 80
+    },
+    "trees": {
+      "src": "/images/scenery-v1/spring-trees.webp",
+      "width": 1920,
+      "height": 337
+    }
+  },
+  "summer": {
+    "day": {
+      "src": "/images/scenery-v1/summer-day-landscape.webp",
+      "width": 2048,
+      "height": 401
+    },
+    "dayGround": {
+      "src": "/images/scenery-v1/summer-day-ground.webp",
+      "width": 480,
+      "height": 80
+    },
+    "night": {
+      "src": "/images/scenery-v1/summer-night-landscape.webp",
+      "width": 2048,
+      "height": 401
+    },
+    "nightGround": {
+      "src": "/images/scenery-v1/summer-night-ground.webp",
+      "width": 480,
+      "height": 80
+    },
+    "trees": {
+      "src": "/images/scenery-v1/summer-trees.webp",
+      "width": 1920,
+      "height": 350
+    }
+  },
+  "autumn": {
+    "day": {
+      "src": "/images/scenery-v1/autumn-day-landscape.webp",
+      "width": 2048,
+      "height": 387
+    },
+    "dayGround": {
+      "src": "/images/scenery-v1/autumn-day-ground.webp",
+      "width": 480,
+      "height": 80
+    },
+    "night": {
+      "src": "/images/scenery-v1/autumn-night-landscape.webp",
+      "width": 2048,
+      "height": 387
+    },
+    "nightGround": {
+      "src": "/images/scenery-v1/autumn-night-ground.webp",
+      "width": 480,
+      "height": 80
+    },
+    "trees": {
+      "src": "/images/scenery-v1/autumn-trees.webp",
+      "width": 1920,
+      "height": 347
+    }
+  },
+  "winter": {
+    "day": {
+      "src": "/images/scenery-v1/winter-day-landscape.webp",
+      "width": 2048,
+      "height": 387
+    },
+    "dayGround": {
+      "src": "/images/scenery-v1/winter-day-ground.webp",
+      "width": 480,
+      "height": 80
+    },
+    "night": {
+      "src": "/images/scenery-v1/winter-night-landscape.webp",
+      "width": 2048,
+      "height": 387
+    },
+    "nightGround": {
+      "src": "/images/scenery-v1/winter-night-ground.webp",
+      "width": 480,
+      "height": 80
+    },
+    "trees": {
+      "src": "/images/scenery-v1/winter-trees.webp",
+      "width": 1920,
+      "height": 362
+    }
+  }
+}

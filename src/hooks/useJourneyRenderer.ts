@@ -74,6 +74,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     const layers = Array.from(element.querySelectorAll<HTMLElement>('[data-layer]'));
     const visitor = element.querySelector<HTMLElement>('[data-scenery-visitor]');
     const particles = Array.from(element.querySelectorAll<HTMLElement>('[data-scenery-particle]'));
+    const light = element.querySelector<HTMLElement>('[data-scenery-light]');
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     let width = element.clientWidth;
@@ -86,6 +87,14 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     let geometry = finishGeometry(width, actorWidth);
     element.style.setProperty('--finish-x', `${geometry.lineX}px`);
     element.style.setProperty('--scene-height', `${height}px`);
+    const sizeLayers = () => {
+      for (const layer of layers) {
+        const period = layer.dataset.tileScale ? height * Number(layer.dataset.tileScale) : TILE_WIDTH;
+        layer.style.setProperty('--tile-width', `${period}px`);
+        layer.dataset.tileWidth = String(period);
+      }
+    };
+    sizeLayers();
 
     const draw = () => {
       const sample = snapshot.current;
@@ -174,9 +183,13 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       }
       for (const layer of layers) {
         const rate = Number(layer.dataset.rate);
-        const offset = reduced ? 0 : loopOffset(distance * rate, TILE_WIDTH);
+        const offset = reduced ? 0 : loopOffset(distance * rate, Number(layer.dataset.tileWidth));
         layer.style.transform = `translate3d(${-offset}px, 0, 0)`;
         layer.dataset.scrollOffset = offset.toFixed(6);
+      }
+      if (light && !reduced) {
+        light.style.opacity = String((theme === 'day' ? .12 : .09) + .035 * Math.sin(elapsed / 6500));
+        light.style.transform = `translate3d(${Math.sin(elapsed / 11_000) * 6}px, 0, 0)`;
       }
       if (visitor && !reduced) {
         const event = sceneryEvent(elapsed, season, theme);
@@ -208,6 +221,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       geometry = finishGeometry(width, actorWidth);
       element.style.setProperty('--finish-x', `${geometry.lineX}px`);
       element.style.setProperty('--scene-height', `${height}px`);
+      sizeLayers();
       draw();
     });
     resize.observe(element); resize.observe(actor);

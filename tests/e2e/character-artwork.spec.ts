@@ -164,26 +164,26 @@ test('repeated scenery tiles match at their seams and keep slower parallax layer
   await page.clock.install();
   await begin(page);
   await seek(page, 40_000);
-  const layers = await page.locator('[data-layer]').evaluateAll(async (elements) => {
-    return Promise.all(elements.map(async (element) => {
-      const svg = element.querySelector('svg')!;
-      const standalone = svg.cloneNode(true) as SVGSVGElement;
-      standalone.setAttribute('width', '1920'); standalone.setAttribute('height', '600');
-      const image = new Image();
-      const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(standalone)], { type: 'image/svg+xml' }));
-      try {
-        image.src = url;
-        await image.decode();
-        const canvas = document.createElement('canvas'); canvas.width = 1920; canvas.height = 600;
-        const context = canvas.getContext('2d')!; context.drawImage(image, 0, 0, 1920, 600);
-        const left = context.getImageData(479, 0, 1, 600).data;
-        const right = context.getImageData(480, 0, 1, 600).data;
-        let difference = 0;
-        for (let index = 0; index < left.length; index++) difference = Math.max(difference, Math.abs(left[index] - right[index]));
-        return { name: (element as HTMLElement).dataset.layer, rate: Number((element as HTMLElement).dataset.rate), difference };
-      } finally { URL.revokeObjectURL(url); }
-    }));
-  });
-  expect(layers.map((layer) => layer.rate)).toEqual([.08, .2, .65, 1]);
-  for (const layer of layers) expect(layer.difference, `${layer.name} has a visible tile seam`).toBeLessThanOrEqual(5);
+  const layers = await page.locator('[data-layer]').evaluateAll(async (elements) => Promise.all(elements.map(async (element) => {
+    const painted = element.querySelector<HTMLElement>('[data-scenery-src]')!;
+    const image = new Image(); image.src = painted.dataset.scenerySrc!;
+    await image.decode();
+    const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+    const context = canvas.getContext('2d')!; context.drawImage(image, 0, 0);
+    const left = context.getImageData(0, 0, 1, image.height).data;
+    const right = context.getImageData(image.width - 1, 0, 1, image.height).data;
+    let difference = 0;
+    for (let index = 0; index < left.length; index++) difference = Math.max(difference, Math.abs(left[index] - right[index]));
+    const layer = element as HTMLElement;
+    return { name: layer.dataset.layer, rate: Number(layer.dataset.rate), difference,
+      period: Number(layer.dataset.tileWidth), size: getComputedStyle(painted).backgroundSize };
+  })));
+  expect(layers.map((layer) => layer.name)).toEqual(['hill', 'tree', 'ground']);
+  expect(layers[0].rate).toBeLessThan(layers[1].rate);
+  expect(layers[1].rate).toBeLessThan(layers[2].rate);
+  expect(layers[2].rate).toBe(1);
+  for (const layer of layers) {
+    expect(layer.difference, `${layer.name} has a visible tile seam`).toBeLessThanOrEqual(5);
+    expect(parseFloat(layer.size)).toBeCloseTo(layer.period, 2);
+  }
 });

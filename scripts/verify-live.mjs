@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 const origin = 'https://neegiman.github.io';
 const target = `${origin}/timer/`;
@@ -24,9 +25,11 @@ try {
   const storyIcons = ['handshake', 'bath', 'sleep', 'meal', 'tidy', 'outside', 'video', 'clock', 'rabbit'].map((id) => `/timer/images/story-v1/${id}.webp`);
   storyIcons.push(...['custom', 'home', 'flag', 'star'].map((id) => `/timer/images/story-v1/${id}.svg`));
   const appIcons = ['favicon-handshake-v1', 'promise-handshake-v1', 'apple-touch-handshake-v1'].map((id) => `/timer/images/${id}.png`);
+  const scenery = JSON.parse(await readFile('src/lib/paintedScenery.json', 'utf8'));
+  const paintings = Object.values(scenery).flatMap((season) => Object.values(season).map((asset) => `/timer${asset.src}`));
   assert.ok(html.includes('/timer/images/favicon-handshake-v1.png'), 'Missing deployed handshake favicon');
   assert.ok(html.includes('/timer/images/apple-touch-handshake-v1.png'), 'Missing deployed handshake home screen icon');
-  for (const path of [...sounds.map((sound) => `/timer/sounds/${sound}.mp3`), ...animals, ...pixels, ...storyIcons, ...appIcons, '/timer/images/meadow.svg', '/timer/images/meadow-night.svg', '/timer/images/icon.svg', ...assets]) {
+  for (const path of [...sounds.map((sound) => `/timer/sounds/${sound}.mp3`), ...animals, ...pixels, ...storyIcons, ...appIcons, ...paintings, '/timer/images/icon.svg', ...assets]) {
     const result = await fetch(`${origin}${path}`, { signal: AbortSignal.timeout(15_000) });
     assert.equal(result.status, 200, `${path}: HTTP ${result.status}`);
     assert.ok((await result.arrayBuffer()).byteLength > 0, `Empty asset ${path}`);

@@ -68,7 +68,7 @@ npm run verify:live
 
 **낮 / 밤** 버튼으로 원하는 배경을 고정할 수도 있습니다. 배경 선택과 위치 사용 여부만 저장하고, 위도·경도는 현재 탭의 메모리에서만 사용합니다. `watchPosition`은 정확한 GPS가 필요 없는 저전력 설정으로 위치 변경을 반영합니다. 매분과 백그라운드 복귀 시 현재 시각을 적용하며, 타이머를 일시정지해도 낮·밤은 실제 시각을 따릅니다. 모션 감소 환경에서는 배경 전환 효과도 줄입니다.
 
-주요 파일은 `src/hooks/useDayNight.ts`, `src/components/SceneSettings.tsx`, `JourneyPath.tsx`, `ScrollingScenery.tsx`, `globals.css`, `public/images/meadow.svg`, `public/images/meadow-night.svg`입니다. 기존 전신 SVG, 초원 레이어와 UI를 재사용하며 새 라이브러리를 추가하지 않았습니다.
+주요 파일은 `src/hooks/useDayNight.ts`, `src/components/SceneSettings.tsx`, `JourneyPath.tsx`, `ScrollingScenery.tsx`, `globals.css`, `src/lib/paintedScenery.json`, `public/images/scenery-v1/`입니다. 기존 캐릭터와 UI를 유지하며 새 라이브러리를 추가하지 않았습니다.
 
 ## 대한민국 사계절과 작은 풍경 이벤트
 
@@ -83,9 +83,9 @@ npm run verify:live
 
 봄·여름 밤에는 반딧불, 밤하늘에는 드문 별똥별이 나타납니다. 방문 이벤트는 48초 주기 안에서 7~9초씩 두 번만 등장하고, 조용한 구간을 둡니다. 입자는 최대 6개로 제한하며 반복 경계에서는 투명해집니다. 모두 기존 `requestAnimationFrame`과 **실제 경과 시간**을 사용해 일시정지·재개·새로고침에서도 같은 위치를 복원합니다. 완료 후에는 움직임을 멈추며, 모션 감소 설정에서는 입자와 방문 이벤트를 숨깁니다. 고정된 오른쪽 도착점은 풍경과 함께 움직이지 않습니다.
 
-`src/lib/seasons.ts`, `sceneryEvents.ts`, `SeasonalAtmosphere.tsx`에 계절·이벤트를 분리했습니다. 기존 SVG·CSS를 확장했으며 외부 이미지 요청, 추가 라이브러리, 날씨 서버가 필요하지 않습니다.
+`src/lib/seasons.ts`, `sceneryEvents.ts`, `SeasonalAtmosphere.tsx`에 계절·이벤트를 분리했습니다. 배경은 원화풍 낮·밤 풍경과 투명 나무 레이어로 교체했습니다. 모든 원화는 저장소의 정적 파일이며 외부 이미지 서비스, 추가 라이브러리, 날씨 서버가 필요하지 않습니다.
 
-[사계절 낮·밤 화면 8종](docs/scenery/seasons-day-night.png)은 390px 화면에서 일시정지 상태로 캡처했습니다.
+[현재 사계절 원화 배경·낮밤 화면 8종·프롬프트·제작 기록](docs/background-design/painted-v1/README.md)을 참고하세요. `npm run scenery`로 원본을 다시 분리·변환합니다. 먼 풍경/나무/길은 0.14/0.55/1배의 속도로 흐르고, 화면 높이에 맞춘 타일 크기와 반사 연결로 반복 경계를 감춥니다. 길은 기존 발걸음 시계와 함께 움직이며 결승점은 고정합니다. 빛과 계절 이벤트는 일시정지·완료 때 같이 멈춥니다.
 
 2026-10-09 검증: 타입 검사·린트·정적 내보내기와 단위 검사 61개 통과. 사계절·문구·낮밤·기존 애니메이션·전체화면의 Chromium/모바일 WebKit 시나리오 37개 통과. 이 환경에서 지원하지 않는 WebKit 네이티브 전체화면 1개는 건너뛰었으며, 대체 큰 화면 모드는 두 브라우저에서 확인했습니다.
 

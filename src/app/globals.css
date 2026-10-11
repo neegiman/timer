@@ -85,89 +85,24 @@ h1:focus { outline: none; }
 .timer-layout { max-width: 840px; margin: 0 auto; }
 .stage-message { text-align: center; font-size: clamp(28px, 6vw, 38px); line-height: 1.35; letter-spacing: -.035em; margin: 4px 0 20px; font-weight: 800; }
 .journey-scene { position: relative; isolation: isolate; width: 100%; height: clamp(300px, 45svh, 460px); border-radius: 32px; overflow: hidden; }
-.scene-backdrop { position: absolute; inset: 0; width: 100%; height: 100%; }
-.scene-backdrop { object-fit: fill; }
-.scene-backdrop { transition: opacity 1.2s ease-in-out; }
-.scene-night { opacity: 0; }
-.journey-scene[data-theme="night"] .scene-day { opacity: 0; }
-.journey-scene[data-theme="night"] .scene-night { opacity: 1; }
-.journey-scene[data-theme="night"] {
-  --scene-cloud: #8396ac;
-  --scene-hill-far: #536b84;
-  --scene-hill-middle: #48677b;
-  --scene-hill-near: #3f6570;
-  --scene-trunk: #526b75;
-  --scene-leaf: #5f7e81;
-  --scene-leaf-light: #789594;
-  --scene-ground: #b5ada1;
-  --scene-verge: #79998d;
-  --scene-grass: #7e9b91;
-  --scene-flower: #ead5a6;
-  --scene-flower-center: #b89b6b;
-  --scene-stone: #919b98;
-  --scene-ground-mark: #929b96;
-}
-.parallax-layer :is(path, rect, g, circle, ellipse) { transition: fill 1.2s ease-in-out, stroke 1.2s ease-in-out; }
-/* KST calendar seasons share the existing sky and scrolling scenery. */
-.journey-scene[data-season="spring"] {
-  --season-sky: linear-gradient(#f5e6ed80, transparent 65%);
-  --scene-leaf: #dba7b8; --scene-leaf-light: #efcbd5;
-  --scene-hill-far: #e0edce; --scene-hill-middle: #d1e4ba; --scene-hill-near: #bed7a4;
-  --scene-flower: #f1bfd0; --scene-flower-center: #dbb45b;
-}
-.journey-scene[data-season="summer"] {
-  --season-sky: linear-gradient(#bce7ef70, transparent 65%);
-  --scene-leaf: #72a87c; --scene-leaf-light: #9fc898; --scene-trunk: #85946a;
-  --scene-hill-far: #cde3c0; --scene-hill-middle: #b2d3a5; --scene-hill-near: #9ac18f;
-  --scene-ground: #ead4ae; --scene-verge: #87b575; --scene-grass: #82aa6c;
-  --scene-flower: #f5dda0;
-}
-.journey-scene[data-season="autumn"] {
-  --season-sky: linear-gradient(#f4dbad80, transparent 65%);
-  --scene-leaf: #c78c59; --scene-leaf-light: #e0ae6f; --scene-trunk: #a18a64;
-  --scene-hill-far: #e4dbb5; --scene-hill-middle: #d3c99c; --scene-hill-near: #b9bb8b;
-  --scene-ground: #e6cba4; --scene-verge: #c4b27f; --scene-grass: #afa36e;
-  --scene-flower: #edd4a0; --scene-stone: #c7ad8b;
-}
-.journey-scene[data-season="winter"] {
-  --season-sky: linear-gradient(#dce9f080, transparent 65%);
-  --scene-leaf: #b5cacc; --scene-leaf-light: #d7e4e5; --scene-trunk: #8c9fa4;
-  --scene-hill-far: #e3edf0; --scene-hill-middle: #d2e0e4; --scene-hill-near: #bdd1d7;
-  --scene-ground: #e6edf0; --scene-verge: #f4f7f6; --scene-grass: #b1c6c9;
-  --scene-flower: #edf3f3; --scene-flower-center: #c4d2d3; --scene-stone: #bdcdd2;
-  --scene-ground-mark: #cfdbde; --scene-snow: #f6f9f8;
-}
-.journey-scene[data-season="spring"][data-theme="night"] {
-  --season-sky: linear-gradient(#82758e30, transparent 65%);
-  --scene-leaf: #8a7e96; --scene-leaf-light: #ad98ae;
-  --scene-hill-far: #58687e; --scene-hill-middle: #526b75; --scene-hill-near: #49696b;
-  --scene-flower: #cfadbf; --scene-flower-center: #bca56f;
-}
-.journey-scene[data-season="summer"][data-theme="night"] {
-  --season-sky: linear-gradient(#306b7025, transparent 65%);
-  --scene-leaf: #4f7b72; --scene-leaf-light: #77998a; --scene-trunk: #5a706e;
-  --scene-hill-far: #506a7b; --scene-hill-middle: #446e70; --scene-hill-near: #3b6b63;
-  --scene-ground: #aaa99a; --scene-verge: #729787; --scene-grass: #739a86; --scene-flower: #d6c795;
-}
-.journey-scene[data-season="autumn"][data-theme="night"] {
-  --season-sky: linear-gradient(#886c5b25, transparent 65%);
-  --scene-leaf: #9c816e; --scene-leaf-light: #b39b80; --scene-trunk: #7b7c71;
-  --scene-hill-far: #646b7b; --scene-hill-middle: #676f70; --scene-hill-near: #5d726a;
-  --scene-ground: #b2a391; --scene-verge: #9a9a7c; --scene-grass: #98997a;
-  --scene-flower: #c8b794; --scene-stone: #968d81;
-}
-.journey-scene[data-season="winter"][data-theme="night"] {
-  --season-sky: linear-gradient(#8295af20, transparent 65%);
-  --scene-leaf: #79939f; --scene-leaf-light: #9eb3bd; --scene-trunk: #677e8b;
-  --scene-hill-far: #667d92; --scene-hill-middle: #7794a4; --scene-hill-near: #8aa4ae;
-  --scene-ground: #becdd3; --scene-verge: #d7e1e5; --scene-grass: #94aeb6;
-  --scene-flower: #d8e4e7; --scene-flower-center: #aebfc4; --scene-stone: #96abb4;
-  --scene-ground-mark: #a7bbc3; --scene-snow: #dbe6eb;
-}
-.season-sky-tint { position: absolute; inset: 0; background: var(--season-sky); pointer-events: none; }
+.journey-scene { background: #e8e5d6; }
+.journey-scene[data-theme="night"] { background: #32465e; }
+.painted-environment { position: absolute; inset: 0; pointer-events: none; }
+.parallax-layer { position: absolute; left: 0; top: 0; width: calc(100% + var(--tile-width, 480px)); overflow: hidden; will-change: transform; pointer-events: none; }
+.hill-layer { height: 78%; z-index: 0; }
+.tree-layer { top: 16%; height: 62%; z-index: 1; }
+.ground-layer { top: 78%; height: 22%; z-index: 2; }
+.scenery-paint { position: absolute; inset: 0; background-repeat: repeat-x; background-size: var(--tile-width, 480px) 100%; transition: opacity 1.2s ease-in-out; }
+.scene-night, .scenery-ground-night { opacity: 0; }
+.journey-scene[data-theme="night"] :is(.scene-day, .scenery-ground-day) { opacity: 0; }
+.journey-scene[data-theme="night"] :is(.scene-night, .scenery-ground-night) { opacity: 1; }
+.painted-trees { transition: filter 1.2s ease-in-out; }
+.journey-scene[data-theme="night"] .painted-trees { filter: brightness(.63) saturate(.72); }
+.scenery-light { position: absolute; inset: 0 0 22%; z-index: 1; opacity: .12; background: linear-gradient(112deg, transparent 15%, #fff4ce70 32%, transparent 42%, #fff4ce40 60%, transparent 72%); will-change: opacity, transform; }
+.journey-scene[data-theme="night"] .scenery-light { background: radial-gradient(ellipse at 76% 12%, #bddcff55, transparent 60%); }
 .season-setting-note { color: var(--muted); font-size: 14px; line-height: 1.7; }
 .seasonal-atmosphere { position: absolute; z-index: 2; inset: 0; pointer-events: none; overflow: hidden; }
-.scenery-visitor { position: absolute; top: 0; left: 0; width: clamp(64px, 15vw, 98px); opacity: 0; will-change: transform; }
+.scenery-visitor { position: absolute; top: 0; left: 0; width: clamp(40px, 12vw, 72px); opacity: 0; will-change: transform; }
 .scenery-visitor svg { display: none; width: 100%; height: auto; overflow: visible; }
 .scenery-visitor[data-event="butterfly"] [data-visitor-art="butterfly"],
 .scenery-visitor[data-event="dragonfly"] [data-visitor-art="dragonfly"],
@@ -179,7 +114,8 @@ h1:focus { outline: none; }
 .visitor-wings { transform-box: view-box; transform-origin: 60px 45px; transform: scaleX(var(--wing, 1)); }
 .scenery-particle { position: absolute; left: 0; top: 0; width: 12px; height: 12px; opacity: 0; will-change: transform; }
 .scenery-particle:nth-of-type(even) { width: 9px; height: 9px; }
-.scenery-particle svg { display: block; width: 100%; height: 100%; }
+.scenery-particle svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 1px 1px #fff4); }
+@media (prefers-reduced-motion: reduce) { .scenery-light { opacity: .1 !important; transform: none !important; } .scenery-paint, .painted-trees { transition: none; } }
 .journey-scene[data-theme="night"] .seasonal-atmosphere { --event-ink: #b8c6ce; --seed-color: #eee4b4; }
 .journey-scene[data-theme="night"] .scenery-particle { filter: brightness(.9); }
 @media (prefers-reduced-motion: reduce) { .seasonal-atmosphere { display: none; } }
@@ -216,8 +152,6 @@ h1:focus { outline: none; }
 .pixel-prince-artwork, .pixel-vehicle-artwork { image-rendering: pixelated; shape-rendering: crispEdges; }
 .character-icon :is(.pixel-prince-artwork, .pixel-vehicle-artwork), .traveler-body :is(.pixel-prince-artwork, .pixel-vehicle-artwork) { overflow: hidden; }
 .character-eyes { transform-box: fill-box; transform-origin: center; animation: eyeBlink 4.2s linear infinite; }
-.parallax-layer { position: absolute; inset: 0; pointer-events: none; }
-.parallax-layer svg { display: block; width: 100%; height: 100%; }
 .tree-layer { z-index: 1; }
 .is-paused *, [data-suspended="true"] * { animation-play-state: paused !important; }
 .arrival-sparkles { position: absolute; inset: 0; z-index: 5; pointer-events: none; color: #ce922d; }
@@ -352,11 +286,6 @@ h1:focus { outline: none; }
 .progress-marker { position: absolute; left: 0; top: 50%; width: 0; height: 0; will-change: transform; }
 .progress-marker > span { display: block; position: absolute; left: -22px; top: -40px; width: 44px; height: 48px; border-radius: 18px; background: #fffaf0; box-shadow: 0 2px 0 #b7cba4; }
 .progress-marker .character-icon { width: 36px !important; height: 47px !important; }
-.parallax-layer { width: calc(100% + 480px); overflow: hidden; will-change: transform; pointer-events: none; }
-.parallax-layer svg { width: 1920px; }
-.cloud-layer { z-index: 0; }
-.hill-layer, .tree-layer { z-index: 1; }
-.ground-layer { z-index: 2; }
 .character-wrapper { width: min(clamp(124px, 32vw, 168px), var(--actor-limit, 168px)); }
 .character-anchor { transform: translate(-50%, calc(-1 * var(--foot-origin))); }
 .traveler-body { transform-origin: 50% var(--foot-origin); }

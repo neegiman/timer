@@ -18,6 +18,10 @@ for (const id of ['dog', 'cat']) assert.ok(preview.includes(`/timer/characters/r
 assert.ok(!preview.includes('data-animal-scene="bear"'), 'Removed bear still appears in preview');
 assert.ok(preview.includes('https://neegiman.github.io/timer/animal-preview/'), 'Animal preview canonical mismatch');
 const files = await filesIn(root);
+const scenery = JSON.parse(await readFile('src/lib/paintedScenery.json', 'utf8'));
+for (const season of Object.values(scenery)) for (const asset of Object.values(season)) {
+  assert.ok((await stat(path.join(root, asset.src))).size > 1000, `Missing painted scenery ${asset.src}`);
+}
 let inspected = 0;
 for (const file of files) {
   if (!/\.(html|css|js|json|txt)$/.test(file)) continue;
