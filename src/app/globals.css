@@ -292,6 +292,7 @@ h1:focus { outline: none; }
 .stage-halfway, .stage-near, .stage-arrived { color: var(--green); }
 .message-current { transition: opacity .4s ease, transform .4s ease, visibility .4s; }
 .message-current[data-visible="true"] { animation: messageIn .4s ease-out both; }
+.journey-card[data-adjusting="true"] .message-current[data-visible="true"] { animation: none; opacity: 1; transform: none; }
 .message-current[data-visible="false"] { opacity: 0; visibility: hidden; transform: translateY(-3px); }
 .message-quiet { justify-self: center; display: flex; align-items: center; justify-content: center; gap: 12px; width: min(100%, 280px); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .4s ease, visibility .4s; }
 .message-quiet[data-visible="true"] { opacity: 1; visibility: visible; }
@@ -309,13 +310,21 @@ h1:focus { outline: none; }
 @keyframes quietHalo { 0%, 100% { opacity: .35; transform: scale(.97); } 50% { opacity: .65; transform: scale(1.04); } }
 .numeric-time { margin-top: 8px; font-size: 23px; }
 .journey-progress { max-width: 650px; margin: 14px auto 0; padding: 0 20px; }
-.progress-endpoints { display: flex; justify-content: space-between; gap: 12px; font-size: 18px; font-weight: 800; margin-bottom: 24px; }
+.progress-endpoints { display: flex; justify-content: space-between; gap: 12px; font-size: 18px; font-weight: 800; margin-bottom: 26px; }
 .progress-endpoints > span { display: inline-flex; align-items: center; gap: 4px; }
-.progress-track { position: relative; height: 12px; margin: 0 14px 14px; border-radius: 20px; background: #e7dfcb; }
-.progress-fill { position: absolute; inset: 0; border-radius: inherit; transform-origin: left; background: #a9c980; }
-.progress-marker { position: absolute; left: 0; top: 50%; width: 0; height: 0; will-change: transform; }
-.progress-marker > span { display: block; position: absolute; left: -22px; top: -40px; width: 44px; height: 48px; border-radius: 18px; background: #fffaf0; box-shadow: 0 2px 0 #b7cba4; }
+.progress-track { position: relative; height: 22px; margin: 0 14px 20px; }
+.progress-paint, .progress-fill { position: absolute; inset: 0; background-size: 100% 100%; background-repeat: no-repeat; pointer-events: none; }
+.progress-fill { filter: sepia(.25) saturate(1.55) hue-rotate(45deg) brightness(.87); will-change: clip-path; }
+.progress-marker { position: absolute; z-index: 2; left: 0; top: 50%; width: 0; height: 0; will-change: transform; pointer-events: none; }
+.progress-marker > span { display: block; position: absolute; left: -22px; top: -40px; width: 44px; height: 48px; border-radius: 45% 52% 48% 50%; background: #fffaf0e6; box-shadow: 0 2px 4px #89996c26; }
 .progress-marker .character-icon { width: 36px !important; height: 47px !important; }
+.progress-interaction { position: absolute; z-index: 4; inset: -18px -22px; min-height: 56px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; border-radius: 22px; }
+.progress-interaction:focus-visible { outline: 3px solid #88a06b; outline-offset: 3px; }
+.journey-progress[data-adjusting="true"] .progress-interaction { cursor: grabbing; }
+.progress-interaction[aria-disabled="true"] { cursor: default; touch-action: auto; }
+.progress-hint { margin: 0; height: 36px; color: var(--muted); font-size: 14px; line-height: 36px; text-align: center; }
+.progress-time-bubble { position: relative; z-index: 5; min-width: 136px; height: 36px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #dfd5b9; border-radius: 14px 16px 13px 17px; background: #fffaf0; color: var(--green); box-shadow: 0 4px 12px #6d72501a; font-size: 13px; line-height: 1; white-space: nowrap; pointer-events: none; }
+.progress-time-bubble strong { font-size: 20px; font-variant-numeric: tabular-nums; }
 .character-wrapper { width: min(clamp(124px, 32vw, 168px), var(--actor-limit, 168px)); }
 .character-anchor { transform: translate(-50%, calc(-1 * var(--foot-origin))); }
 .traveler-body { transform-origin: 50% var(--foot-origin); }

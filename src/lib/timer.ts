@@ -28,6 +28,16 @@ export function resumeSession(session: TimerSession, now: number): TimerSession 
     startTimestamp: targetTimestamp - session.durationMs };
 }
 
+/** Seeking changes the deadline, never the chosen total duration or reward ID. */
+export function seekSession(session: TimerSession, progress: number, now: number): TimerSession {
+  if (!['running', 'paused'].includes(session.status) || !Number.isFinite(progress) || !Number.isFinite(now)) return session;
+  const remaining = Math.round(session.durationMs * (1 - Math.min(1, Math.max(0, progress))) / 1000) * 1000;
+  const targetTimestamp = now + remaining;
+  return { ...session, targetTimestamp, startTimestamp: targetTimestamp - session.durationMs,
+    pausedRemainingMs: remaining, status: remaining === 0 ? 'arriving' : session.status,
+    arrivalTimestamp: remaining === 0 ? now : null };
+}
+
 export function arriveSession(session: TimerSession, now: number): TimerSession {
   if (session.status !== 'running') return session;
   return { ...session, status: 'arriving', arrivalTimestamp: now, pausedRemainingMs: 0 };

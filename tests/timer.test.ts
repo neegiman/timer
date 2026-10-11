@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { advanceSession, ARRIVAL_DURATION_MS, awardStar, formatRemaining, isSession, pauseSession, resumeSession, timerProgress } from '../src/lib/timer';
+import { advanceSession, ARRIVAL_DURATION_MS, awardStar, formatRemaining, isSession, pauseSession, resumeSession, seekSession, timerProgress } from '../src/lib/timer';
 import { assetPath } from '../src/lib/assetPath';
 import type { TimerSession } from '../src/types/timer';
 
@@ -38,6 +38,43 @@ test('countdown rounds up and never displays negative time', () => {
   assert.equal(formatRemaining(1), '00:01');
   assert.equal(formatRemaining(600_000), '10:00');
   assert.equal(formatRemaining(-100), '00:00');
+});
+
+test('seeking forward and backward rebases timestamps without changing duration or reward identity', () => {
+  for (const durationMs of [60_000, 600_000, 7_200_000]) {
+    for (const progress of [0, .25, .5, .9]) {
+      const adjusted = seekSession({ ...session, durationMs }, progress, start + 123_000);
+      assert.equal(adjusted.id, session.id); assert.equal(adjusted.durationMs, durationMs);
+      assert.equal(adjusted.status, 'running'); assert.equal(adjusted.arrivalTimestamp, null);
+      assert.equal(adjusted.targetTimestamp - adjusted.startTimestamp, durationMs);
+      assert.equal(timerProgress(adjusted, start + 123_000).remaining, Math.round(durationMs * (1 - progress) / 1000) * 1000);
+      assert.equal(timerProgress(adjusted, adjusted.targetTimestamp + 60_000).remaining, 0);
+      assert.equal(isSession(adjusted), true);
+    }
+  }
+  const forward = seekSession(session, .75, start + 100_000);
+  assert.equal(timerProgress(seekSession(forward, .25, start + 200_000), start + 200_000).remaining, 450_000);
+});
+
+test('seeking a paused timer keeps it paused and reaching the endpoint arrives only once', () => {
+  const paused = pauseSession(session, start + 30_000);
+  const adjusted = seekSession(paused, .5, start + 90_000);
+  assert.equal(adjusted.status, 'paused'); assert.equal(adjusted.pausedRemainingMs, 300_000);
+  assert.equal(timerProgress(adjusted, start + 9_000_000).remaining, 300_000);
+  assert.equal(resumeSession(adjusted, start + 200_000).targetTimestamp, start + 500_000);
+  const arrived = seekSession(adjusted, 1, start + 90_000);
+  assert.equal(arrived.status, 'arriving'); assert.equal(arrived.arrivalTimestamp, start + 90_000);
+  assert.equal(seekSession(arrived, 0, start + 91_000), arrived);
+  const complete = advanceSession(arrived, start + 90_000 + ARRIVAL_DURATION_MS);
+  assert.equal(seekSession(complete, 0, start + 999_000), complete);
+});
+
+test('seeking clamps drag boundaries, rounds to seconds and ignores invalid coordinates', () => {
+  assert.equal(timerProgress(seekSession(session, -10, start), start).remaining, 600_000);
+  assert.equal(seekSession(session, 10, start).status, 'arriving');
+  assert.equal(timerProgress(seekSession(session, .33333, start), start).remaining, 400_000);
+  for (const progress of [NaN, Infinity, -Infinity]) assert.equal(seekSession(session, progress, start), session);
+  assert.equal(seekSession(session, .5, NaN), session);
 });
 test('stars cannot be claimed twice, including after midnight', () => {
   const initial = { date: '2026-10-06', count: 0, awardedSessions: [] };

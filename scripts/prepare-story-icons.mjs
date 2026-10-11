@@ -43,6 +43,7 @@ async function normalize(file, name) {
 for (const id of ids) await normalize(`${sources}/${id}.webp`, id);
 await normalize('docs/character-design/rabbit-concept.png', 'rabbit');
 await normalize('docs/ui-icons/pinky-promise-v1/source.png', 'custom');
+for (const id of ['home', 'flag']) await normalize(`docs/ui-icons/progress-v1/${id}-source.png`, id);
 
 const handshake = await sharp(`${output}/handshake.webp`).resize(154, 154).png().toBuffer();
 await sharp({ create: { width: 192, height: 192, channels: 4, background: '#fff3df' } })
@@ -59,4 +60,4 @@ const tiles = await Promise.all([...ids, 'rabbit'].map(async (id, index) => {
 }));
 await sharp({ create: { width: 540, height: 540, channels: 4, background: '#fffaf0' } })
   .composite(tiles).png().toFile(path.join(directory, 'icon-family.png'));
-console.log('Prepared ten transparent story icons, handshake app icons and contact sheet.');
+console.log('Prepared twelve transparent story icons, handshake app icons and contact sheet.');

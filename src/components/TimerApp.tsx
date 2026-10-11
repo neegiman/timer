@@ -135,7 +135,8 @@ export function TimerApp() {
       {active ? <div className="timer-layout">
           <VisualTimer character={character} promise={timer.session?.promise ?? promise} mode={sessionMode} sessionId={timer.session!.id} progress={timer.progress}
             remaining={timer.remaining} minutes={timer.session ? timer.session.durationMs / 60_000 : minutes}
-            status={timer.status} showNumericTime={showNumericTime} animation={animation.state} input={animation.input} sampledAt={animation.sampledAt} theme={appearance.theme} season={appearance.season} />
+            status={timer.status} showNumericTime={showNumericTime} animation={animation.state} input={animation.input} sampledAt={animation.sampledAt} theme={appearance.theme} season={appearance.season}
+            adjustment={{ begin: timer.beginAdjustment, preview: timer.previewAdjustment, end: timer.endAdjustment, seek: timer.seek }} />
           {needsGesture && soundEnabled ? <button className="audio-recovery" onClick={unlock}><Volume2 size={22} /> 소리 켜기</button> : null}
           {completed ? <StarReward awarded={awarded} count={todayCount} total={totalCount} mode={sessionMode} goal={rewards.goal.target} filled={collection.filled} onAward={claimStar} onNewJourney={exit} onViewRewards={() => setModal('rewards')} /> : null}
         </div> : <section className="setup-card" aria-label="여행 준비">

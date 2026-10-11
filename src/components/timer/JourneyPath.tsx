@@ -38,7 +38,7 @@ export function JourneyPath({ character, promise, animation, input, theme, seaso
         </div><span className="character-shadow" />
       </div>
     </div>
-    {input.isPaused ? <span className="paused-sign">잠깐 쉬어요!</span> : null}
+    {input.isPaused && !input.isAdjusting ? <span className="paused-sign">잠깐 쉬어요!</span> : null}
     {animation.messageStage === 'halfway' ? <span className="midpoint-sparkle" aria-hidden="true">✦</span> : null}
     {celebration ? <div className="arrival-sparkles" aria-hidden="true"><span>✦</span><span>⭐</span><span>✧</span><span>✦</span><span>⭐</span><span>✧</span><i /><i /><i /><i /><i /><i /></div> : null}
   </div>;

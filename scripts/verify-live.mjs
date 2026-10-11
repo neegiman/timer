@@ -22,8 +22,8 @@ try {
   const animals = ['rabbit', 'dog', 'cat', 'chick', 'princess', 'princess-upper-v2'].map((id) => `/timer/characters/raster-v1/${id}.webp`);
   animals.push(...['dog', 'cat'].map((id) => `/timer/characters/raster-v1/${id}-torso-v7.webp`));
   const pixels = ['prince-upright-v3', 'car', 'train', 'rocket-horizontal-v3'].map((id) => `/timer/characters/pixel-v1/${id}.svg`);
-  const storyIcons = ['handshake', 'bath', 'sleep', 'meal', 'tidy', 'outside', 'video', 'clock', 'rabbit', 'custom'].map((id) => `/timer/images/story-v1/${id}.webp`);
-  storyIcons.push(...['home', 'flag', 'star'].map((id) => `/timer/images/story-v1/${id}.svg`));
+  const storyIcons = ['handshake', 'bath', 'sleep', 'meal', 'tidy', 'outside', 'video', 'clock', 'rabbit', 'custom', 'home', 'flag'].map((id) => `/timer/images/story-v1/${id}.webp`);
+  storyIcons.push('/timer/images/story-v1/star.svg', '/timer/images/progress-v1/trail.webp');
   const spaceAssets = ['nebula.webp', 'stars.svg', 'near-stars.svg'].map((id) => `/timer/images/space-v1/${id}`);
   const appIcons = ['favicon-handshake-v1', 'promise-handshake-v1', 'apple-touch-handshake-v1'].map((id) => `/timer/images/${id}.png`);
   const scenery = JSON.parse(await readFile('src/lib/paintedScenery.json', 'utf8'));

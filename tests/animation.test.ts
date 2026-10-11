@@ -58,3 +58,14 @@ test('pause and refreshed inputs preserve phase, gait and miniature position', (
   assert.equal(ready.position, 0);
   assert.equal(ready.characterAction, 'idle');
 });
+
+test('drag preview updates scenery and milestones without arrival or sounds until release', () => {
+  for (const progress of [0, .5, .9, 1]) {
+    const preview = getAnimationState({ ...input(600_000 * progress), isPaused: true, isAdjusting: true });
+    assert.equal(preview.phase, 'WALK');
+    assert.equal(preview.position, progress);
+    assert.equal(preview.sound, undefined);
+    assert.notEqual(preview.messageStage, 'arrived');
+  }
+  assert.equal(getAnimationState(input(600_000)).phase, 'CROSS_FINISH');
+});

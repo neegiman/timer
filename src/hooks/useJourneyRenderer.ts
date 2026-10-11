@@ -36,6 +36,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
   const fill = useRef<HTMLDivElement>(null);
   const marker = useRef<HTMLDivElement>(null);
   const snapshot = useRef({ input, sampledAt });
+  const renderFrame = useRef<(() => void) | null>(null);
   const animations = useRef<Animation[]>([]);
   const joints = useRef<{ element: SVGGElement; name: JointName }[]>([]);
   const animalJoints = useRef<{ element: SVGGElement; name: AnimalJoint }[]>([]);
@@ -43,7 +44,11 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
   const princeSprite = useRef<SVGSVGElement | null>(null);
   const vehicleSprite = useRef<SVGSVGElement | null>(null);
 
-  useEffect(() => { snapshot.current = { input, sampledAt }; }, [input, sampledAt]);
+  useEffect(() => {
+    snapshot.current = { input, sampledAt };
+    // A paused slider/keyboard edit still redraws once. Its clock stays frozen.
+    if (input.isPaused) renderFrame.current?.();
+  }, [input, sampledAt]);
   useEffect(() => {
     animations.current = body.current?.getAnimations({ subtree: true }) ?? [];
     for (const animation of animations.current) animation.pause();
@@ -226,7 +231,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         particle.style.opacity = String(pose.opacity);
       }
       if (goal.current) goal.current.style.opacity = String(finishOpacity(pose.position));
-      fill.current?.style.setProperty('transform', `scaleX(${pose.position})`);
+      fill.current?.style.setProperty('clip-path', `inset(0 ${(1 - pose.position) * 100}% 0 0)`);
       marker.current?.style.setProperty('transform', `translate3d(${pose.position * progressWidth}px, 0, 0)`);
       if (marker.current) {
         marker.current.dataset.progress = pose.position.toFixed(6);
@@ -246,6 +251,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     });
     resize.observe(element); resize.observe(actor);
     if (track.current) resize.observe(track.current);
+    renderFrame.current = draw;
     const loop = () => { draw(); if (!snapshot.current.input.isPaused) frame = requestAnimationFrame(loop); };
     const visibility = () => {
       cancelAnimationFrame(frame); element.dataset.suspended = String(document.hidden);
@@ -254,7 +260,7 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     visibility();
     document.addEventListener('visibilitychange', visibility);
     preference.addEventListener('change', draw);
-    return () => { cancelAnimationFrame(frame); resize.disconnect(); document.removeEventListener('visibilitychange', visibility); preference.removeEventListener('change', draw); };
-  }, [input.isPaused, characterId, season, theme]);
+    return () => { renderFrame.current = null; cancelAnimationFrame(frame); resize.disconnect(); document.removeEventListener('visibilitychange', visibility); preference.removeEventListener('change', draw); };
+  }, [input.isPaused, input.isAdjusting, characterId, season, theme]);
   return { scene, wrapper, body, goal, track, fill, marker };
 }

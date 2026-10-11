@@ -9,6 +9,8 @@ export interface AnimationInput {
   remainingTime: number;
   progress: number;
   isPaused: boolean;
+  /** A drag preview must not play milestone sounds or finish before release. */
+  isAdjusting?: boolean;
   isFinished: boolean;
   hasStarted: boolean;
   finishElapsedMs: number;

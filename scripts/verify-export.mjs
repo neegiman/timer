@@ -39,8 +39,8 @@ for (const file of files) {
   inspected++;
 }
 const soundFiles = (await readdir(path.join(root, 'sounds'))).filter((name) => name.endsWith('.mp3'));
-const storyIcons = ['handshake', 'bath', 'sleep', 'meal', 'tidy', 'outside', 'video', 'clock', 'rabbit', 'custom'].map((id) => `images/story-v1/${id}.webp`);
-storyIcons.push(...['home', 'flag', 'star'].map((id) => `images/story-v1/${id}.svg`));
+const storyIcons = ['handshake', 'bath', 'sleep', 'meal', 'tidy', 'outside', 'video', 'clock', 'rabbit', 'custom', 'home', 'flag'].map((id) => `images/story-v1/${id}.webp`);
+storyIcons.push('images/story-v1/star.svg', 'images/progress-v1/trail.webp');
 const appIcons = ['favicon-handshake-v1', 'promise-handshake-v1', 'apple-touch-handshake-v1'].map((id) => `images/${id}.png`);
 assert.equal(soundFiles.length, 11, 'Missing animation sound assets');
 for (const animal of ['rabbit', 'dog', 'cat', 'chick', 'princess', 'princess-upper-v2']) {

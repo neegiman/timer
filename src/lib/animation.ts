@@ -40,15 +40,15 @@ export function getFinishAnimationState(elapsed: number): AnimationState {
 export function getAnimationState(input: AnimationInput): AnimationState {
   const total = Math.max(60_000, input.totalDuration);
   const remaining = Math.max(0, Math.min(total, input.remainingTime));
-  if (input.hasStarted && (input.isFinished || remaining === 0)) return getFinishAnimationState(Math.max(0, input.finishElapsedMs));
+  if (input.hasStarted && (input.isFinished || (remaining === 0 && !input.isAdjusting))) return getFinishAnimationState(Math.max(0, input.finishElapsedMs));
   const elapsed = input.hasStarted ? total - remaining : 0;
   const position = input.hasStarted ? elapsed / total : 0;
-  const messageStage = journeyStage(position);
+  const messageStage = journeyStage(input.isAdjusting ? Math.min(position, .999999) : position);
   return { phase: input.hasStarted ? 'WALK' : 'READY', phaseKey: input.hasStarted ? 'walking' : 'ready',
     position, characterAction: input.hasStarted ? 'walk' : 'idle', actionElapsedMs: elapsed, speed: 1,
     messageStage, message: JOURNEY_MESSAGES[messageStage], backgroundMode: input.hasStarted ? 'moving' : 'idle',
-    ...(input.hasStarted && elapsed < 800 ? { sound: 'start', soundKey: 'start' } as const : {}),
-    ...(messageStage === 'halfway' ? { sound: 'midpoint', soundKey: 'midpoint' } as const : {}),
-    ...(messageStage === 'near' ? { sound: 'sparkle', soundKey: 'finish-recognition' } as const : {}),
+    ...(!input.isAdjusting && input.hasStarted && elapsed < 800 ? { sound: 'start', soundKey: 'start' } as const : {}),
+    ...(!input.isAdjusting && messageStage === 'halfway' ? { sound: 'midpoint', soundKey: 'midpoint' } as const : {}),
+    ...(!input.isAdjusting && messageStage === 'near' ? { sound: 'sparkle', soundKey: 'finish-recognition' } as const : {}),
   };
 }
