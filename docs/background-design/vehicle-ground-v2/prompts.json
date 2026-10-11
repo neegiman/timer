@@ -1,0 +1,27 @@
+{
+  "generator": "Built-in ImageGen",
+  "prompts": [
+    {
+      "id": "road-day",
+      "mode": "generate",
+      "prompt": "Use case: illustration-story. Production bitmap asset for a preschool timer, a hand-painted HORIZONTAL ROAD GROUND STRIP. Premium original gouache/watercolor illustration on textured paper, warm detailed natural brushwork to match a Korean picture-book landscape, organic irregular paint edges, soft muted blue-gray asphalt, warm cream roadside edges, short buttery-yellow dashed center line. Absolutely NOT pixel art, NOT 8-bit, NOT vector art, NOT flat geometric blocks. Wide 3:1 landscape composition. Paint just ONE straight level road ribbon stretching fully from left edge to right edge, band width about five times its painted height, centered vertically with transparent space above/below. Parallel horizontal upper and lower edges, absolutely no perspective taper, no vanishing point, no bends. Broad clear smooth drivable asphalt in the middle, scattered tiny subtle painted speckles and worn pigment texture. Single row of evenly spaced short cream-yellow lane dashes halfway down. Gentle warm daytime lighting, painterly sandy beige verges and tiny soft sage moss only along the narrow outer edge. No big plants, no scenery behind it, no sky, no objects, no cars, no characters, no text, no numbers, no flags, no border, no watermark. Left and right edge road widths/heights must match to support horizontal looping. Genuinely transparent alpha background, not a checkerboard painting."
+    },
+    {
+      "id": "road-night",
+      "mode": "edit",
+      "reference": "road-day.png",
+      "prompt": "Use case: precise-object-edit. Edit this hand-painted road strip into its NIGHT lighting variant. Change lighting and pigment colors only. Preserve exact composition, road width and height, straight horizontal verges, lane-dash positions, dimensions and transparent alpha silhouette. Keep the fine genuine gouache/watercolor brushwork and paper grain. Calm moonlit blue-gray asphalt, muted cream/gold lane paint still easy to see, cool gray-beige verges and subtle desaturated sage edges. Comforting and softly luminous, never neon, black, pixelated or vector-flat. No added scene, objects, road signs, text or watermark. Keep the genuinely transparent background and same full image dimensions. Do not move, rotate or reshape any part."
+    },
+    {
+      "id": "railway-day",
+      "mode": "generate",
+      "prompt": "Use case: illustration-story. Production bitmap for a preschool side-scrolling timer, an isolated HORIZONTAL RAILWAY GROUND STRIP in premium hand-painted gouache/watercolor ORIGINAL ART. Fine natural brushwork, softly worn wood grain, rounded irregular small stones, delicate warm paper pigment texture matching a comforting Korean landscape picture book. NOT pixel art, NOT 8-bit, NOT flat SVG/vector art. Very wide 3:1 landscape canvas. A single straight level railway stretches fully across the left and right edges, centered vertically with genuinely transparent alpha above and below. Two perfectly horizontal parallel thin steel rails in a shallow side-on view, with regularly spaced weathered brown wooden sleepers joining them. Near rail is clearly in front of the far rail, silver softly painted top edge continuous and level, ready to support train wheels. Rails never curve, converge or slope. A narrow soft sandy-beige gravel bed with tiny muted sage edges under the sleepers, richly painted and naturally irregular without big stones. Upper/lower margins fade softly into transparency. The painted strip width should be about 4 times its height. Quiet daylight, warm cream highlights on steel, honey-brown wood, warm gray stones; enough detail to see painted wood and gravel at small size. Same rail heights at both left/right edges. No train, no vehicle, no characters, no trees, no hills, no sky, no station, no signs, no text, no border, no watermark, no checkerboard background. Keep a clear horizontal contact line on the near rail and do not draw a perspective railway disappearing into the distance."
+    },
+    {
+      "id": "railway-night",
+      "mode": "edit",
+      "reference": "railway-day.png",
+      "prompt": "Use case: precise-object-edit. Change only the lighting and pigment colors of this hand-painted railway ground strip to a calm NIGHT version. Preserve exact composition, geometry, rail heights, sleeper positions, gravel-bed silhouette, image dimensions and transparent alpha. Keep the detailed genuine gouache/watercolor brushwork with softly painted wood grain, metal highlights and rounded gravel. Moonlit cool slate-blue stones, softly desaturated warm brown wood, thin gentle silver-blue rail highlights still readable for children. Comforting night palette matching a painted Korean picture-book landscape. Not neon, black, pixel art, vector art or glossy 3D. No new objects, scenery, train, text, station, sky, border or watermark. Rails stay perfectly horizontal and continuous. Preserve genuine transparent background and all object locations."
+    }
+  ]
+}

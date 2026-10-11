@@ -25,7 +25,7 @@ try {
   const storyIcons = ['handshake', 'bath', 'sleep', 'meal', 'tidy', 'outside', 'video', 'clock', 'rabbit', 'custom', 'home', 'flag'].map((id) => `/timer/images/story-v1/${id}.webp`);
   storyIcons.push('/timer/images/story-v1/star.svg', '/timer/images/progress-v1/trail.webp');
   const spaceAssets = ['nebula.webp', 'stars.svg', 'near-stars.svg'].map((id) => `/timer/images/space-v1/${id}`);
-  const vehicleGrounds = ['road', 'railway'].flatMap((surface) => ['day', 'night'].map((theme) => `/timer/images/vehicle-ground-v1/${surface}-${theme}.svg`));
+  const vehicleGrounds = ['road', 'railway'].flatMap((surface) => ['day', 'night'].map((theme) => `/timer/images/vehicle-ground-v2/${surface}-${theme}.webp`));
   const appIcons = ['favicon-handshake-v1', 'promise-handshake-v1', 'apple-touch-handshake-v1'].map((id) => `/timer/images/${id}.png`);
   const scenery = JSON.parse(await readFile('src/lib/paintedScenery.json', 'utf8'));
   const paintings = Object.values(scenery).flatMap((season) => Object.values(season).map((asset) => `/timer${asset.src}`));

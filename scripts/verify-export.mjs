@@ -22,7 +22,7 @@ const scenery = JSON.parse(await readFile('src/lib/paintedScenery.json', 'utf8')
 assert.ok((await stat(path.join(root, 'images/scenery-v1/painted-glimmer-v1.webp'))).size > 500, 'Missing painted sky glimmer');
 for (const file of ['nebula.webp', 'stars.svg', 'near-stars.svg']) assert.ok((await stat(path.join(root, 'images/space-v1', file))).size > 200, `Missing pixel space asset ${file}`);
 for (const surface of ['road', 'railway']) for (const theme of ['day', 'night']) {
-  assert.ok((await stat(path.join(root, 'images/vehicle-ground-v1', `${surface}-${theme}.svg`))).size > 500, `Missing ${surface} ${theme} ground`);
+  assert.ok((await stat(path.join(root, 'images/vehicle-ground-v2', `${surface}-${theme}.webp`))).size > 1000, `Missing painted ${surface} ${theme} ground`);
 }
 for (const season of Object.values(scenery)) for (const asset of Object.values(season)) {
   assert.ok((await stat(path.join(root, asset.src))).size > 1000, `Missing painted scenery ${asset.src}`);

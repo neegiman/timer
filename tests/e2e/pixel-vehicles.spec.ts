@@ -62,7 +62,8 @@ for (const id of PIXEL_VEHICLES) test(`${id} pixel art clips correctly and prese
       await page.getByRole('button', { name: '닫기', exact: true }).click();
       await page.clock.runFor(1400);
       const painting = surface.locator(`.vehicle-surface-${theme}`);
-      await expect(painting).toHaveAttribute('data-scenery-src', `/timer/images/vehicle-ground-v1/${id === 'car' ? 'road' : 'railway'}-${theme}.svg`);
+      await expect(painting).toHaveAttribute('data-scenery-src', `/timer/images/vehicle-ground-v2/${id === 'car' ? 'road' : 'railway'}-${theme}.webp`);
+      await expect(painting).toHaveCSS('image-rendering', 'auto');
       await expect(painting).toHaveCSS('opacity', '1');
       if (testInfo.project.name === 'chromium') {
         await page.setViewportSize({ width: 390, height: 844 }); await page.clock.runFor(32);

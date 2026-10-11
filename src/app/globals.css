@@ -96,8 +96,8 @@ h1:focus { outline: none; }
 .vehicle-surface-night { opacity: 0; }
 .journey-scene[data-theme="night"] .vehicle-surface-day { opacity: 0; }
 .journey-scene[data-theme="night"] .vehicle-surface-night { opacity: 1; }
-/* Keep rail contact 24px below the strip's top at every screen height. */
-.vehicle-railway-layer .scenery-paint { background-size: var(--tile-width, 480px) 96px; }
+/* Painted details and the measured rail contact retain their height on tablets/fullscreen. */
+.vehicle-ground-layer .scenery-paint { background-size: var(--tile-width, 480px) 96px; image-rendering: auto; }
 .scenery-paint { position: absolute; inset: 0; background-repeat: repeat-x; background-size: var(--tile-width, 480px) 100%; transition: opacity 1.2s ease-in-out; }
 .scene-night, .scenery-ground-night { opacity: 0; }
 .journey-scene[data-theme="night"] :is(.scene-day, .scenery-ground-day) { opacity: 0; }

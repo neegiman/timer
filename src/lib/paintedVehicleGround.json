@@ -1,0 +1,28 @@
+{
+  "road": {
+    "width": 480,
+    "height": 96,
+    "contactY": 18,
+    "crop": {
+      "left": 727,
+      "top": 217,
+      "width": 718,
+      "height": 287
+    },
+    "day": "/images/vehicle-ground-v2/road-day.webp",
+    "night": "/images/vehicle-ground-v2/road-night.webp"
+  },
+  "railway": {
+    "width": 480,
+    "height": 96,
+    "contactY": 62,
+    "crop": {
+      "left": 787,
+      "top": 270,
+      "width": 598,
+      "height": 239
+    },
+    "day": "/images/vehicle-ground-v2/railway-day.webp",
+    "night": "/images/vehicle-ground-v2/railway-night.webp"
+  }
+}

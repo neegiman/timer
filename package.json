@@ -14,7 +14,7 @@
     "sounds": "node scripts/generate-sounds.mjs",
     "icons": "node scripts/prepare-story-icons.mjs",
     "progress-art": "node scripts/prepare-progress-art.mjs",
-    "vehicle-ground": "node scripts/generate-vehicle-ground.mjs",
+    "vehicle-ground": "node scripts/prepare-painted-vehicle-ground.mjs",
     "scenery": "node scripts/prepare-painted-scenery.mjs",
     "space": "node scripts/prepare-pixel-space.mjs",
     "characters": "node scripts/prepare-character-atlases.mjs && node scripts/prepare-walking-torsos.mjs && node scripts/prepare-princess-atlas.mjs && tsx scripts/generate-pixel-prince.ts && tsx scripts/generate-pixel-vehicles.ts"

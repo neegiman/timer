@@ -1,5 +1,6 @@
 import { memo, type CSSProperties, type ReactNode } from 'react';
 import art from '@/lib/paintedScenery.json';
+import groundArt from '@/lib/paintedVehicleGround.json';
 import { assetPath } from '@/lib/assetPath';
 import type { Season } from '@/lib/seasons';
 import { RocketSky } from './RocketSky';
@@ -32,13 +33,13 @@ export const ScrollingScenery = memo(function ScrollingScenery({ season, charact
   </div>;
 });
 
-const surfaces = { car: { kind: 'road', contactY: 18 }, train: { kind: 'railway', contactY: 24 } } as const;
+const surfaces = { car: { kind: 'road', ...groundArt.road }, train: { kind: 'railway', ...groundArt.railway } } as const;
 
 /** The road/rails use the existing wheel-and-ground clock, never a second animation. */
 function VehicleGround({ characterId }: { characterId: string }) {
   const surface = characterId === 'car' || characterId === 'train' ? surfaces[characterId] : null;
   if (!surface) return null;
-  const source = (theme: 'day' | 'night') => assetPath(`/images/vehicle-ground-v1/${surface.kind}-${theme}.svg`);
+  const source = (theme: 'day' | 'night') => assetPath(surface[theme]);
   return <div className={`parallax-layer vehicle-ground-layer vehicle-${surface.kind}-layer`} data-layer="vehicle-ground" data-rate="1"
     data-ground-type={surface.kind} data-contact-y={surface.contactY} style={{ '--surface-contact-y': `${surface.contactY}px` } as CSSProperties}>
     <div className="scenery-paint vehicle-surface-day" data-scenery-src={source('day')} style={{ backgroundImage: `url("${source('day')}")` }} />
