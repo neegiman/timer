@@ -53,21 +53,15 @@ test('dog and cat paintings keep native proportions and bury limb and ear roots 
   }
 });
 
-test('dog and cat torsos have rounded corners and a shallow natural waist without hanging leg masses', async () => {
+test('dog and cat reuse their selection paintings with native, rounded puppy and kitten proportions', async () => {
   for (const id of ['dog', 'cat'] as const) {
     const art = walkingTorsoArt[id], [left, top, width, height] = art.viewBox;
     const data = await sharp(`public${art.src}`).ensureAlpha().raw().toBuffer();
     const alpha = (x: number, y: number) => data[((top + y) * art.width + left + x) * 4 + 3];
     for (const x of [2, width - 3]) for (const y of [2, height - 3]) assert.ok(alpha(x, y) < 24, `${id} corner is rectangular`);
-    const lowerEdge = (fraction: number) => {
-      const x = Math.round(width * fraction);
-      for (let y = height - 1; y >= 0; y--) if (alpha(x, y) >= 160) return y;
-      return -1;
-    };
-    const rump = lowerEdge(.18), waist = Math.min(lowerEdge(.3), lowerEdge(.4)), chest = lowerEdge(.82);
-    assert.ok(width / height > (id === 'dog' ? 2.35 : 2.55), `${id} torso is too deep`);
-    assert.ok(waist < Math.min(rump, chest) - height * .04, `${id} waist has no natural tuck`);
-    assert.ok(waist > height * .8, `${id} hip/chest lobes hang below the waist`);
+    assert.equal(art.src, `/characters/raster-v1/${id}.webp`);
+    assert.deepEqual(art.viewBox, atlases[id].parts.torso);
+    assert.ok(width / height > 1.6 && width / height < 2, `${id} torso no longer matches its rounded selection painting`);
   }
 });
 

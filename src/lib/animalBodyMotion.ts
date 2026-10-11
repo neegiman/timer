@@ -35,7 +35,7 @@ export function animalBodyMotion(id: AnimalId, cycle: number, moving: boolean): 
   // The neck is an attachment to the same surface as the shoulders, not an
   // independently stabilized layer. Its tiny nod rotates about this socket.
   return { torso, tail, headY: isWalker(id) ? torsoOffset(id, torso, walkingAnatomy[id].headPivot.x) : 0,
-    tailY: isWalker(id) ? torsoOffset(id, torso, 29) : 0 };
+    tailY: isWalker(id) ? torsoOffset(id, torso, id === 'cat' ? 36 : 29) : 0 };
 }
 
 /** Same piecewise-linear surface used by the painted panels and their attached joints. */

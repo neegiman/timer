@@ -8,6 +8,8 @@ import { walkingAnatomy, type LimbArtwork } from '@/lib/walkingAnatomy';
 import { chickAnatomy } from '@/lib/chickAnatomy';
 import { AnimalTorsoPanels, AnimalTailPanels } from './AnimalBodyPanels';
 import { animalMatrix, limbSkinClip, limbSkinMatrix, limbSkinTriangles } from '@/lib/animalLimbSkin';
+import { isWalker } from '@/lib/animalBodyMotion';
+import { WALK_SPRITE, walkingFrameViewBox, walkingSpritePath } from '@/lib/walkingSprites';
 
 type PartName = keyof typeof atlases.rabbit.parts;
 /** A bounded CSS image crop avoids nested SVG repainting when a choice is tapped on mobile. */
@@ -121,7 +123,7 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
 }
 
 /** ImageGen's transparent painted parts, posed by the same four-paw rig as the motion study. */
-export function PaintedAnimalArtwork({ id, label, compact = false }: { id: AnimalId; label?: string; compact?: boolean }) {
+export function PaintedAnimalArtwork({ id, label, compact = false, baked = true }: { id: AnimalId; label?: string; compact?: boolean; baked?: boolean }) {
   const prefix = useId().replace(/:/g, ''), bird = id === 'chick', rabbit = id === 'rabbit', dog = id === 'dog';
   const filter = `url(#${prefix}-far-fur)`;
   const anatomy = rabbit ? rabbitAnatomy : id === 'dog' || id === 'cat' ? walkingAnatomy[id] : null;
@@ -137,7 +139,7 @@ export function PaintedAnimalArtwork({ id, label, compact = false }: { id: Anima
         <feComponentTransfer><feFuncR type="linear" slope=".79" /><feFuncG type="linear" slope=".79" /><feFuncB type="linear" slope=".79" /></feComponentTransfer>
       </filter></defs>
       <g data-animal-body data-body>
-        <g transform={`translate(${bird ? 58 : 29} ${bird ? 164 : 158})`}><g data-animal-tail-root><g data-animal-joint="tail"><AnimalTailPanels id={id}>
+        <g transform={`translate(${bird ? 58 : id === 'cat' ? 36 : 29} ${bird ? 164 : 158})`}><g data-animal-tail-root><g data-animal-joint="tail"><AnimalTailPanels id={id}>
           <Part id={id} part="tail" x={id === 'cat' || dog ? -24 : -16} y={id === 'cat' || dog ? -51 : -13} width={id === 'cat' || dog ? 35 : 23} height={id === 'cat' || dog ? 57 : 24} />
         </AnimalTailPanels></g></g></g>
         <PaintedPaw id={id} name="farHind" far filter={filter} /><PaintedPaw id={id} name="farFore" far filter={filter} />
@@ -154,5 +156,10 @@ export function PaintedAnimalArtwork({ id, label, compact = false }: { id: Anima
         </g></g> : null}
         <PaintedPaw id={id} name="nearHind" filter={filter} /><PaintedPaw id={id} name="nearFore" filter={filter} />
       </g>
+      {baked && isWalker(id) ? <svg data-animal-walk-sprite data-frame="0" style={{ display: 'none' }}
+        x={WALK_SPRITE.x} y={WALK_SPRITE.y} width={WALK_SPRITE.width} height={WALK_SPRITE.height} viewBox={walkingFrameViewBox(0)} overflow="hidden">
+        <image href={assetPath(walkingSpritePath(id))} width={WALK_SPRITE.width * WALK_SPRITE.columns}
+          height={WALK_SPRITE.height * Math.ceil(WALK_SPRITE.frames / WALK_SPRITE.columns)} />
+      </svg> : null}
   </svg>;
 }

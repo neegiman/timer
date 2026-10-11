@@ -6,6 +6,7 @@ test('animal studies articulate paws with the ground, keep a fixed body and paus
   page.on('pageerror', (error) => errors.push(error.message));
   await page.clock.install();
   await page.goto('./animal-preview/');
+  for (const id of ['dog', 'cat']) await expect(page.locator(`[data-animal-scene="${id}"] [data-animal-walk-sprite]`)).toHaveAttribute('data-loaded', 'true');
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   await expect(page.getByRole('heading', { name: '동물처럼 움직여요', exact: true })).toBeVisible();
   await expect(page.locator('[data-animal-scene]')).toHaveCount(4);
@@ -14,7 +15,9 @@ test('animal studies articulate paws with the ground, keep a fixed body and paus
     id: scene.dataset.animalScene, time: scene.dataset.motionTime,
     ground: scene.querySelector<HTMLElement>('.animal-study-ground')!.style.transform,
     x: scene.querySelector('.animal-study-actor')!.getBoundingClientRect().x,
-    joints: [...scene.querySelectorAll('[data-animal-joint]')].map((joint) => joint.getAttribute('transform')),
+    joints: scene.querySelector<SVGSVGElement>('[data-animal-walk-sprite]')?.style.display === ''
+      ? [scene.querySelector('[data-animal-walk-sprite]')!.getAttribute('viewBox')]
+      : [...scene.querySelectorAll('[data-animal-joint]')].map((joint) => joint.getAttribute('transform')),
   })));
   const first = await read();
   await page.clock.runFor(200);
@@ -58,7 +61,7 @@ test('animal studies articulate paws with the ground, keep a fixed body and paus
 
 test('planted animal paws have no sliding and motion reduction leaves a still study', async ({ page }) => {
   await page.clock.install();
-  await page.goto('./animal-preview/');
+  await page.goto('./animal-preview/?rig=1');
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   await page.getByRole('button', { name: '다시 보기', exact: false }).click();
   await page.clock.runFor(50);

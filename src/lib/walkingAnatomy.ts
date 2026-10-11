@@ -23,13 +23,13 @@ function fittedEar(id: WalkerId, part: 'earNear' | 'earFar', anchorX: number, an
  */
 export const walkingAnatomy = {
   dog: {
-    torso: fittedPart('dog', 'torso', 23, 128, 103),
+    torso: fittedPart('dog', 'torso', 32, 124, 96),
     head: fittedPart('dog', 'head', 98, 121, 50), headPivot: { x: 110, y: 147 },
     earNear: fittedEar('dog', 'earNear', 108, 130, { x: 96, y: 40 }, 33),
     earFar: fittedEar('dog', 'earFar', 118, 128, { x: 65, y: 40 }, 30),
     paws: {
-      nearHind: { x: 43, y: 155, upper: 22, lower: 22, bend: 1 },
-      farHind: { x: 51, y: 153, upper: 23, lower: 23, bend: 1 },
+      nearHind: { x: 51, y: 155, upper: 22, lower: 22, bend: 1 },
+      farHind: { x: 59, y: 153, upper: 23, lower: 23, bend: 1 },
       nearFore: { x: 108, y: 158, upper: 20, lower: 21, bend: -1 },
       farFore: { x: 116, y: 156, upper: 21, lower: 22, bend: -1 },
     },
@@ -45,15 +45,15 @@ export const walkingAnatomy = {
     },
   },
   cat: {
-    torso: fittedPart('cat', 'torso', 23, 135, 100),
+    torso: fittedPart('cat', 'torso', 34, 128, 90),
     head: fittedPart('cat', 'head', 95, 124, 44), headPivot: { x: 106, y: 149 },
     earNear: fittedEar('cat', 'earNear', 106, 138, { x: 94, y: 183 }, 23),
     earFar: fittedEar('cat', 'earFar', 116, 134, { x: 97, y: 186 }, 21),
     paws: {
-      nearHind: { x: 47, y: 148, upper: 28, lower: 28, bend: 1 },
-      farHind: { x: 55, y: 146, upper: 29, lower: 29, bend: 1 },
-      nearFore: { x: 101, y: 150, upper: 27, lower: 27, bend: -1 },
-      farFore: { x: 109, y: 148, upper: 28, lower: 28, bend: -1 },
+      nearHind: { x: 53, y: 153, upper: 26, lower: 26, bend: 1 },
+      farHind: { x: 61, y: 151, upper: 27, lower: 27, bend: 1 },
+      nearFore: { x: 101, y: 156, upper: 23, lower: 24, bend: -1 },
+      farFore: { x: 109, y: 154, upper: 24, lower: 25, bend: -1 },
     },
     hindArtwork: {
       upper: { pivot: { x: 88, y: 42 }, tip: { x: 88, y: 244 } },

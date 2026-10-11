@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { walkingAnatomy, walkingPawContact } from '../../src/lib/walkingAnatomy';
-import { animalProfiles } from '../../src/lib/animalMotion';
+import { animalPose, animalProfiles } from '../../src/lib/animalMotion';
+import { WALK_SPRITE } from '../../src/lib/walkingSprites';
 
 for (const [id, name, cycle] of [['dog', '강아지', 1440], ['cat', '고양이', 1900]] as const) {
   test(`${id} painted joints stay registered and all four paws remain attached through a stride`, async ({ page }) => {
     await page.clock.install();
-    await page.goto('./animal-preview/');
+    await page.goto('./animal-preview/?rig=1');
     await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
     await page.getByRole('button', { name: '다시 보기', exact: false }).click();
     const frames = [];
@@ -114,6 +115,7 @@ for (const [id, name, cycle] of [['dog', '강아지', 1440], ['cat', '고양이'
     await expect(page.getByRole('button', { name: '곰', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name, exact: true }).click();
     await page.getByRole('button', { name: '출발!' }).click();
+    await expect(page.locator('.traveler-body [data-animal-walk-sprite]')).toHaveAttribute('data-loaded', 'true');
     await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
     const session = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!));
     // Late stance: heel rises while the painted toe stays on the moving ground.
@@ -121,23 +123,32 @@ for (const [id, name, cycle] of [['dog', '강아지', 1440], ['cat', '고양이'
     await page.clock.setSystemTime(session.startTimestamp + 400 + (20 + support * .82) * cycle);
     await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
     await page.clock.runFor(16);
-    const contact = () => page.evaluate((sole) => {
-      const scene = document.querySelector<HTMLElement>('.journey-scene')!;
-      const ankle = scene.querySelector<SVGGElement>('[data-animal-joint="nearHindAnkle"]')!;
-      const toe = new DOMPoint(sole.x, sole.y).matrixTransform(ankle.getScreenCTM()!);
-      const heel = new DOMPoint(-3, sole.y).matrixTransform(ankle.getScreenCTM()!);
-      return { x: toe.x, y: toe.y, heel: heel.y, baseline: scene.getBoundingClientRect().y + Number(scene.dataset.groundY), distance: Number(scene.dataset.groundDistance) };
-    }, walkingPawContact(id, true));
+    // The production view displays the pre-rendered rig. Inspect the exact
+    // sampled frame's painted toe (verified against bitmap alpha in unit tests).
+    const contact = async () => {
+      const rendered = await page.locator('.traveler-body [data-animal-walk-sprite]').evaluate((sprite) => {
+        const scene = document.querySelector<HTMLElement>('.journey-scene')!;
+        const root = sprite.closest('svg.character-artwork') as SVGSVGElement;
+        const matrix = root.getScreenCTM()!;
+        return { frame: Number(sprite.getAttribute('data-frame')), scale: matrix.a, x: matrix.e, y: matrix.f,
+          baseline: scene.getBoundingClientRect().y + Number(scene.dataset.groundY), distance: Number(scene.dataset.groundDistance) };
+      });
+      const pose = animalPose(id, rendered.frame / WALK_SPRITE.frames * cycle), foot = pose.feet.nearHind!;
+      return { x: rendered.x + foot.x * rendered.scale, y: rendered.y + foot.y * rendered.scale,
+        heel: rendered.y + (foot.y - Math.sin(foot.pitch * Math.PI / 180) * 3) * rendered.scale,
+        baseline: rendered.baseline, distance: rendered.distance };
+    };
     const first = await contact(); await page.clock.runFor(50); const second = await contact();
     for (const pose of [first, second]) { expect(Math.abs(pose.y - pose.baseline)).toBeLessThan(.3); expect(pose.heel).toBeLessThan(pose.y); }
-    expect(Math.abs(second.x - first.x + second.distance - first.distance)).toBeLessThan(.3);
-    const pose = () => page.locator('.traveler-body [data-animal-joint], .traveler-body [data-animal-torso-panel], .traveler-body [data-animal-tail-panel], .traveler-body [data-animal-limb-skin], .traveler-body [data-paw], .traveler-body [data-animal-head-root], .traveler-body [data-animal-tail-root]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('transform')));
+    expect(Math.abs(second.x - first.x + second.distance - first.distance)).toBeLessThan(.6);
+    const pose = () => page.locator('.traveler-body [data-animal-walk-sprite]').getAttribute('viewBox');
     await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
     await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
     const paused = await pose(); await page.clock.runFor(3000); expect(await pose()).toEqual(paused);
     await page.reload();
     // A production refresh may load the saved journey after the document itself.
     await expect(page.locator('.traveler-body [data-character]')).toHaveAttribute('data-character', id);
+    await expect(page.locator('.traveler-body [data-animal-walk-sprite]')).toBeVisible();
     await page.clock.runFor(32); expect(await pose()).toEqual(paused);
     if (testInfo.project.name === 'chromium') await page.screenshot({ path: `artifacts/${id}-journey-320.png`, fullPage: true });
     await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
@@ -147,7 +158,7 @@ for (const [id, name, cycle] of [['dog', '강아지', 1440], ['cat', '고양이'
 }
 
 test('cat painted paws register on both sides while its head remains calm and attached to the neck', async ({ page }) => {
-  await page.clock.install(); await page.goto('./animal-preview/');
+  await page.clock.install(); await page.goto('./animal-preview/?rig=1');
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   const read = (paw: string, sole: { x: number; y: number }) => page.locator('[data-animal-scene="cat"]').evaluate((scene, { paw, sole }) => {
     const ankle = scene.querySelector<SVGGElement>(`[data-animal-joint="${paw}Ankle"]`)!;

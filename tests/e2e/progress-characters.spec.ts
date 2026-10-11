@@ -13,22 +13,26 @@ import type { JointName } from '../../src/lib/characterPose';
 
 async function readPoses(page: Page) {
   return page.evaluate(() => {
-    const read = (root: Element) => ({
-      frame: root.querySelector('[data-vehicle-sprite]')?.getAttribute('data-frame') ?? null,
+    const read = (root: Element) => {
+      const sprite = root.querySelector<SVGSVGElement>('[data-animal-walk-sprite]');
+      const baked = sprite?.style.display !== 'none' && !!sprite;
+      const transform = (node: Element | null) => baked ? null : node?.getAttribute('transform') ?? null;
+      return {
+      frame: root.querySelector('[data-vehicle-sprite], [data-animal-walk-sprite]')?.getAttribute('data-frame') ?? null,
       joints: Array.from(root.querySelectorAll('[data-joint], [data-animal-joint]')).map((joint) => ({
-        name: joint.getAttribute('data-joint') ?? joint.getAttribute('data-animal-joint'), transform: joint.getAttribute('transform'),
+        name: joint.getAttribute('data-joint') ?? joint.getAttribute('data-animal-joint'), transform: transform(joint),
       })),
-      body: root.querySelector('[data-animal-body], [data-prince-body]')?.getAttribute('transform') ?? null,
+      body: transform(root.querySelector('[data-animal-body], [data-prince-body]')),
       cape: Array.from(root.querySelectorAll('[data-prince-cape-panel]'), (panel) => panel.getAttribute('transform')),
       capeRoot: root.querySelector('[data-prince-cape]')?.getAttribute('transform') ?? null,
       deformation: {
-        panels: Array.from(root.querySelectorAll('[data-animal-torso-panel], [data-animal-tail-panel]'), (node) => node.getAttribute('transform')),
-        skin: Array.from(root.querySelectorAll('[data-animal-limb-skin]'), (node) => node.getAttribute('transform')),
-        roots: Array.from(root.querySelectorAll('[data-paw]'), (node) => node.getAttribute('transform')),
-        head: root.querySelector('[data-animal-head-root]')?.getAttribute('transform') ?? null,
-        tail: root.querySelector('[data-animal-tail-root]')?.getAttribute('transform') ?? null,
+        panels: Array.from(root.querySelectorAll('[data-animal-torso-panel], [data-animal-tail-panel]'), transform),
+        skin: Array.from(root.querySelectorAll('[data-animal-limb-skin]'), transform),
+        roots: Array.from(root.querySelectorAll('[data-paw]'), transform),
+        head: transform(root.querySelector('[data-animal-head-root]')),
+        tail: transform(root.querySelector('[data-animal-tail-root]')),
       },
-    });
+    }; };
     return { main: read(document.querySelector('.traveler-body')!), miniature: read(document.querySelector('.progress-marker')!) };
   });
 }
@@ -50,6 +54,10 @@ for (const character of characters) test(`${character.id}: progress artwork shar
     const urls = new Set(Array.from(document.querySelectorAll<SVGImageElement>('.progress-marker svg.character-artwork image'), (image) => image.href.baseVal));
     await Promise.all([...urls].map(async (src) => { const image = new Image(); image.src = src; await image.decode(); }));
   });
+  if (isAnimalId(character.id) && isWalker(character.id)) {
+    await expect(page.locator('.traveler-body [data-animal-walk-sprite]')).toHaveAttribute('data-loaded', 'true');
+    await expect(page.locator('.progress-marker [data-animal-walk-sprite]')).toHaveAttribute('data-loaded', 'true');
+  }
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   const session = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!));
   const miniature = page.locator('.progress-marker');
@@ -88,6 +96,10 @@ for (const character of characters) test(`${character.id}: progress artwork shar
   await page.reload();
   await expect(page.locator('[data-status="paused"]')).toBeVisible();
   await expect(miniature.locator('svg.character-artwork')).toBeVisible();
+  if (isAnimalId(character.id) && isWalker(character.id)) {
+    await expect(page.locator('.traveler-body [data-animal-walk-sprite]')).toBeVisible();
+    await expect(miniature.locator('[data-animal-walk-sprite]')).toBeVisible();
+  }
   await page.clock.runFor(32); expect(await readPoses(page)).toEqual(frozen);
   await page.getByRole('button', { name: '부모 메뉴', exact: true }).click();
   await page.getByRole('button', { name: '계속', exact: true }).click();

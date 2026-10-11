@@ -41,6 +41,7 @@ export function AnimalMotionPreview() {
     for (const { scene } of scenes) observer.observe(scene);
     measure();
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const inspectRig = new URLSearchParams(window.location.search).get('rig') === '1';
     let frame = 0;
     let lastReduced = reduced.matches;
     const draw = () => {
@@ -49,7 +50,7 @@ export function AnimalMotionPreview() {
       if (lastElapsed !== elapsed || lastReduced !== reduced.matches) {
         for (const { scene, id, render, ground, scale } of scenes) {
           const pose = animalPose(id, elapsed, !reduced.matches);
-          render(pose);
+          render(pose, !inspectRig && !reduced.matches ? elapsed : undefined);
           ground.style.transform = `translate3d(${-pose.ground * scale % 48}px, 0, 0)`;
           scene.dataset.motionTime = elapsed.toFixed(3);
           scene.dataset.groundDistance = (pose.ground * scale).toFixed(5);

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "dog",
+    "frames": 359,
+    "averageMs": 16.711977715877435,
+    "p95Ms": 16.799999999999272,
+    "over33ms": 0,
+    "taskSeconds": 2.8408689999999996,
+    "scriptSeconds": 0.753684
+  },
+  {
+    "id": "cat",
+    "frames": 359,
+    "averageMs": 16.712534818941506,
+    "p95Ms": 16.700000000000728,
+    "over33ms": 0,
+    "taskSeconds": 3.0970619999999998,
+    "scriptSeconds": 0.795097
+  }
+]

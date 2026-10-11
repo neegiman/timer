@@ -159,11 +159,11 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
       if (animalId) {
         const animal = pose.phase === 'SETTLE' ? settleAnimalPose(animalId, gait, pose.actionElapsedMs, reduced)
           : animalActionPose(animalId, pose.characterAction, animationTime, reduced);
-        renderAnimal?.(animal);
+        renderAnimal?.(animal, walking && !reduced ? gait : undefined);
         // Reuse the exact main pose during travel; the miniature rests at the
         // endpoint while the main character crosses and celebrates.
         const miniature = miniatureAction === 'walk' && walking ? animal : animalActionPose(animalId, miniatureAction, gait, reduced);
-        renderProgressAnimal?.(miniature);
+        renderProgressAnimal?.(miniature, miniatureAction === 'walk' && !reduced ? gait : undefined);
       }
       const prince = characterId === 'prince' ? (pose.phase === 'SETTLE' ? settlePaintedPrincePose(gait, pose.actionElapsedMs, reduced)
         : paintedPrincePose(pose.characterAction, animationTime, reduced)) : null;
