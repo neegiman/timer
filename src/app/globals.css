@@ -104,9 +104,10 @@ h1:focus { outline: none; }
 .seasonal-atmosphere { position: absolute; z-index: 2; inset: 0; pointer-events: none; overflow: hidden; }
 .scenery-visitor { position: absolute; top: 0; left: 0; width: clamp(40px, 12vw, 72px); opacity: 0; will-change: transform; }
 .scenery-visitor[data-event="birds"] { width: clamp(58px, 16vw, 100px); }
-.scenery-visitor[data-event="shooting-star"] { width: clamp(100px, 28vw, 180px); filter: drop-shadow(0 0 4px #ffe9b777); }
+.scenery-visitor[data-event="shooting-star"] { width: clamp(24px, 5.5vw, 36px); }
 .scenery-visitor[data-event="ufo"] { width: clamp(76px, 22vw, 128px); }
-.scenery-visitor svg { display: none; width: 100%; height: auto; overflow: visible; }
+.scenery-visitor > [data-visitor-art] { display: none; width: 100%; height: auto; overflow: visible; }
+.meteor-glimmer img { display: block; width: 100%; height: auto; user-select: none; }
 .scenery-visitor[data-event="butterfly"] [data-visitor-art="butterfly"],
 .scenery-visitor[data-event="dragonfly"] [data-visitor-art="dragonfly"],
 .scenery-visitor[data-event="birds"] [data-visitor-art="birds"],

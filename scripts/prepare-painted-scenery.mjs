@@ -48,4 +48,8 @@ for (const season of Object.keys(road)) {
   manifest[season] = entry;
 }
 await writeFile('src/lib/paintedScenery.json', JSON.stringify(manifest, null, 2) + '\n');
-console.log('Prepared 20 painted scenery assets with matching repeat edges.');
+await sharp('docs/background-design/meteor-glimmer-v1/source.png').trim({ threshold: 3 }).resize(112, 112, { fit: 'contain', background: '#00000000' })
+  .extend({ top: 8, bottom: 8, left: 8, right: 8, background: '#00000000' })
+  .webp({ lossless: true, effort: 6 })
+  .toFile(path.join(output, 'painted-glimmer-v1.webp'));
+console.log('Prepared 20 painted scenery assets with matching repeat edges and one transparent glimmer.');

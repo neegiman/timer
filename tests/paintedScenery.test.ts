@@ -25,3 +25,18 @@ test('all seasonal paintings decode and join seamlessly at both sides of each re
     assert.ok(bytes < 4_000_000, `${season} exceeds the complete day/night scenery budget`);
   }
 });
+
+test('the painted sky glimmer keeps soft alpha edges and fits a tiny eager-loaded asset budget', async () => {
+  const file = 'public/images/scenery-v1/painted-glimmer-v1.webp';
+  const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  assert.equal(info.width, 128); assert.equal(info.height, 128);
+  let soft = 0, visible = 0;
+  for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
+    const alpha: number = data[(y * info.width + x) * 4 + 3];
+    if (x === 0 || y === 0 || x === info.width - 1 || y === info.height - 1) assert.equal(alpha, 0, 'Glimmer must fade into transparent sky');
+    if (alpha > 0 && alpha < 255) soft++;
+    if (alpha > 32) visible++;
+  }
+  assert.ok(soft > 200 && visible > 100, 'Need painted glow and a visible core');
+  assert.ok((await stat(file)).size < 40_000, 'Glimmer should not delay a brief flash');
+});

@@ -19,6 +19,7 @@ assert.ok(!preview.includes('data-animal-scene="bear"'), 'Removed bear still app
 assert.ok(preview.includes('https://neegiman.github.io/timer/animal-preview/'), 'Animal preview canonical mismatch');
 const files = await filesIn(root);
 const scenery = JSON.parse(await readFile('src/lib/paintedScenery.json', 'utf8'));
+assert.ok((await stat(path.join(root, 'images/scenery-v1/painted-glimmer-v1.webp'))).size > 500, 'Missing painted sky glimmer');
 for (const season of Object.values(scenery)) for (const asset of Object.values(season)) {
   assert.ok((await stat(path.join(root, asset.src))).size > 1000, `Missing painted scenery ${asset.src}`);
 }

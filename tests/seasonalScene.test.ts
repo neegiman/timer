@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { isSeasonMode, koreanSeason, SEASONS } from '../src/lib/seasons';
 import { journeyNotice, noticeInterval } from '../src/lib/journeyNotice';
-import { sceneryEvent, sceneryParticle } from '../src/lib/sceneryEvents';
+import { METEOR_GLIMMER_MS, meteorGlimmerPose, sceneryEvent, sceneryParticle } from '../src/lib/sceneryEvents';
 
 test('Korean seasons cover all months and switch at midnight KST, independent of device timezone', () => {
   const seasons = ['winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'];
@@ -55,13 +55,13 @@ test('seasonal visitors alternate with quiet gaps and use different daytime and 
   assert.equal(sceneryEvent(34_000, 'summer', 'night').kind, 'fireflies');
   for (const season of Object.keys(SEASONS) as (keyof typeof SEASONS)[]) for (const theme of ['day', 'night'] as const) {
     for (const time of [0, 9000, 17_000, 25_000, 39_000, 47_999]) assert.equal(sceneryEvent(time, season, theme).opacity, 0);
-    const time = theme === 'night' ? 11_200 : 13_000;
+    const time = theme === 'night' ? 10_120 : 13_000;
     assert.equal(sceneryEvent(time, season, theme).opacity, 1);
     assert.equal(sceneryEvent(time, season, theme).kind, theme === 'night' ? 'shooting-star' : 'birds');
     assert.deepEqual(sceneryEvent(time, season, theme), sceneryEvent(time, season, theme));
     assert.notEqual(sceneryEvent(time, season, theme).kind, sceneryEvent(34_000, season, theme).kind);
     if (theme === 'night') {
-      assert.equal(sceneryEvent(12_600, season, theme).opacity, 0);
+      assert.equal(sceneryEvent(10_800, season, theme).opacity, 0);
       assert.equal(sceneryEvent(time + 48_000, season, theme).kind, 'shooting-star');
       assert.equal(sceneryEvent(time + 48_000, season, theme).opacity, 1);
     }
@@ -81,9 +81,28 @@ test('rocket visits use a fading UFO and comet instead of animals in every seaso
     assert.equal(sceneryEvent(17_800, season, theme, true).kind, 'ufo');
     assert.ok(sceneryEvent(17_800, season, theme, true).opacity < .1);
     assert.equal(sceneryEvent(18_000, season, theme, true).opacity, 0);
-    assert.equal(sceneryEvent(31_200, season, theme, true).kind, 'shooting-star');
-    assert.equal(sceneryEvent(31_200, season, theme, true).opacity, 1);
+    assert.equal(sceneryEvent(30_120, season, theme, true).kind, 'shooting-star');
+    assert.equal(sceneryEvent(30_120, season, theme, true).opacity, 1);
+    assert.equal(sceneryEvent(30_800, season, theme, true).opacity, 0);
     assert.equal(sceneryEvent(61_000, season, theme, true).kind, 'ufo');
+  }
+});
+
+test('painted sky glimmers bloom briefly, fade and drift less than one small sprite width', () => {
+  assert.equal(METEOR_GLIMMER_MS, 800);
+  const at = (time: number) => sceneryEvent(10_000 + time, 'winter', 'night').opacity;
+  assert.equal(at(-1), 0); assert.equal(at(0), 0); assert.equal(at(120), 1);
+  assert.ok(at(400) > at(600)); assert.ok(at(600) > at(720));
+  assert.ok(at(720) < .1); assert.equal(at(800), 0); assert.equal(at(5000), 0);
+  for (const [width, height] of [[288, 300], [358, 380], [840, 460]]) for (let cycle = 0; cycle < 3; cycle++) {
+    const start = meteorGlimmerPose(0, width, height, cycle), end = meteorGlimmerPose(1, width, height, cycle);
+    assert.ok(start.x - end.x <= 22 && start.x > end.x);
+    assert.ok(Math.abs(end.y - start.y - 5) < 1e-9);
+    for (const progress of [0, .15, .5, .9, 1]) {
+      const pose = meteorGlimmerPose(progress, width, height, cycle);
+      assert.ok(pose.scale >= .65 && pose.scale <= 1.1);
+      assert.ok(pose.x >= 0 && pose.x + 40 < width && pose.y + 40 < height * .4);
+    }
   }
 });
 

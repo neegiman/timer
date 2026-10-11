@@ -129,7 +129,7 @@ test('parents can preview all eight backgrounds, persist a choice and return to 
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 320, height: 740 });
   await page.clock.install({ time: new Date('2026-10-15T12:00:00+09:00') });
-  await start(page); await seek(page, 11_200); await menu(page);
+  await start(page); await seek(page, 10_120); await menu(page);
   await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
   const scene = page.locator('.journey-scene'), visitor = page.locator('[data-scenery-visitor]');
   const remaining = await page.getByTestId('countdown').textContent();
@@ -149,7 +149,8 @@ test('parents can preview all eight backgrounds, persist a choice and return to 
       await expect(page.locator('.character-wrapper')).toHaveAttribute('style', pose!);
       await expect(page.locator('.ground-layer')).toHaveAttribute('data-scroll-offset', ground!);
       await expect(visitor).toHaveAttribute('data-event', theme === 'day' ? 'birds' : 'shooting-star');
-      await expect(visitor).toHaveCSS('opacity', '1');
+      if (theme === 'night') await expect(visitor).toHaveCSS('opacity', '1');
+      else expect(Number(await visitor.evaluate((element) => getComputedStyle(element).opacity))).toBeGreaterThan(0);
       await expect(visitor.locator(theme === 'day' ? `[data-bird-kind="${bird}"]` : '[data-visitor-art="shooting-star"]')).toBeVisible();
       if (testInfo.project.name === 'chromium') {
         await page.waitForTimeout(1250);
@@ -194,25 +195,32 @@ test('audio recovery button has space below the journey in portrait and expanded
   }
 });
 
-test('night meteors cross the sky, fade, pause in place and stop with the finished journey', async ({ page }) => {
+test('night glimmers flash briefly, fade, pause in place and stop with the finished journey', async ({ page }, testInfo) => {
   await page.clock.install({ time: new Date('2026-10-15T21:00:00+09:00') });
-  await start(page); await seek(page, 10_700);
+  await start(page); await seek(page, 10_120);
   const visitor = page.locator('[data-scenery-visitor]');
   await expect(visitor).toHaveAttribute('data-event', 'shooting-star'); await expect(visitor).toHaveCSS('opacity', '1');
   await expect(visitor.locator('[data-visitor-art="birds"]')).toBeHidden();
+  const painting = visitor.locator('.meteor-glimmer img');
+  await expect(painting).toHaveAttribute('src', '/timer/images/scenery-v1/painted-glimmer-v1.webp');
+  await expect.poll(() => painting.evaluate((element) => (element as HTMLImageElement).complete && (element as HTMLImageElement).naturalWidth > 0)).toBe(true);
+  const bounds = await visitor.boundingBox(); expect(bounds!.width).toBeLessThanOrEqual(40);
+  if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/meteor-glimmer-peak.png', fullPage: true });
   const position = () => visitor.evaluate((element) => {
     const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
     return { x: matrix.m41, y: matrix.m42 };
   });
-  const first = await position(); await page.clock.runFor(350); const next = await position();
+  const first = await position(); await page.clock.runFor(160); const next = await position();
   expect(next.x).toBeLessThan(first.x); expect(next.y).toBeGreaterThan(first.y);
+  expect(first.x - next.x).toBeLessThan(22);
   await menu(page); await page.getByRole('button', { name: '일시정지', exact: true }).click(); await page.clock.runFor(32);
   const frozen = await visitor.getAttribute('style'); await page.clock.fastForward(2000);
   await expect(visitor).toHaveAttribute('style', frozen!);
   await menu(page); await page.getByRole('button', { name: '계속', exact: true }).click(); await page.clock.runFor(250);
   expect(await visitor.getAttribute('style')).not.toBe(frozen);
-  await seek(page, 12_600); await expect(visitor).toHaveCSS('opacity', '0');
-  await seek(page, 59_200); await expect(visitor).toHaveAttribute('data-event', 'shooting-star'); await expect(visitor).toHaveCSS('opacity', '1');
+  await seek(page, 10_800); await expect(visitor).toHaveCSS('opacity', '0');
+  if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/meteor-glimmer-gone.png', fullPage: true });
+  await seek(page, 58_120); await expect(visitor).toHaveAttribute('data-event', 'shooting-star'); await expect(visitor).toHaveCSS('opacity', '1');
   await seek(page, 600_000); await page.clock.fastForward(6000);
   const stopped = await visitor.getAttribute('style'); await page.clock.runFor(2000);
   await expect(visitor).toHaveAttribute('style', stopped!);

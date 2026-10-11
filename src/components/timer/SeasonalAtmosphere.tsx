@@ -2,8 +2,10 @@ import { memo } from 'react';
 import type { Season } from '@/lib/seasons';
 import { SeasonalBird } from './SeasonalBird';
 import { UfoVisitor } from './RocketSky';
+import Image from 'next/image';
+import { assetPath } from '@/lib/assetPath';
 
-/** Small code-native illustrations; the shared journey frame clock animates their wrappers. */
+/** Painted glimmer and small native visitors share the journey's paused frame clock. */
 export const SeasonalAtmosphere = memo(function SeasonalAtmosphere({ season, space = false }: { season: Season; space?: boolean }) {
   return <div className="seasonal-atmosphere" aria-hidden="true">
     <div className="scenery-visitor" data-scenery-visitor data-event="none">
@@ -26,12 +28,9 @@ export const SeasonalAtmosphere = memo(function SeasonalAtmosphere({ season, spa
       <svg data-visitor-art="fireflies" viewBox="0 0 120 90">
         {[[22, 44], [49, 24], [72, 53], [94, 30]].map(([x, y]) => <g key={x}><circle cx={x} cy={y} r="9" fill="#f9e6a0" opacity=".12" /><circle cx={x} cy={y} r="3" fill="#f9e6a0" /><path d={`m${x - 5} ${y - 5} 4 2m3 0 4-2`} stroke="#c6d9b6" strokeWidth="2" strokeLinecap="round" /></g>)}
       </svg>
-      <svg data-visitor-art="shooting-star" viewBox="0 0 120 90">
-        <defs><linearGradient id="meteor-trail" x1="23" y1="61" x2="109" y2="10" gradientUnits="userSpaceOnUse"><stop stopColor="#fff1c7" /><stop offset="1" stopColor="#dbeaff" stopOpacity="0" /></linearGradient></defs>
-        <path d="M23 61 109 10 43 53Z" fill="url(#meteor-trail)" opacity=".6" />
-        <path d="m23 61 86-51m-81 55 61-35" fill="none" stroke="url(#meteor-trail)" strokeWidth="1.8" strokeLinecap="round" />
-        <path d="m23 53 2 6 7 2-7 2-2 7-2-7-7-2 7-2Z" fill="#fff8df" /><circle cx="23" cy="61" r="2" fill="#fffdf3" />
-      </svg>
+      <div className="meteor-glimmer" data-visitor-art="shooting-star">
+        <Image src={assetPath('/images/scenery-v1/painted-glimmer-v1.webp')} alt="" width={128} height={128} loading="eager" draggable={false} />
+      </div>
     </div>
     {Array.from({ length: 6 }, (_, index) => <span key={index} className="scenery-particle" data-scenery-particle>
       <svg viewBox="0 0 24 24">
