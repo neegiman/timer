@@ -1,5 +1,3 @@
-import { clamp } from './journey';
-
 interface DestinationArt {
   width: number; height: number;
   anchor: { x: number; y: number };
@@ -15,14 +13,8 @@ export function destinationLayout(art: DestinationArt, width: number, height: nu
   const bottom = art.height - art.anchor.y;
   const scale = Math.max(lineX / art.anchor.x, (width - lineX) / (art.width - art.anchor.x),
     y / art.anchor.y, bottom > 0 ? (visibleHeight - y) / bottom : 0);
-  // Start with the actual painted left edge at the viewport's right edge.
+  // Entry occurs when the actual painted left edge reaches the viewport's right edge.
   // The much larger transparent bitmap must not be used as the entry boundary.
   const entryX = width + (art.anchor.x - art.paintBounds.x) * scale;
   return { y, width: art.width * scale, height: art.height * scale, left: -art.anchor.x * scale, top: -art.anchor.y * scale, entryX };
-}
-
-/** One full-size, fully opaque landmark enters from the right as the child
- * walks. Only its X position changes; it stops at the crossing when time is up. */
-export function destinationApproach(progress: number, entryX: number, lineX: number) {
-  return { offsetX: Math.max(0, entryX - lineX) * (1 - clamp(progress)) };
 }

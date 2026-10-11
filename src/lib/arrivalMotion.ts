@@ -36,10 +36,17 @@ export function arrivalMotion(elapsed: number, total: number, finishElapsed: num
   const u = clamp(finishElapsed / CROSSING_DURATION_MS);
   const tangent = Math.min(speed * CROSSING_DURATION_MS, 2 * runout);
   const crossing = tangent * u + (3 * runout - 2 * tangent) * u ** 2 + (tangent - 2 * runout) * u ** 3;
+  const backgroundDistance = Math.max(0, baseGait * speed - approach);
+  // A single landmark is fixed in world space at the timer's end position.
+  // Subtract the unwrapped camera distance, never a repeating walk phase or
+  // a percentage of viewport width. Its gap closes exactly when time is up.
+  const finishWorldX = geometry.startX + locomotionTime(total, total + MOTION_RAMP_MS) * speed;
+  const destinationX = Math.max(geometry.lineX, finishWorldX - backgroundDistance);
   return {
     x: geometry.startX + approach + crossing,
     gait: baseGait + crossing / speed,
-    backgroundDistance: Math.max(0, baseGait * speed - approach),
+    backgroundDistance,
+    destinationX,
     crossing,
   };
 }

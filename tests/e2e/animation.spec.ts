@@ -38,7 +38,7 @@ test('fixed walking, one-time 50/90 messages, approaching destination and ordere
   const fixedX = await main.evaluate((element) => element.getBoundingClientRect().x);
   await seek(page, 299_900);
   await expect(message).toHaveAttribute('data-message-id', /^bath-after-beginning-/);
-  await expect(page.getByTestId('journey-goal').locator('.destination-paint')).toBeVisible();
+  expect((await page.getByTestId('journey-goal').boundingBox())!.x).toBeGreaterThan((await scene.boundingBox())!.x + (await scene.boundingBox())!.width);
   await seek(page, 300_000);
   await expect(message).toHaveAttribute('data-message-id', /^bath-after-halfway-/);
   await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
@@ -49,7 +49,7 @@ test('fixed walking, one-time 50/90 messages, approaching destination and ordere
   await expect(message).toHaveAttribute('data-visible', 'true');
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'artifacts/motion-midpoint.png', fullPage: true });
   await seek(page, 539_900);
-  await expect(page.getByTestId('journey-goal').locator('.destination-paint')).toBeVisible();
+  expect((await page.getByTestId('journey-goal').boundingBox())!.x).toBeGreaterThan((await scene.boundingBox())!.x + (await scene.boundingBox())!.width);
   await seek(page, 540_000);
   await expect(message).toHaveAttribute('data-message-id', /^bath-after-near-/);
   await expect(page.getByTestId('journey-goal')).toHaveCount(1);
@@ -144,7 +144,7 @@ test('pause freezes joints, scroll, miniature, destination and time through refr
   expect(Number(resumed.gait) - Number(frozen.gait)).toBeLessThan(500);
   expect(resumed.joints).not.toEqual(frozen.joints);
   expect(resumed.layers).not.toEqual(frozen.layers);
-  expect(Math.abs(resumed.goal.x - frozen.goal.x)).toBeLessThan(.1);
+  expect(Math.abs(resumed.goal.x - frozen.goal.x)).toBeLessThan(2);
   expect(resumed.goal.x).toBeLessThanOrEqual(frozen.goal.x);
   expect(resumed.goal.y).toBe(frozen.goal.y);
   expect(await page.evaluate(() => (window as unknown as { wrongResumeStage: boolean }).wrongResumeStage)).toBe(false);

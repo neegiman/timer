@@ -118,7 +118,7 @@ for (const display of ['window', 'expanded'] as const) {
 }
 
 for (const [minutes, width, height] of [[1, 320, 740], [10, 390, 844], [120, 1440, 900]]) {
-  test(`destination approaches from departure until zero: ${minutes}min ${width}px`, async ({ page }, testInfo) => {
+  test(`timed destination closes the remaining distance until zero: ${minutes}min ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height });
     const session = await start(page, 'window', false, '왕자', minutes);
     let fixed: Awaited<ReturnType<typeof landmarks>> | undefined;
@@ -128,13 +128,12 @@ for (const [minutes, width, height] of [[1, 320, 740], [10, 390, 844], [120, 144
       await seek(page, session.startTimestamp + minutes * 60_000 * progress);
       const actor = (await page.locator('.character-wrapper').boundingBox())!;
       const goal = (await page.getByTestId('journey-goal').boundingBox())!;
-      await expect(page.locator('.destination-paint')).toBeVisible();
       await expect(page.getByTestId('journey-goal')).toHaveCSS('opacity', '1');
       const paint = (await page.locator('.destination-paint').boundingBox())!;
       if (paintWidth !== undefined) expect(paint.width).toBeCloseTo(paintWidth, 2);
       else paintWidth = paint.width;
       const gap = goal.x - actor.x;
-      expect(gap, `No visible approach at ${progress * 100}%`).toBeLessThan(previousGap - 1);
+      expect(gap, `Remaining distance did not decrease at ${progress * 100}%`).toBeLessThan(previousGap - 1);
       expect(gap).toBeGreaterThan(0);
       if (fixed) await expectFixed(page, fixed);
       else fixed = await landmarks(page, true);

@@ -17,7 +17,7 @@ for (const character of ['토끼', '자동차', '기차', '로켓']) {
     await page.getByRole('button', { name: '출발!', exact: true }).click();
     await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
     const deadline = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).targetTimestamp);
-    await page.clock.setSystemTime(deadline - 30_000);
+    await page.clock.setSystemTime(deadline - 2000);
     await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
     await expect(page.locator('.destination-paint')).toHaveCount(1);
     await page.clock.runFor(128);

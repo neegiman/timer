@@ -2,31 +2,32 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
 import manifest from '../src/lib/destinationScenery.json';
-import { destinationApproach, destinationLayout } from '../src/lib/destinationBackground';
-import { finishGeometry } from '../src/lib/arrivalMotion';
+import { destinationLayout } from '../src/lib/destinationBackground';
+import { arrivalMotion, finishGeometry } from '../src/lib/arrivalMotion';
 
 const seasons = ['spring', 'summer', 'autumn', 'winter'] as const;
 const assets = [...seasons.flatMap((season) => (['day', 'night'] as const).map((theme) => manifest[season][theme])), manifest.space];
 
-test('every destination enters at the right painted edge, translates continuously and stops at zero', () => {
+test('every full-size destination enters at the right painted edge before its timed arrival', () => {
   for (const art of assets) for (const width of [288, 358, 720, 1100]) {
-    const lineX = finishGeometry(width, 100).lineX;
+    const geometry = finishGeometry(width, 100), lineX = geometry.lineX;
     const layout = destinationLayout(art, width, 380, lineX, 100);
     const paintedLeft = layout.left + art.paintBounds.x * layout.width / art.width;
-    let previous = destinationApproach(0, layout.entryX, lineX);
-    assert.ok(Math.abs(lineX + previous.offsetX + paintedLeft - width) < 1e-8, `${art.src}: entry must be at the far right edge`);
-    for (let i = 1; i <= 1000; i++) {
-      const next = destinationApproach(i / 1000, layout.entryX, lineX);
-      assert.ok(next.offsetX < previous.offsetX);
-      assert.ok(previous.offsetX - next.offsetX < width * .002);
-      previous = next;
+    for (const total of [60_000, 600_000, 7_200_000]) {
+      let low = 0, high = total;
+      for (let i = 0; i < 60; i++) {
+        const time = (low + high) / 2;
+        if (arrivalMotion(time, total, 0, geometry, .024).destinationX > layout.entryX) low = time;
+        else high = time;
+      }
+      const entry = arrivalMotion(high, total, 0, geometry, .024);
+      assert.ok(Math.abs(entry.destinationX + paintedLeft - width) < 1e-7);
+      assert.ok(high > 0 && high < total);
+      assert.ok(total - high < width / .024 + 2000, 'Entry must be tied to the remaining walking distance');
+      if (total >= 600_000) assert.ok(high > total * .9, 'A long timer must not keep the landmark beside the child all journey');
+      assert.ok(arrivalMotion(high + 100, total, 0, geometry, .024).destinationX + paintedLeft < width);
+      assert.ok(Math.abs(arrivalMotion(total, total, 0, geometry, .024).destinationX - lineX) < 1e-7);
     }
-    assert.deepEqual(previous, { offsetX: 0 });
-    assert.deepEqual(destinationApproach(2, layout.entryX, lineX), previous);
-    assert.deepEqual(destinationApproach(-1, layout.entryX, lineX), destinationApproach(0, layout.entryX, lineX));
-    const before = destinationApproach(.89999, layout.entryX, lineX);
-    const after = destinationApproach(.90001, layout.entryX, lineX);
-    assert.ok(before.offsetX - after.offsetX < .1, '90% must not reveal or teleport the destination');
   }
 });
 

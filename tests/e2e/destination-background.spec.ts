@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
 import manifest from '../../src/lib/destinationScenery.json';
 import { destinationLandmarks } from './destination';
-import { destinationApproach, destinationLayout } from '../../src/lib/destinationBackground';
+import { arrivalMotion, finishGeometry } from '../../src/lib/arrivalMotion';
+import { animalProfiles } from '../../src/lib/animalMotion';
+import { groundDistance } from '../../src/lib/journey';
+import { motionProfile } from '../../src/lib/motionProfiles';
 
 for (const character of ['토끼', '로켓']) {
   test(`arrival painting stays grounded and pauses in every background: ${character}`, async ({ page }, testInfo) => {
@@ -18,7 +21,7 @@ for (const character of ['토끼', '로켓']) {
     await page.getByRole('button', { name: '출발!', exact: true }).click();
     await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
     const deadline = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!).targetTimestamp);
-    await page.clock.setSystemTime(deadline - 20_000);
+    await page.clock.setSystemTime(deadline - 5000);
     await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
     await expect(page.locator('.destination-paint')).toHaveCount(1);
     await page.clock.runFor(128);
@@ -58,10 +61,10 @@ for (const character of ['토끼', '로켓']) {
         const scene = points.find((point) => point.selector === '.journey-scene')!;
         const point = points.find((point) => point.selector === 'painted landmark')!;
         const progress = Number(await page.locator('.progress-marker').getAttribute('data-progress'));
-        const layout = destinationLayout(art, scene.width, scene.height, pose.finish, pose.width);
-        const approach = destinationApproach(progress, layout.entryX, pose.finish);
+        const nativeSpeed = character === '토끼' ? animalProfiles.rabbit.travel / animalProfiles.rabbit.cycleMs : groundDistance(1, motionProfile('rocket').cycleMs);
+        const motion = arrivalMotion(progress * 600_000, 600_000, 0, finishGeometry(scene.width, pose.width), nativeSpeed * pose.width / 160);
         // Scene borders and the CSS layout grid can round to fractional pixels.
-        expect(Math.abs(point.x - scene.x - pose.finish - approach.offsetX)).toBeLessThan(1);
+        expect(Math.abs(point.x - scene.x - motion.destinationX)).toBeLessThan(1);
         const contactY = scene.height * .78 - (character === '로켓' ? pose.width * 105 / 160 : 0);
         expect(Math.abs(point.y - scene.y - contactY)).toBeLessThan(1);
         const frozen = points;

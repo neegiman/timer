@@ -69,3 +69,30 @@ test('approach and crossing share the foot clock and never cross before zero', (
     assert.ok(geometry.stopX - before.x < .0001, 'Braking must finish with zero velocity');
   }
 });
+
+test('one world-fixed destination closes with timestamp time, not the repeating walk or viewport percentage', () => {
+  for (const total of [60_000, 600_000, 7_200_000]) for (const [width, actorWidth] of [[288, 102.4], [358, 124.8], [840, 168]]) {
+    const geometry = finishGeometry(width, actorWidth);
+    for (const nativeSpeed of [.018, .024, .0288, .05, .07]) {
+      const speed = nativeSpeed * actorWidth / 160;
+      let previous = arrivalMotion(0, total, 0, geometry, speed);
+      const worldX = previous.destinationX + previous.backgroundDistance;
+      for (let i = 1; i <= 1200; i++) {
+        const time = total * i / 1200, motion = arrivalMotion(time, total, 0, geometry, speed);
+        assert.ok(Math.abs(motion.destinationX + motion.backgroundDistance - worldX) < 1e-7, 'The destination slides along the ground');
+        assert.ok(motion.destinationX <= previous.destinationX + 1e-7, 'The destination recedes');
+        assert.ok(motion.destinationX - motion.x < previous.destinationX - previous.x, 'The remaining distance increases');
+        if (i < 1200) assert.ok(motion.destinationX > motion.x, 'Arrives before the timer ends');
+        // The destination has the exact ground velocity, independent of body/foot poses.
+        assert.ok(Math.abs(motion.destinationX - previous.destinationX + motion.backgroundDistance - previous.backgroundDistance) < 1e-7);
+        previous = motion;
+      }
+      assert.ok(Math.abs(previous.destinationX - previous.x) < 1e-7);
+      assert.ok(Math.abs(previous.destinationX - geometry.lineX) < 1e-7);
+      for (const finish of [1, 800, CROSSING_DURATION_MS, CROSSING_DURATION_MS + 5000]) {
+        const arrived = arrivalMotion(total, total, finish, geometry, speed);
+        assert.equal(arrived.destinationX, previous.destinationX, 'The destination must stay after crossing');
+      }
+    }
+  }
+});

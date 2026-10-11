@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { finishPhaseStart } from '../../src/lib/animation';
 import { destinationLandmarks } from './destination';
+import { animalProfiles } from '../../src/lib/animalMotion';
 
 async function start(page: Page) {
   await page.getByRole('button', { name: '씻기', exact: true }).click();
@@ -154,7 +155,7 @@ test('fixed character, separate progress and destination stay aligned after resi
     for (const [width, height] of [[320, 740], [390, 844], [844, 390], [1440, 900]]) {
       await page.setViewportSize({ width, height });
       await page.clock.runFor(64);
-      const readGeometry = () => page.evaluate(() => {
+      const readGeometry = () => page.evaluate((nativeSpeed) => {
         const scene = document.querySelector<HTMLElement>('.journey-scene')!;
         const actor = document.querySelector<HTMLElement>('.character-wrapper')!;
         const box = actor.getBoundingClientRect();
@@ -163,13 +164,13 @@ test('fixed character, separate progress and destination stay aligned after resi
         const track = document.querySelector('.progress-track')!.getBoundingClientRect();
         const marker = document.querySelector('.progress-marker')!.getBoundingClientRect();
         const goal = document.querySelector<HTMLElement>('.destination-background');
-        const entryX = Number.parseFloat(getComputedStyle(scene).getPropertyValue('--destination-entryX'));
-        const goalX = Number(actor.dataset.finishLineX) + Math.max(0, entryX - Number(actor.dataset.finishLineX)) * (1 - progress);
+        const speed = nativeSpeed * Number.parseFloat(getComputedStyle(actor).width) / 160;
+        const goalX = box.x - scenery.x + (1 - progress) * 600_000 * speed;
         return { error: Math.abs(box.y - scenery.y - scenery.height * .78),
           actorX: box.x - scenery.x, startX: scenery.width * .42, lineX: Number(actor.dataset.finishLineX),
           progress, markerError: Math.abs(marker.x - track.x - track.width * progress),
           goalError: goal ? Math.hypot(goal.getBoundingClientRect().x - scenery.x - goalX, goal.getBoundingClientRect().y - scenery.y - scenery.height * .78) : null };
-      });
+      }, animalProfiles.rabbit.travel / animalProfiles.rabbit.cycleMs);
       await expect.poll(async () => { await page.clock.runFor(32); return (await readGeometry()).error; }, { message: `actor leaves its anchor at ${width}px` }).toBeLessThan(1);
       const geometry = await readGeometry();
       if (elapsed < 540_000) expect(geometry.actorX).toBeCloseTo(geometry.startX, 1);
