@@ -1,8 +1,9 @@
-import { clamp, smoothstep } from './journey';
+import { clamp } from './journey';
 
 interface DestinationArt {
   width: number; height: number;
   anchor: { x: number; y: number };
+  paintBounds: { x: number };
   kind: string;
 }
 
@@ -14,14 +15,14 @@ export function destinationLayout(art: DestinationArt, width: number, height: nu
   const bottom = art.height - art.anchor.y;
   const scale = Math.max(lineX / art.anchor.x, (width - lineX) / (art.width - art.anchor.x),
     y / art.anchor.y, bottom > 0 ? (visibleHeight - y) / bottom : 0);
-  return { y, width: art.width * scale, height: art.height * scale, left: -art.anchor.x * scale, top: -art.anchor.y * scale };
+  // Start with the actual painted left edge at the viewport's right edge.
+  // The much larger transparent bitmap must not be used as the entry boundary.
+  const entryX = width + (art.anchor.x - art.paintBounds.x) * scale;
+  return { y, width: art.width * scale, height: art.height * scale, left: -art.anchor.x * scale, top: -art.anchor.y * scale, entryX };
 }
 
-/** One non-repeating landmark, visible from departure. Perspective changes
- * continuously with elapsed time, then freezes at the exact crossing position.
- * Scaling around the post base keeps it planted rather than floating. */
-export function destinationApproach(progress: number, width: number, lineX: number) {
-  const approach = smoothstep(clamp(progress));
-  const distance = Math.max(0, width * .88 - lineX);
-  return { offsetX: distance * (1 - approach), scale: .34 + .66 * approach };
+/** One full-size, fully opaque landmark enters from the right as the child
+ * walks. Only its X position changes; it stops at the crossing when time is up. */
+export function destinationApproach(progress: number, entryX: number, lineX: number) {
+  return { offsetX: Math.max(0, entryX - lineX) * (1 - clamp(progress)) };
 }

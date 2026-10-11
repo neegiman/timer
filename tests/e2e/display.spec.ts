@@ -30,7 +30,10 @@ async function assertInsideTrack(page: Page) {
   if (await page.locator('.destination-paint').count()) {
     const endpoint = (await page.evaluate(destinationLandmarks, {})).find((point) => point.selector === 'painted landmark')!;
     expect(endpoint.x).toBeGreaterThanOrEqual(scene!.x);
-    expect(endpoint.x).toBeLessThanOrEqual(scene!.x + scene!.width);
+    // The landmark may still be partly beyond the right edge during entry.
+    if (Number(await page.locator('.progress-marker').getAttribute('data-progress')) === 1) {
+      expect(endpoint.x).toBeLessThanOrEqual(scene!.x + scene!.width);
+    }
     expect(endpoint.y).toBeLessThanOrEqual(scene!.y + scene!.height);
   }
   const sizes = await page.evaluate(() => ({ viewport: innerWidth, page: document.documentElement.scrollWidth, shell: document.querySelector('.app-shell')!.scrollWidth }));
@@ -160,8 +163,8 @@ test('fixed character, separate progress and destination stay aligned after resi
         const track = document.querySelector('.progress-track')!.getBoundingClientRect();
         const marker = document.querySelector('.progress-marker')!.getBoundingClientRect();
         const goal = document.querySelector<HTMLElement>('.destination-background');
-        const approach = progress * progress * (3 - 2 * progress);
-        const goalX = Number(actor.dataset.finishLineX) + Math.max(0, scenery.width * .88 - Number(actor.dataset.finishLineX)) * (1 - approach);
+        const entryX = Number.parseFloat(getComputedStyle(scene).getPropertyValue('--destination-entryX'));
+        const goalX = Number(actor.dataset.finishLineX) + Math.max(0, entryX - Number(actor.dataset.finishLineX)) * (1 - progress);
         return { error: Math.abs(box.y - scenery.y - scenery.height * .78),
           actorX: box.x - scenery.x, startX: scenery.width * .42, lineX: Number(actor.dataset.finishLineX),
           progress, markerError: Math.abs(marker.x - track.x - track.width * progress),

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import manifest from '../../src/lib/destinationScenery.json';
 import { destinationLandmarks } from './destination';
-import { destinationApproach } from '../../src/lib/destinationBackground';
+import { destinationApproach, destinationLayout } from '../../src/lib/destinationBackground';
 
 for (const character of ['토끼', '로켓']) {
   test(`arrival painting stays grounded and pauses in every background: ${character}`, async ({ page }, testInfo) => {
@@ -58,7 +58,8 @@ for (const character of ['토끼', '로켓']) {
         const scene = points.find((point) => point.selector === '.journey-scene')!;
         const point = points.find((point) => point.selector === 'painted landmark')!;
         const progress = Number(await page.locator('.progress-marker').getAttribute('data-progress'));
-        const approach = destinationApproach(progress, scene.width, pose.finish);
+        const layout = destinationLayout(art, scene.width, scene.height, pose.finish, pose.width);
+        const approach = destinationApproach(progress, layout.entryX, pose.finish);
         // Scene borders and the CSS layout grid can round to fractional pixels.
         expect(Math.abs(point.x - scene.x - pose.finish - approach.offsetX)).toBeLessThan(1);
         const contactY = scene.height * .78 - (character === '로켓' ? pose.width * 105 / 160 : 0);

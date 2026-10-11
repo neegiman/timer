@@ -123,7 +123,7 @@ for (const [minutes, width, height] of [[1, 320, 740], [10, 390, 844], [120, 144
     const session = await start(page, 'window', false, '왕자', minutes);
     let fixed: Awaited<ReturnType<typeof landmarks>> | undefined;
     let previousGap = Infinity;
-    let previousPaintWidth = 0;
+    let paintWidth: number | undefined;
     for (const progress of [.01, .25, .5, .75, .9, .92, .94, .96, .98, .99]) {
       await seek(page, session.startTimestamp + minutes * 60_000 * progress);
       const actor = (await page.locator('.character-wrapper').boundingBox())!;
@@ -131,8 +131,8 @@ for (const [minutes, width, height] of [[1, 320, 740], [10, 390, 844], [120, 144
       await expect(page.locator('.destination-paint')).toBeVisible();
       await expect(page.getByTestId('journey-goal')).toHaveCSS('opacity', '1');
       const paint = (await page.locator('.destination-paint').boundingBox())!;
-      expect(paint.width).toBeGreaterThan(previousPaintWidth);
-      previousPaintWidth = paint.width;
+      if (paintWidth !== undefined) expect(paint.width).toBeCloseTo(paintWidth, 2);
+      else paintWidth = paint.width;
       const gap = goal.x - actor.x;
       expect(gap, `No visible approach at ${progress * 100}%`).toBeLessThan(previousGap - 1);
       expect(gap).toBeGreaterThan(0);

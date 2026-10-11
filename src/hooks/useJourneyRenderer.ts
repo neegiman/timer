@@ -91,11 +91,13 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
     element.style.setProperty('--finish-x', `${geometry.lineX}px`);
     element.style.setProperty('--scene-height', `${height}px`);
     const backdrop = characterId === 'rocket' ? destinationArt.space : destinationArt[season][theme];
+    let destinationEntryX = width;
     const sizeDestination = () => {
       // svh-based heights can contain fractional pixels that clientHeight rounds.
       // Keep the painted post base on the exact same 78% ground as CSS scenery.
       const paintedHeight = Number.parseFloat(getComputedStyle(element).height);
       const layout = destinationLayout(backdrop, width, paintedHeight, geometry.lineX, actorWidth);
+      destinationEntryX = layout.entryX;
       for (const [name, value] of Object.entries(layout)) element.style.setProperty(`--destination-${name}`, `${value}px`);
     };
     sizeDestination();
@@ -234,9 +236,8 @@ export function useJourneyRenderer(input: AnimationInput, state: AnimationState,
         particle.style.opacity = String(pose.opacity);
       }
       if (goal.current) {
-        const destination = destinationApproach(pose.position, width, geometry.lineX);
-        goal.current.style.transform = `translate3d(${destination.offsetX}px, 0, 0) scale(${destination.scale})`;
-        goal.current.style.opacity = '1';
+        const destination = destinationApproach(pose.position, destinationEntryX, geometry.lineX);
+        goal.current.style.transform = `translate3d(${destination.offsetX}px, 0, 0)`;
       }
       fill.current?.style.setProperty('clip-path', `inset(0 ${(1 - pose.position) * 100}% 0 0)`);
       marker.current?.style.setProperty('transform', `translate3d(${pose.position * progressWidth}px, 0, 0)`);

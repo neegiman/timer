@@ -8,27 +8,25 @@ import { finishGeometry } from '../src/lib/arrivalMotion';
 const seasons = ['spring', 'summer', 'autumn', 'winter'] as const;
 const assets = [...seasons.flatMap((season) => (['day', 'night'] as const).map((theme) => manifest[season][theme])), manifest.space];
 
-test('destination stays visible in the distance, approaches continuously and stops at zero', () => {
-  for (const width of [288, 358, 720, 1100]) {
+test('every destination enters at the right painted edge, translates continuously and stops at zero', () => {
+  for (const art of assets) for (const width of [288, 358, 720, 1100]) {
     const lineX = finishGeometry(width, 100).lineX;
-    let previous = destinationApproach(0, width, lineX);
-    assert.ok(previous.scale > .3);
-    assert.ok(lineX + previous.offsetX > width * .85);
+    const layout = destinationLayout(art, width, 380, lineX, 100);
+    const paintedLeft = layout.left + art.paintBounds.x * layout.width / art.width;
+    let previous = destinationApproach(0, layout.entryX, lineX);
+    assert.ok(Math.abs(lineX + previous.offsetX + paintedLeft - width) < 1e-8, `${art.src}: entry must be at the far right edge`);
     for (let i = 1; i <= 1000; i++) {
-      const next = destinationApproach(i / 1000, width, lineX);
+      const next = destinationApproach(i / 1000, layout.entryX, lineX);
       assert.ok(next.offsetX < previous.offsetX);
-      assert.ok(next.scale > previous.scale);
-      assert.ok(previous.offsetX - next.offsetX < width * .001);
-      assert.ok(next.scale - previous.scale < .001);
+      assert.ok(previous.offsetX - next.offsetX < width * .002);
       previous = next;
     }
-    assert.deepEqual(previous, { offsetX: 0, scale: 1 });
-    assert.deepEqual(destinationApproach(2, width, lineX), previous);
-    assert.deepEqual(destinationApproach(-1, width, lineX), destinationApproach(0, width, lineX));
-    const before = destinationApproach(.89999, width, lineX);
-    const after = destinationApproach(.90001, width, lineX);
+    assert.deepEqual(previous, { offsetX: 0 });
+    assert.deepEqual(destinationApproach(2, layout.entryX, lineX), previous);
+    assert.deepEqual(destinationApproach(-1, layout.entryX, lineX), destinationApproach(0, layout.entryX, lineX));
+    const before = destinationApproach(.89999, layout.entryX, lineX);
+    const after = destinationApproach(.90001, layout.entryX, lineX);
     assert.ok(before.offsetX - after.offsetX < .1, '90% must not reveal or teleport the destination');
-    assert.ok(after.scale - before.scale < .0001);
   }
 });
 

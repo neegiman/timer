@@ -332,10 +332,10 @@ h1:focus { outline: none; }
 .traveler-body { transform-origin: 50% var(--foot-origin); }
 .sprite-motion:is([data-action="walk"], [data-action="idle"]) { animation: none; }
 .character-shadow { top: calc(var(--foot-origin) - 3px); bottom: auto; height: 7px; }
-/* One transparent arrival painting approaches from the distance. Its post base
-   remains on the ground; surrounding live scenery is never replaced. */
-.destination-background { position: absolute; z-index: 1; left: var(--finish-x, 70%); top: var(--destination-y, 78%); width: 0; height: 0; opacity: 0; transform-origin: 0 0; will-change: transform; pointer-events: none; }
-.destination-paint { position: absolute; left: var(--destination-left); top: var(--destination-top); width: var(--destination-width); height: var(--destination-height); background-size: 100% 100%; background-repeat: no-repeat; pointer-events: none; }
+/* The full-size arrival painting enters through the right edge. Only X moves;
+   no fading or zooming, and the post base stays planted on the ground. */
+.destination-background { position: absolute; z-index: 1; left: var(--finish-x, 70%); top: var(--destination-y, 78%); width: 0; height: 0; opacity: 1; transform: translate3d(100vw, 0, 0); will-change: transform; transition: none; animation: none; pointer-events: none; }
+.destination-paint { position: absolute; left: var(--destination-left); top: var(--destination-top); width: var(--destination-width); height: var(--destination-height); background-size: 100% 100%; background-repeat: no-repeat; opacity: 1; transition: none; animation: none; pointer-events: none; }
 .paused-sign { position: absolute; z-index: 6; top: 18px; left: 50%; transform: translateX(-50%); padding: 10px 18px; border-radius: 18px; background: #fffaf0ed; color: var(--green); font-size: 24px; font-weight: 800; white-space: nowrap; }
 .midpoint-sparkle { left: 50%; top: 35%; font-size: 36px; animation: celebrateStar 1.6s ease-out both; }
 .arrival-sparkles span { animation: celebrateStar 1.6s ease-out both; }
