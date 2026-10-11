@@ -226,7 +226,7 @@ h1:focus { outline: none; }
 .arrival-sparkles span:nth-child(5) { left: 35%; top: 13%; animation-delay: .5s; }
 .arrival-sparkles span:nth-child(6) { left: 93%; top: 36%; animation-delay: .1s; }
 .journey-message { text-align: center; padding: 20px 0 8px; }
-.promise-reminder, .completion-promise { display: flex; justify-content: center; align-items: center; gap: 10px; font-size: 24px; font-weight: 750; line-height: 1.5; overflow-wrap: anywhere; }
+.promise-reminder, .completion-promise { display: flex; justify-content: center; align-items: center; gap: 10px; font-size: 24px; font-weight: 750; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
 .promise-reminder span, .completion-promise span { flex-shrink: 0; font-size: 40px; }
 .numeric-time { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; font-size: 22px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 12px; }
 .numeric-time span { font-size: 16px; }
