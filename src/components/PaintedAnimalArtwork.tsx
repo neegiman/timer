@@ -7,6 +7,7 @@ import { rabbitAnatomy } from '@/lib/rabbitAnatomy';
 import { walkingAnatomy, type LimbArtwork } from '@/lib/walkingAnatomy';
 import { chickAnatomy } from '@/lib/chickAnatomy';
 import { AnimalTorsoPanels, AnimalTailPanels } from './AnimalBodyPanels';
+import { animalMatrix, limbSkinClip, limbSkinMatrix, limbSkinTriangles } from '@/lib/animalLimbSkin';
 
 type PartName = keyof typeof atlases.rabbit.parts;
 /** A bounded CSS image crop avoids nested SVG repainting when a choice is tapped on mobile. */
@@ -54,6 +55,20 @@ function PaintedEar({ id, part, placement }: {
   </g></g>;
 }
 
+function PaintedUpperSkin({ id, name, part, length, landmarks }: {
+  id: 'dog' | 'cat'; name: PawName; part: PartName; length: number; landmarks: LimbArtwork['upper'];
+}) {
+  const prefix = useId().replace(/:/g, '');
+  const rest = animalPose(id, 0, false);
+  return limbSkinTriangles(length).map((triangle, index) => <g key={index} data-animal-limb-skin={index} data-paw-skin={name}
+    data-limb-landmark={triangle[0].y === 0 && triangle[1].y === 0 ? triangle[0].x < 0 ? 'root-left' : 'root-right'
+      : triangle[0].y === length && triangle[1].y === length ? 'knee' : undefined}
+    transform={animalMatrix(limbSkinMatrix(id, name, rest.body, rest.joints[`${name}Hip`], triangle))}>
+    <defs><clipPath id={`${prefix}-skin-${index}`}><polygon points={limbSkinClip(triangle)} /></clipPath></defs>
+    <g clipPath={`url(#${prefix}-skin-${index})`}><PaintedBone id={id} part={part} length={length} landmarks={landmarks} /></g>
+  </g>);
+}
+
 function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; far?: boolean; filter: string }) {
   const prefix = useId().replace(/:/g, '');
   const rig = animalProfiles[id].paws[name];
@@ -76,17 +91,20 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
   // Let the torso supply the hip/shoulder fur instead of painting a second
   // outlined thigh over it. Reveal the moving limb as it leaves the body.
   const walker = id === 'dog' || id === 'cat';
-  const fadeStart = id === 'cat' ? 4 : walker ? hind ? -2 : -3 : artwork ? -14 : -overlap;
-  const fadeEnd = id === 'cat' ? 19 : walker ? hind ? 14 : 8 : artwork ? 5 : 12;
+  const fadeStart = walker ? -2 : artwork ? -14 : -overlap;
+  const fadeEnd = walker ? id === 'cat' ? 10 : 8 : artwork ? 5 : 12;
   return <g data-paw={name} transform={`translate(${rig.x} ${rig.y})`} filter={far ? filter : undefined}>
     {blendedRoot ? <defs>
       <linearGradient id={`${prefix}-root-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={fadeStart} x2="0" y2={fadeEnd}><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
       <mask id={`${prefix}-root-mask`} maskUnits="userSpaceOnUse" x="-30" y="-30" width="60" height="110"><rect x="-30" y="-30" width="60" height="110" fill={`url(#${prefix}-root-fade)`} /></mask>
     </defs> : null}
+    {walker && artwork ? <g mask={blendedRoot ? `url(#${prefix}-root-mask)` : undefined}>
+      <PaintedUpperSkin id={id} name={name} part={upperPart} length={rig.upper} landmarks={artwork.upper} />
+    </g> : null}
     <g data-animal-joint={`${name}Hip`} transform={`rotate(${rest[`${name}Hip`]})`}>
-      <g mask={blendedRoot ? `url(#${prefix}-root-mask)` : undefined}>{artwork
+      {!walker ? <g mask={blendedRoot ? `url(#${prefix}-root-mask)` : undefined}>{artwork
         ? <PaintedBone id={id} part={upperPart} length={rig.upper} landmarks={artwork.upper} />
-        : <Part id={id} part={upperPart} x={-upperWidth / 2} y={-overlap} width={upperWidth} height={upperHeight} />}</g>
+        : <Part id={id} part={upperPart} x={-upperWidth / 2} y={-overlap} width={upperWidth} height={upperHeight} />}</g> : null}
       <g transform={`translate(0 ${rig.upper})`}><g data-animal-joint={`${name}Knee`} transform={`rotate(${rest[`${name}Knee`]})`}>
         {artwork ? <PaintedBone id={id} part={lowerPart} length={rig.lower} landmarks={artwork.lower} />
           : <Part id={id} part={lowerPart} x={-lowerWidth / 2} y={-overlap} width={lowerWidth} height={lowerHeight} />}

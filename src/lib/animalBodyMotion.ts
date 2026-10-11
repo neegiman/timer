@@ -16,7 +16,7 @@ export interface AnimalBodyMotion {
 export const isWalker = (id: AnimalId): id is 'dog' | 'cat' => id === 'dog' || id === 'cat';
 
 /** Small, continuous waves: a walking cat stabilizes its back rather than arching like a gallop. */
-export function animalBodyMotion(id: AnimalId, cycle: number, bob: number, moving: boolean): AnimalBodyMotion {
+export function animalBodyMotion(id: AnimalId, cycle: number, moving: boolean): AnimalBodyMotion {
   const angle = cycle * Math.PI * 2;
   const active = moving && isWalker(id);
   const torso = Array.from({ length: TORSO_PANELS + 1 }, (_, index) => {
@@ -32,7 +32,9 @@ export function animalBodyMotion(id: AnimalId, cycle: number, bob: number, movin
     const t = Math.max(0, Math.min(1, -y / -TAIL_BOUNDS.y));
     return Math.sin(angle * (id === 'dog' ? 2 : 1) - t * 1.2) * (id === 'cat' ? 3 : 1.5) * t * t;
   });
-  return { torso, tail, headY: active ? id === 'cat' ? -bob : .15 * Math.sin(angle * 2) : 0,
+  // The neck is an attachment to the same surface as the shoulders, not an
+  // independently stabilized layer. Its tiny nod rotates about this socket.
+  return { torso, tail, headY: isWalker(id) ? torsoOffset(id, torso, walkingAnatomy[id].headPivot.x) : 0,
     tailY: isWalker(id) ? torsoOffset(id, torso, 29) : 0 };
 }
 

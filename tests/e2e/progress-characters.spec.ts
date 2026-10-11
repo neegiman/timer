@@ -6,6 +6,7 @@ import { motionProfile } from '../../src/lib/motionProfiles';
 import { animalActionPose, isAnimalId } from '../../src/lib/animalActionPose';
 import { animalProfiles, type AnimalJoint } from '../../src/lib/animalMotion';
 import { isWalker } from '../../src/lib/animalBodyMotion';
+import { animalMatrix, limbSkinMatrix, limbSkinTriangles } from '../../src/lib/animalLimbSkin';
 import { princessPose } from '../../src/lib/princessMotion';
 import { paintedPrincePose, princeCapePanelTransform, princeCapeRootTransform } from '../../src/lib/paintedPrinceMotion';
 import type { JointName } from '../../src/lib/characterPose';
@@ -22,6 +23,7 @@ async function readPoses(page: Page) {
       capeRoot: root.querySelector('[data-prince-cape]')?.getAttribute('transform') ?? null,
       deformation: {
         panels: Array.from(root.querySelectorAll('[data-animal-torso-panel], [data-animal-tail-panel]'), (node) => node.getAttribute('transform')),
+        skin: Array.from(root.querySelectorAll('[data-animal-limb-skin]'), (node) => node.getAttribute('transform')),
         roots: Array.from(root.querySelectorAll('[data-paw]'), (node) => node.getAttribute('transform')),
         head: root.querySelector('[data-animal-head-root]')?.getAttribute('transform') ?? null,
         tail: root.querySelector('[data-animal-tail-root]')?.getAttribute('transform') ?? null,
@@ -110,6 +112,10 @@ for (const character of characters) test(`${character.id}: progress artwork shar
     capeRoot: restingPrince ? princeCapeRootTransform(restingPrince.capeTransform) : null,
     deformation: isAnimalId(character.id) && isWalker(character.id) ? {
       panels: beforeReduced.deformation.panels.map(() => 'matrix(1.0000000 0.0000000 0.0000000 1.0000000 0.0000000 0.0000000)'),
+      skin: (['farHind', 'farFore', 'nearHind', 'nearFore'] as const).flatMap((paw) => {
+        const id = character.id as 'dog' | 'cat', rig = animalProfiles[id].paws[paw]!, pose = restingAnimal!;
+        return limbSkinTriangles(rig.upper).map((triangle) => animalMatrix(limbSkinMatrix(id, paw, pose.body, pose.joints[`${paw}Hip`], triangle)));
+      }),
       roots: (['farHind', 'farFore', 'nearHind', 'nearFore'] as const).map((paw) => {
         const rig = animalProfiles[character.id as 'dog' | 'cat'].paws[paw]!;
         return `translate(${rig.x} ${rig.y.toFixed(5)})`;

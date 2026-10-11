@@ -26,11 +26,14 @@ test('deformed paintings share every panel edge, keep the tail root fixed and pr
   }
 });
 
-test('cat keeps its head level while its trunk and tail flex; dog has stronger elastic bob and nod', () => {
+test('head stays attached to the neck surface while dog and cat retain distinct small body rhythms', () => {
   let catBob = 0, dogBob = 0, catHead = 0, dogHead = 0, catFlex = 0, dogFlex = 0, catTail = 0;
   for (let sample = 0; sample < 100; sample++) {
     const cat = animalPose('cat', sample / 100 * animalProfiles.cat.cycleMs), dog = animalPose('dog', sample / 100 * animalProfiles.dog.cycleMs);
-    assert.ok(Math.abs(cat.bob + cat.body.headY) < 1e-10);
+    for (const [id, pose] of [['cat', cat], ['dog', dog]] as const) {
+      assert.equal(pose.body.headY, torsoOffset(id, pose.body.torso, walkingAnatomy[id].headPivot.x));
+      assert.ok(Math.abs(pose.bob + pose.body.headY) < 1);
+    }
     catBob = Math.max(catBob, Math.abs(cat.bob)); dogBob = Math.max(dogBob, Math.abs(dog.bob));
     catHead = Math.max(catHead, Math.abs(cat.joints.head)); dogHead = Math.max(dogHead, Math.abs(dog.joints.head));
     catFlex = Math.max(catFlex, ...cat.body.torso.map(Math.abs)); dogFlex = Math.max(dogFlex, ...dog.body.torso.map(Math.abs));

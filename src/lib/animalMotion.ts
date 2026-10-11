@@ -91,7 +91,7 @@ export function animalPose(id: AnimalId, elapsedMs: number, moving = true) {
   // Weight rises during hind-paw propulsion, then settles through fore-paw contact.
   const hop = id === 'rabbit' && moving ? 2.4 * (p < .86 ? ease((p - .72) / .14) : 1 - ease((p - .86) / .12)) : 0;
   const bob = !moving ? 0 : id === 'rabbit' ? -hop : Math.sin(cycle * Math.PI * 4) * (id === 'chick' ? .7 : id === 'dog' ? .45 : .12);
-  const body = animalBodyMotion(id, cycle, bob, moving);
+  const body = animalBodyMotion(id, cycle, moving);
   const joints = {} as Record<AnimalJoint, number>;
   const feet = {} as Partial<Record<PawName, { x: number; y: number; planted: boolean; contactX: number; contactY: number; pitch: number }>>;
   for (const [paw, rig] of Object.entries(profile.paws) as [PawName, PawRig][]) {
