@@ -283,6 +283,11 @@ test('rocket has planets and a UFO that appears, drifts, pauses, disappears and 
   await seek(page, 61_000); await expect(visitor).toHaveCSS('opacity', '1');
   await page.emulateMedia({ reducedMotion: 'reduce' }); await page.clock.runFor(32);
   await expect(page.locator('.seasonal-atmosphere')).toBeHidden(); await expect(planets.first()).toBeVisible();
+  // WebKit may deliver the JS media-query change after the CSS has updated.
+  await expect.poll(() => planets.first().evaluate((element) => {
+    const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
+    return [matrix.m41, matrix.m42];
+  })).toEqual([0, 0]);
   const still = await planets.first().getAttribute('style'); await page.clock.runFor(1000); await expect(planets.first()).toHaveAttribute('style', still!);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await seek(page, 600_000); await page.clock.fastForward(6000);
