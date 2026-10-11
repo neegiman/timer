@@ -229,6 +229,10 @@ test('night glimmers flash briefly, fade, pause in place and stop with the finis
 test('rocket has planets and a UFO that appears, drifts, pauses, disappears and survives refresh', async ({ page }, testInfo) => {
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    localStorage.setItem('promise-journey:v1:backgroundSeason', JSON.stringify('winter'));
+    localStorage.setItem('promise-journey:v1:backgroundMode', JSON.stringify('night'));
+  });
   await page.clock.install({ time: new Date('2026-10-15T12:00:00+09:00') });
   await page.goto('./');
   await page.getByRole('button', { name: '다음', exact: true }).click();
@@ -238,6 +242,8 @@ test('rocket has planets and a UFO that appears, drifts, pauses, disappears and 
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   const scene = page.locator('.journey-scene'), visitor = page.locator('[data-scenery-visitor]'), planets = page.locator('[data-space-planet]');
   await expect(scene).toHaveAttribute('data-environment', 'space');
+  expect(await scene.getAttribute('data-season')).toBeNull();
+  expect(await scene.getAttribute('data-theme')).toBeNull();
   await expect(scene.locator('[data-scenery="pixel-space-v1"]')).toBeVisible();
   await expect(scene.locator('[data-scenery-src*="/scenery-v1/"]')).toHaveCount(0);
   await expect(scene.locator('[data-layer]')).toHaveCount(3);
@@ -254,13 +260,18 @@ test('rocket has planets and a UFO that appears, drifts, pauses, disappears and 
   const frozenStars = await scene.locator('[data-layer="stars"]').getAttribute('style');
   const daySky = await scene.screenshot({ animations: 'disabled' });
   await page.clock.fastForward(3000); await expect(visitor).toHaveAttribute('style', frozenUfo!); await expect(planets.first()).toHaveAttribute('style', frozenPlanet!);
-  await menu(page); await page.getByRole('button', { name: '밤 배경', exact: true }).click(); await page.getByRole('button', { name: '닫기', exact: true }).click();
-  await page.clock.runFor(32); await expect(visitor).toHaveAttribute('data-event', 'ufo'); await expect(scene).toHaveAttribute('data-theme', 'night');
+  await menu(page);
+  await expect(page.getByTestId('space-background-status')).toContainText('계절과 낮·밤 없이 우주를 여행해요.');
+  await expect(page.getByRole('button', { name: /^(계절 자동|봄 배경|여름 배경|가을 배경|겨울 배경|자동 배경|낮 배경|밤 배경)$/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /현재 위치/ })).toHaveCount(0);
+  await page.getByRole('button', { name: '닫기', exact: true }).click();
+  await page.clock.runFor(32); await expect(visitor).toHaveAttribute('data-event', 'ufo');
   await expect(planets.first()).toHaveAttribute('style', frozenPlanet!);
   await expect(scene.locator('[data-layer="stars"]')).toHaveAttribute('style', frozenStars!);
   expect((await scene.screenshot({ animations: 'disabled' })).equals(daySky)).toBe(true);
-  await menu(page); await page.getByRole('button', { name: '겨울 배경', exact: true }).click(); await page.getByRole('button', { name: '닫기', exact: true }).click();
-  await page.clock.runFor(32); await expect(scene).toHaveAttribute('data-season', 'winter');
+  await page.clock.setSystemTime(new Date('2026-12-15T22:00:00+09:00'));
+  await page.evaluate(() => window.dispatchEvent(new Event('pageshow'))); await page.clock.runFor(32);
+  expect(await scene.getAttribute('data-season')).toBeNull(); expect(await scene.getAttribute('data-theme')).toBeNull();
   expect((await scene.screenshot({ animations: 'disabled' })).equals(daySky)).toBe(true);
   if (testInfo.project.name === 'chromium') {
     await page.waitForTimeout(1250); await page.screenshot({ path: 'artifacts/rocket-ufo-night-390.png', fullPage: true });
@@ -276,6 +287,35 @@ test('rocket has planets and a UFO that appears, drifts, pauses, disappears and 
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await seek(page, 600_000); await page.clock.fastForward(6000);
   const stopped = await planets.first().getAttribute('style'); await page.clock.runFor(1000); await expect(planets.first()).toHaveAttribute('style', stopped!);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('only rocket hides seasonal settings and preserves the other characters background preferences', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.goto('./'); await menu(page);
+  await page.getByRole('button', { name: '가을 배경', exact: true }).click();
+  await page.getByRole('button', { name: '밤 배경', exact: true }).click();
+  await page.getByRole('button', { name: '닫기', exact: true }).click();
+  await page.getByRole('button', { name: '친구', exact: true }).click();
+  await page.getByRole('button', { name: '로켓', exact: true }).click(); await menu(page);
+  await expect(page.getByTestId('space-background-status')).toBeVisible();
+  await expect(page.getByRole('button', { name: '가을 배경', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '밤 배경', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '닫기', exact: true }).click();
+  await page.reload(); await menu(page);
+  await expect(page.getByTestId('space-background-status')).toBeVisible();
+  await page.getByRole('button', { name: '닫기', exact: true }).click();
+  await page.getByRole('button', { name: '친구', exact: true }).click();
+  await page.getByRole('button', { name: '토끼', exact: true }).click(); await menu(page);
+  await expect(page.getByTestId('space-background-status')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '가을 배경', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: '밤 배경', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: '닫기', exact: true }).click();
+  await page.getByRole('button', { name: '출발!', exact: true }).click();
+  await expect(page.locator('.journey-scene')).toHaveAttribute('data-environment', 'nature');
+  await expect(page.locator('.journey-scene')).toHaveAttribute('data-season', 'autumn');
+  await expect(page.locator('.journey-scene')).toHaveAttribute('data-theme', 'night');
+  await expect(page.locator('[data-rocket-sky]')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 

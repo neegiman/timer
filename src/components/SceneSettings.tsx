@@ -2,6 +2,14 @@ import type { useDayNight } from '@/hooks/useDayNight';
 import { SEASONS } from '@/lib/seasons';
 
 export function SceneSettings({ appearance, space = false }: { appearance: ReturnType<typeof useDayNight>; space?: boolean }) {
+  if (space) return <fieldset className="scene-settings">
+    <legend>우주 배경</legend>
+    <p className="scene-setting-status" data-testid="space-background-status">
+      <strong>🚀 별과 행성이 있는 우주</strong>
+      <span>로켓은 계절과 낮·밤 없이 우주를 여행해요.</span>
+    </p>
+    <p className="season-setting-note scene-event-note">행성과 반짝이는 별 사이로 UFO가 가끔 나타났다 사라져요.</p>
+  </fieldset>;
   const { mode, setMode, theme, season, seasonMode, setSeasonMode, source, status, locationEnabled, enableLocation, disableLocation } = appearance;
   const description = source === 'manual' ? '고른 배경을 계속 보여요.'
     : source === 'location' ? '현재 위치의 일출·일몰에 맞추고 있어요.'
@@ -29,10 +37,10 @@ export function SceneSettings({ appearance, space = false }: { appearance: Retur
         </button>)}
     </div>
     <p className="scene-setting-status" data-testid="location-status" aria-live="polite">
-      <strong>{space ? '🚀 8비트 우주' : `${SEASONS[season].icon} ${SEASONS[season].name} · ${theme === 'day' ? '☀️ 낮 배경' : '🌙 밤 배경'}`}</strong><span>{space ? '로켓은 계절과 낮·밤에 관계없이 같은 우주 배경을 보여요.' : description}</span>
+      <strong>{SEASONS[season].icon} {SEASONS[season].name} · {theme === 'day' ? '☀️ 낮 배경' : '🌙 밤 배경'}</strong><span>{description}</span>
     </p>
     <p className="season-setting-note">계절과 낮·밤을 직접 골라 배경을 확인할 수 있어요. {seasonMode === 'auto' ? '계절 자동은 대한민국 달력에 맞춰 봄(3~5월) · 여름(6~8월) · 가을(9~11월) · 겨울(12~2월)로 바뀌어요.' : `지금은 ${SEASONS[season].name}으로 고정했어요. ‘계절 자동’을 누르면 대한민국 달력에 맞춰 돌아가요.`}</p>
-    <p className="season-setting-note scene-event-note">{space ? '행성과 별 사이로 UFO가 가끔 나타났다 사라져요. 고른 계절과 낮·밤은 다른 캐릭터의 여행에 적용돼요.' : '낮에는 계절마다 다른 새가, 밤에는 별똥별이 가끔 지나가요.'}</p>
+    <p className="season-setting-note scene-event-note">낮에는 계절마다 다른 새가, 밤에는 별똥별이 가끔 지나가요.</p>
     {mode === 'auto' ? <div className="location-controls">
       {source !== 'location' ? <button type="button" className="location-button" disabled={locationEnabled && status === 'pending'} onClick={enableLocation}>
         {locationEnabled && status === 'pending' ? '위치 확인 중…' : locationEnabled ? '현재 위치 다시 확인' : '현재 위치로 맞추기'}

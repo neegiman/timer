@@ -19,7 +19,7 @@ export function JourneyPath({ character, promise, animation, input, theme, seaso
   const celebration = animation.phase === 'LAND' || animation.phase === 'CELEBRATE';
   const space = character.id === 'rocket';
   const variables = { '--cycle': `${profile.cycleMs}ms`, '--foot-origin': `${profile.groundY / 210 * 100}%` } as CSSProperties;
-  return <div ref={sceneRef} className={`journey-scene ${input.isPaused ? 'is-paused' : ''}`} data-phase={animation.phase} data-stage={animation.messageStage} data-theme={theme} data-season={season} data-environment={space ? 'space' : 'nature'}
+  return <div ref={sceneRef} className={`journey-scene ${input.isPaused ? 'is-paused' : ''}`} data-phase={animation.phase} data-stage={animation.messageStage} data-theme={space ? undefined : theme} data-season={space ? undefined : season} data-environment={space ? 'space' : 'nature'}
     role="img" aria-label={`${space ? '별과 행성이 떠 있는 8비트 우주' : `${SEASONS[season].name} ${theme === 'day' ? '낮' : '밤'} 풍경`}에서 ${character.name}와 함께 ${promise.name}까지 여행해요`}>
     <ScrollingScenery season={season} space={space} />
     <SeasonalAtmosphere season={season} space={space} />
