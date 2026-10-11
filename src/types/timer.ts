@@ -1,4 +1,5 @@
 export type TimerStatus = 'setup' | 'ready' | 'running' | 'paused' | 'arriving' | 'completed';
+export type TimerMode = 'after' | 'during';
 
 export interface Character {
   id: string;
@@ -25,6 +26,8 @@ export interface TimerSession {
   arrivalTimestamp: number | null;
   characterId: string;
   promise: PromiseActivity;
+  /** Sessions saved before activity modes default to `after`. */
+  mode?: TimerMode;
 }
 
 export interface TodayStars {

@@ -23,11 +23,11 @@ h1:focus { outline: none; }
 .app-shell:is([data-display="native"], [data-display="expanded"]) { max-width: none; background: var(--paper); }
 .app-shell[data-display="expanded"] { position: fixed; inset: 0; z-index: 20; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .app-shell:is([data-display="native"], [data-display="expanded"]) .timer-layout { max-width: 1200px; }
-.site-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 24px; }
+.site-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 24px; }
 .brand { display: flex; align-items: center; gap: 7px; font-size: 23px; font-weight: 800; white-space: nowrap; }
 .story-icon { display: inline-block; flex: none; object-fit: contain; vertical-align: middle; }
 .brand > .story-icon { width: 44px; height: 44px; }
-.header-actions { display: flex; align-items: center; gap: 12px; }
+.header-actions { display: flex; align-items: center; gap: 12px; margin-left: auto; }
 .stars-pill { display: inline-flex; align-items: center; gap: 6px; color: #a5731c; font-size: 22px; }
 .parent-menu-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 16px; background: #fffdf7; font-size: 15px; }
 .setup-card { max-width: 600px; padding: 24px; margin: 0 auto; border-radius: 28px; background: white; box-shadow: 0 8px 30px #65532309; }
@@ -443,3 +443,87 @@ h1:focus { outline: none; }
   .animal-study-card { padding: 16px; }
   .animal-playback button { min-width: 120px; }
 }
+/* Activity modes and the local star story reuse the picture-book palette. */
+.stars-pill { border: 0; background: transparent; min-height: 48px; padding: 0; cursor: pointer; }
+.activity-modes { border: 0; padding: 0; margin: 0 0 24px; min-width: 0; }
+.activity-modes legend { font-size: 16px; color: var(--muted); margin-bottom: 10px; }
+.activity-mode-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.activity-mode-options button { display: grid; justify-items: center; gap: 7px; padding: 15px 8px; border: 2px solid var(--border); border-radius: 20px; background: white; color: var(--ink); min-height: 122px; }
+.activity-mode-options button[aria-pressed="true"] { border-color: var(--green); background: #edf4e6; }
+.activity-mode-options strong { font-size: 23px; }
+.activity-mode-options span { font-size: 16px; color: var(--muted); }
+.activity-summary { text-align: center; line-height: 1.6; font-size: 19px; margin: -4px 0 24px; }
+.modal:has(.rewards-view) { width: min(600px, calc(100% - 24px)); }
+.reward-total { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; margin: 20px 0; }
+.reward-total strong { font-size: 25px; }
+.reward-total > span { color: var(--muted); font-size: 16px; margin-left: auto; }
+.reward-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 22px; }
+.reward-tabs button { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 54px; padding: 6px; border-radius: 15px; border: 1px solid var(--border); background: white; font-size: 17px; color: var(--ink); }
+.reward-tabs button[aria-pressed="true"] { background: #edf4e6; border-color: var(--green); color: var(--green); font-weight: 700; }
+.calendar-heading, .board-pages { display: flex; align-items: center; justify-content: space-between; }
+.calendar-heading h3 { margin: 0; font-size: 24px; }
+.calendar-today { display: flex; margin: 0 auto 8px; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.calendar-weekday { text-align: center; padding: 8px 0; font-size: 15px; color: var(--muted); }
+.calendar-day { min-width: 0; min-height: 64px; padding: 5px 1px; border-radius: 13px; border: 2px solid transparent; background: #f5f2e8; display: flex; flex-direction: column; align-items: center; justify-content: space-around; gap: 4px; font-size: 18px; color: var(--ink); }
+.calendar-day.is-today { border-color: var(--border); font-weight: 700; }
+.calendar-day[aria-pressed="true"] { border-color: var(--green); background: #edf4e6; }
+.day-stars { display: flex; align-items: center; justify-content: center; font-size: 12px; gap: 2px; }
+.day-empty { color: #c1c3ad; }
+.calendar-detail { margin: 24px 0 0; border-top: 1px solid var(--border); padding-top: 8px; }
+.calendar-detail h3, .star-collection h3, .reward-settings h3 { font-size: 21px; line-height: 1.4; }
+.calendar-detail > p, .reward-settings p { line-height: 1.6; color: var(--muted); }
+.star-records, .finished-boards ul { padding: 0; margin: 0; list-style: none; }
+.star-records li { display: flex; align-items: center; gap: 10px; padding: 13px 0; border-bottom: 1px dashed var(--border); }
+.star-records li > div { display: grid; gap: 6px; flex: 1; min-width: 0; }
+.star-records strong { font-size: 20px; overflow-wrap: anywhere; }
+.star-records li span { font-size: 14px; color: var(--muted); }
+.reward-storage-note { font-size: 13px; color: var(--muted); line-height: 1.7; padding-top: 20px; border-top: 1px solid var(--border); margin: 22px 0 0; }
+.star-collection { text-align: center; }
+.board-progress { font-size: 30px; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums; margin: 14px 0; }
+.star-board { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; padding: 18px; background: #f5f0de; border-radius: 22px; }
+.star-board > span { display: grid; place-items: center; min-width: 0; }
+.star-board .empty { filter: grayscale(1); opacity: .17; }
+.star-board.many-stars { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; padding: 14px 8px; }
+.many-stars img { width: 100%; max-width: 36px; height: auto; }
+.board-pages { margin-top: 14px; font-size: 15px; }
+.board-complete { padding: 24px 0 10px; }
+.board-complete > img { margin: auto; }
+.board-complete p { font-size: 17px; line-height: 1.5; }
+.board-complete .primary-button { font-size: 21px; width: 100%; }
+.finished-boards { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 20px; text-align: left; }
+.finished-boards li { display: flex; align-items: center; gap: 8px; padding: 10px 0; }
+.finished-boards time { margin-left: auto; color: var(--muted); font-size: 13px; }
+.goal-presets { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
+.goal-presets button { display: grid; gap: 4px; place-content: center; min-height: 66px; border: 2px solid var(--border); border-radius: 14px; background: white; font-size: 24px; font-weight: 700; color: var(--ink); padding: 6px; }
+.goal-presets span { font-size: 13px; font-weight: 400; }
+.goal-presets button[aria-pressed="true"] { background: #edf4e6; border-color: var(--green); }
+.custom-goal { margin-top: 22px; }
+.custom-goal label { display: flex; justify-content: space-between; font-size: 18px; }
+.custom-goal small { color: var(--muted); font-size: 14px; }
+.custom-goal > div { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.custom-goal input { width: 0; flex: 1; min-width: 0; border: 2px solid var(--border); border-radius: 14px; padding: 12px 8px; font-size: 24px; text-align: center; background: white; color: var(--ink); min-height: 56px; }
+.custom-goal .secondary-button { font-size: 18px; min-height: 56px; padding: 10px 14px; }
+.reward-backup { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--border); }
+.reward-backup > button { width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 12px; font-size: 19px; min-height: 56px; }
+.reward-feedback { min-height: 1.6em; color: var(--green) !important; }
+.import-preview { margin-top: 20px; padding: 15px; border-radius: 20px; background: #edf4e6; }
+.import-preview h4 { font-size: 20px; margin: 0; }
+.import-preview > div { display: flex; gap: 8px; }
+.import-preview button { flex: 1; font-size: 17px; min-height: 52px; padding: 8px; }
+.reward-collection-link { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; width: 100%; background: #f7efd7; color: var(--ink); border: 1px solid var(--border); border-radius: 20px; padding: 16px 10px; min-height: 64px; font-size: 22px; font-weight: 700; }
+.reward-collection-link > span { font-size: 15px; font-weight: 400; color: var(--green); }
+.reward-collection-link.goal-reached { animation: goalGlow 1s ease-out 1; }
+@keyframes goalGlow { 0% { box-shadow: 0 0 0 0 #f6c56e99; } 100% { box-shadow: 0 0 0 16px #f6c56e00; } }
+@media (max-width: 400px) {
+  .modal:has(.rewards-view) .modal-content { padding: 16px; }
+  .reward-tabs button { flex-direction: column; gap: 3px; font-size: 15px; }
+  .calendar-grid { gap: 3px; }
+  .calendar-day { min-height: 56px; font-size: 16px; border-radius: 10px; }
+  .day-stars { gap: 0; font-size: 11px; }
+  .day-stars img { width: 13px; height: 13px; }
+  .reward-total strong { font-size: 22px; }
+  .activity-mode-options strong { font-size: 21px; }
+  .activity-summary { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { .reward-collection-link.goal-reached { animation: none; } }

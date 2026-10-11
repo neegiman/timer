@@ -70,5 +70,6 @@ export function isSession(value: unknown): value is TimerSession | null {
     typeof s.targetTimestamp === 'number' && Number.isFinite(s.targetTimestamp) &&
     typeof s.pausedRemainingMs === 'number' && s.pausedRemainingMs >= 0 && s.pausedRemainingMs <= s.durationMs &&
     (s.arrivalTimestamp === null || (typeof s.arrivalTimestamp === 'number' && Number.isFinite(s.arrivalTimestamp))) &&
-    typeof s.characterId === 'string' && isPromise(s.promise);
+    typeof s.characterId === 'string' && isPromise(s.promise) &&
+    (s.mode === undefined || s.mode === 'after' || s.mode === 'during');
 }
