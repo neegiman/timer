@@ -62,13 +62,35 @@ function PaintedUpperSkin({ id, name, part, length, landmarks }: {
 }) {
   const prefix = useId().replace(/:/g, '');
   const rest = animalPose(id, 0, false);
-  return limbSkinTriangles(length).map((triangle, index) => <g key={index} data-animal-limb-skin={index} data-paw-skin={name}
+  return <><defs>
+    <linearGradient id={`${prefix}-distal-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={length - 5} x2="0" y2={length + 3}><stop stopColor="white" /><stop offset="1" stopColor="black" /></linearGradient>
+    <mask id={`${prefix}-distal-mask`} maskUnits="userSpaceOnUse" x="-30" y="-20" width="60" height={length + 40}><rect x="-30" y="-20" width="60" height={length + 40} fill={`url(#${prefix}-distal-fade)`} /></mask>
+  </defs>{limbSkinTriangles(length).map((triangle, index) => <g key={index} data-animal-limb-skin={index} data-paw-skin={name}
     data-limb-landmark={triangle[0].y === 0 && triangle[1].y === 0 ? triangle[0].x < 0 ? 'root-left' : 'root-right'
       : triangle[0].y === length && triangle[1].y === length ? 'knee' : undefined}
     transform={animalMatrix(limbSkinMatrix(id, name, rest.body, rest.joints[`${name}Hip`], triangle))}>
     <defs><clipPath id={`${prefix}-skin-${index}`}><polygon points={limbSkinClip(triangle)} /></clipPath></defs>
-    <g clipPath={`url(#${prefix}-skin-${index})`}><PaintedBone id={id} part={part} length={length} landmarks={landmarks} /></g>
-  </g>);
+    <g clipPath={`url(#${prefix}-skin-${index})`}><g mask={`url(#${prefix}-distal-mask)`}><PaintedBone id={id} part={part} length={length} landmarks={landmarks} /></g></g>
+  </g>)}</>;
+}
+
+/** One continuous fur sleeve hides the cut-out ends as adjacent bones rotate.
+ * Its center remains at the shared joint; the renderer bisects the bend. */
+function PaintedJointFur({ id, name, joint, part }: { id: 'dog' | 'cat'; name: PawName; joint: 'Knee' | 'Ankle'; part: 'hindLower' | 'foreLower' }) {
+  const prefix = useId().replace(/:/g, ''), atlas = atlases[id];
+  const [left, top, width, height] = atlas.parts[part];
+  const rx = joint === 'Knee' ? id === 'cat' ? 7.2 : 7.6 : id === 'cat' ? 5.8 : 6;
+  const ry = joint === 'Knee' ? 6 : 4.8;
+  const rest = animalPose(id, 0, false).joints[`${name}${joint}`];
+  return <g data-animal-fur-bridge={`${name}${joint}`} transform={`rotate(${-rest / 2})`}>
+    <defs>
+      <radialGradient id={`${prefix}-fur-feather`}><stop offset=".5" stopColor="white" /><stop offset="1" stopColor="black" /></radialGradient>
+      <mask id={`${prefix}-fur-mask`} maskUnits="userSpaceOnUse" x={-rx} y={-ry} width={rx * 2} height={ry * 2}><ellipse rx={rx} ry={ry} fill={`url(#${prefix}-fur-feather)`} /></mask>
+    </defs>
+    <g mask={`url(#${prefix}-fur-mask)`}><svg x={-rx} y={-ry} width={rx * 2} height={ry * 2} viewBox={`${left + width / 2 - 45} ${top + height / 2 - 50} 90 100`} preserveAspectRatio="none">
+      <image href={assetPath(`/characters/raster-v1/${id}.webp`)} width={atlas.width} height={atlas.height} />
+    </svg></g>
+  </g>;
 }
 
 function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; far?: boolean; filter: string }) {
@@ -93,10 +115,16 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
   // Let the torso supply the hip/shoulder fur instead of painting a second
   // outlined thigh over it. Reveal the moving limb as it leaves the body.
   const walker = id === 'dog' || id === 'cat';
-  const fadeStart = walker ? -2 : artwork ? -14 : -overlap;
-  const fadeEnd = walker ? id === 'cat' ? 10 : 8 : artwork ? 5 : 12;
+  const fadeStart = walker ? -6 : artwork ? -14 : -overlap;
+  const fadeEnd = walker ? id === 'cat' ? 16 : 14 : artwork ? 5 : 12;
   const foot = <Part id={id} part={pawPart} x={artwork ? -artwork.paw.pivot.x * pawScale : -7} y={artwork ? -artwork.paw.pivot.y * pawScale : 4 - pawHeight} width={pawWidth} height={pawHeight} />;
   return <g data-paw={name} transform={`translate(${rig.x} ${rig.y})`} filter={far ? filter : undefined}>
+    {walker ? <defs>
+      <linearGradient id={`${prefix}-lower-fade`} gradientUnits="userSpaceOnUse" x1="0" y1="-4" x2="0" y2={rig.lower + 4}>
+        <stop stopColor="black" /><stop offset={9 / (rig.lower + 8)} stopColor="white" /><stop offset={(rig.lower + 1) / (rig.lower + 8)} stopColor="white" /><stop offset="1" stopColor="black" />
+      </linearGradient>
+      <mask id={`${prefix}-lower-mask`} maskUnits="userSpaceOnUse" x="-30" y="-15" width="60" height={rig.lower + 30}><rect x="-30" y="-15" width="60" height={rig.lower + 30} fill={`url(#${prefix}-lower-fade)`} /></mask>
+    </defs> : null}
     {blendedRoot ? <defs>
       <linearGradient id={`${prefix}-root-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={fadeStart} x2="0" y2={fadeEnd}><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
       <mask id={`${prefix}-root-mask`} maskUnits="userSpaceOnUse" x="-30" y="-30" width="60" height="110"><rect x="-30" y="-30" width="60" height="110" fill={`url(#${prefix}-root-fade)`} /></mask>
@@ -109,14 +137,16 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
         ? <PaintedBone id={id} part={upperPart} length={rig.upper} landmarks={artwork.upper} />
         : <Part id={id} part={upperPart} x={-upperWidth / 2} y={-overlap} width={upperWidth} height={upperHeight} />}</g> : null}
       <g transform={`translate(0 ${rig.upper})`}><g data-animal-joint={`${name}Knee`} transform={`rotate(${rest[`${name}Knee`]})`}>
-        {artwork ? <PaintedBone id={id} part={lowerPart} length={rig.lower} landmarks={artwork.lower} />
+        {artwork ? <g mask={walker ? `url(#${prefix}-lower-mask)` : undefined}><PaintedBone id={id} part={lowerPart} length={rig.lower} landmarks={artwork.lower} /></g>
           : <Part id={id} part={lowerPart} x={-lowerWidth / 2} y={-overlap} width={lowerWidth} height={lowerHeight} />}
         <g transform={`translate(0 ${rig.lower})`}><g data-animal-joint={`${name}Ankle`} transform={`rotate(${rest[`${name}Ankle`]})`}>
           {bird ? <g data-chick-foot>
             <defs><clipPath id={`${prefix}-toe-only`}><rect x="-20" y={(chickAnatomy.legArtwork.paw.visibleTop - chickAnatomy.legArtwork.paw.pivot.y) * pawScale} width="50" height="30" /></clipPath></defs>
             <g clipPath={`url(#${prefix}-toe-only)`}>{foot}</g>
           </g> : foot}
+          {walker ? <PaintedJointFur id={id} name={name} joint="Ankle" part={lowerPart} /> : null}
         </g></g>
+        {walker ? <PaintedJointFur id={id} name={name} joint="Knee" part={lowerPart} /> : null}
       </g></g>
     </g>
   </g>;

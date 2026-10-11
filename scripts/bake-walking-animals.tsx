@@ -13,10 +13,10 @@ import { walkingArtDigest } from './walking-art-inputs.mjs';
 // a bitmap in the browser. This uses the same renderer as the joint diagnostics.
 async function main() {
 const preview = process.argv.includes('--preview');
-const directory = preview ? 'artifacts/limb-study-v13' : `public${WALK_SPRITE_DIRECTORY}`;
+const directory = preview ? 'artifacts/limb-study-v14' : `public${WALK_SPRITE_DIRECTORY}`;
 await mkdir(directory, { recursive: true });
 const browser = await chromium.launch();
-const selector = '[data-animal-body], [data-animal-joint], [data-paw], [data-animal-torso-panel], [data-animal-tail-panel], [data-animal-limb-skin], [data-animal-head-root], [data-animal-tail-root]';
+const selector = '[data-animal-body], [data-animal-joint], [data-animal-fur-bridge], [data-paw], [data-animal-torso-panel], [data-animal-tail-panel], [data-animal-limb-skin], [data-animal-head-root], [data-animal-tail-root]';
 const { width, height, scale, columns, frames, y } = WALK_SPRITE;
 try {
   for (const id of ['dog', 'cat'] as const) {

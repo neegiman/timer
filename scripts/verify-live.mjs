@@ -20,7 +20,7 @@ try {
   for (const match of previewHTML.matchAll(/(?:src|href)="(\/timer\/[^"?#]+\.(?:js|css))"/g)) assets.add(match[1]);
   const sounds = ['start', 'almost', 'finish', 'success', 'midpoint', 'sparkle', 'tick', 'strong-tick', 'whoosh', 'pop', 'land'];
   const animals = ['rabbit', 'dog', 'cat', 'chick', 'princess', 'princess-upper-v2', 'prince-painted-v1', 'prince-long-pants-v2', 'prince-clothing-v3', 'prince-boot-v3'].map((id) => `/timer/characters/raster-v1/${id}.webp`);
-  animals.push(...['dog', 'cat'].map((id) => `/timer/characters/walk-v13/${id}.webp`));
+  animals.push(...['dog', 'cat'].map((id) => `/timer/characters/walk-v14/${id}.webp`));
   const pixels = ['prince-upright-v3', 'car', 'train', 'rocket-horizontal-v3'].map((id) => `/timer/characters/pixel-v1/${id}.svg`);
   const storyIcons = ['handshake', 'bath', 'sleep', 'meal', 'tidy', 'outside', 'video', 'clock', 'rabbit', 'custom', 'home', 'flag'].map((id) => `/timer/images/story-v1/${id}.webp`);
   storyIcons.push('/timer/images/story-v1/star.svg', '/timer/images/progress-v1/trail.webp');

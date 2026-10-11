@@ -19,6 +19,8 @@ export function createAnimalRenderer(root: Element | null | undefined, id: Anima
     .map((node) => ({ node, name: node.dataset.animalJoint as AnimalJoint }));
   const paws = Array.from(root?.querySelectorAll<SVGGElement>('[data-paw]') ?? [])
     .map((node) => ({ node, rig: animalProfiles[id].paws[node.dataset.paw as PawName]! }));
+  const furBridges = Array.from(root?.querySelectorAll<SVGGElement>('[data-animal-fur-bridge]') ?? [])
+    .map((node) => ({ node, joint: node.dataset.animalFurBridge as AnimalJoint }));
   const torso = Array.from(root?.querySelectorAll<SVGGElement>('[data-animal-torso-panel]') ?? []);
   const tail = Array.from(root?.querySelectorAll<SVGGElement>('[data-animal-tail-panel]') ?? []);
   const skins = Array.from(root?.querySelectorAll<SVGGElement>('[data-animal-limb-skin]') ?? []).map((node) => {
@@ -49,6 +51,7 @@ export function createAnimalRenderer(root: Element | null | undefined, id: Anima
     }
     body?.setAttribute('transform', `translate(0 ${pose.bob.toFixed(5)})`);
     for (const { node, name } of joints) node.setAttribute('transform', `rotate(${pose.joints[name].toFixed(5)})`);
+    for (const { node, joint } of furBridges) node.setAttribute('transform', `rotate(${(-pose.joints[joint] / 2).toFixed(5)})`);
     if (!isWalker(id)) return;
     for (const { node, rig } of paws) node.setAttribute('transform', `translate(${rig.x} ${(rig.y + torsoOffset(id, pose.body.torso, rig.x)).toFixed(5)})`);
     headRoot?.setAttribute('transform', `translate(0 ${pose.body.headY.toFixed(5)})`);

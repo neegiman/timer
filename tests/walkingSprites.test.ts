@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { stat, readFile } from 'node:fs/promises';
 import sharp from 'sharp';
 import { animalPose, animalProfiles } from '../src/lib/animalMotion';
+import { torsoOffset } from '../src/lib/animalBodyMotion';
+import type { PawName } from '../src/lib/animalMotion';
 import { WALK_SPRITE, WALK_SPRITE_DIRECTORY, walkingFrame, walkingFrameViewBox, walkingSpritePath } from '../src/lib/walkingSprites';
 import { walkingArtDigest } from '../scripts/walking-art-inputs.mjs';
 
@@ -27,7 +29,7 @@ test('walking frames use the elapsed clock, wrap cleanly and fit mobile texture 
   }
 });
 
-test('exported walking frames retain all painted toe contacts and the transparent ground baseline', async () => {
+test('exported walking frames retain solid joint overlaps, toe contacts and the transparent ground baseline', async () => {
   const { width, height, frames, columns, scale, y: top } = WALK_SPRITE;
   for (const id of ['dog', 'cat'] as const) {
     const path = `public${walkingSpritePath(id)}`;
@@ -43,6 +45,21 @@ test('exported walking frames retain all painted toe contacts and the transparen
         let alpha = 0;
         for (let dy = -2; dy <= 1; dy++) for (let dx = -2; dx <= 2; dx++) alpha = Math.max(alpha, data[((y + dy) * info.width + x + dx) * 4 + 3]);
         assert.ok(alpha >= 80, `${id}/${paw} painted toe missing in frame ${frame}`);
+      }
+      // A one-pixel connection can pass a flood-fill while still looking like
+      // separate cut-outs. Require opaque fur across the actual shared joint.
+      for (const [name, rig] of Object.entries(animalProfiles[id].paws)) {
+        const paw = name as PawName;
+        const hip = pose.joints[`${paw}Hip`] * Math.PI / 180;
+        const knee = pose.joints[`${paw}Knee`] * Math.PI / 180;
+        const kx = rig.x - Math.sin(hip) * rig.upper;
+        const ky = pose.bob + rig.y + torsoOffset(id, pose.body.torso, rig.x) + Math.cos(hip) * rig.upper;
+        const joints = [[kx, ky], [kx - Math.sin(hip + knee) * rig.lower, ky + Math.cos(hip + knee) * rig.lower]];
+        for (const [joint, [jx, jy]] of joints.entries()) for (let dy = -5; dy <= 5; dy++) for (let dx = -5; dx <= 5; dx++) {
+          if (dx * dx + dy * dy > 25) continue;
+          const x = Math.round(x0 + jx * scale + dx), y = Math.round(y0 + (jy - top) * scale + dy);
+          assert.ok(data[(y * info.width + x) * 4 + 3] >= 235, `${id}/${paw}/${joint ? 'ankle' : 'knee'} fur opens in frame ${frame}`);
+        }
       }
       const lastRow = y0 + height * scale - 1;
       for (let x = x0; x < x0 + width * scale; x++) assert.equal(data[(lastRow * info.width + x) * 4 + 3], 0, `${id} clipping below the ground`);
