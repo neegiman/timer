@@ -29,9 +29,10 @@ h1:focus { outline: none; }
 .brand > .story-icon { width: 44px; height: 44px; }
 .header-actions { display: flex; align-items: center; gap: 12px; margin-left: auto; }
 .stars-pill { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #a5731c; font-size: 22px; line-height: 1; white-space: nowrap; }
-.stars-pill > .story-icon { display: block; }
-/* Center the visible digit glyphs beside the painted star, not their font's extra leading. */
-.stars-pill > strong { display: block; line-height: 1; font-variant-numeric: tabular-nums; transform: translateY(-1px); }
+.stars-pill > .story-icon { display: block; width: 28px; height: 28px; }
+/* Give the artwork and digits the same box. A numeric font avoids different
+   Korean-font ascenders on iPhone/Android; no device-specific Y offset. */
+.stars-pill > strong { display: block; height: 28px; line-height: 28px; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-variant-numeric: tabular-nums; transform: none; }
 .parent-menu-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 16px; background: #fffdf7; font-size: 15px; }
 .setup-card { max-width: 600px; padding: 24px; margin: 0 auto; border-radius: 28px; background: white; box-shadow: 0 8px 30px #65532309; }
 .setup-steps { display: flex; justify-content: center; gap: 16px; margin-bottom: 24px; }
