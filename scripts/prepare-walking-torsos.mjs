@@ -4,8 +4,8 @@ import sharp from 'sharp';
 // Asset preparation only. ImageGen paints the contour; no procedural retouching.
 const manifest = {};
 for (const id of ['dog', 'cat']) {
-  const source = `docs/character-design/walkers-v7/${id}-torso.png`;
-  const src = `/characters/raster-v1/${id}-torso-v7.webp`;
+  const source = `docs/character-design/walkers-v8/${id}-torso.png`;
+  const src = `/characters/raster-v1/${id}-torso-v8.webp`;
   const pipeline = sharp(source).resize({ width: 640, withoutEnlargement: true });
   const { data, info } = await pipeline.clone().ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   let left = info.width, top = info.height, right = -1, bottom = -1;

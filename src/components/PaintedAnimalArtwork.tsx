@@ -72,9 +72,14 @@ function PaintedPaw({ id, name, far, filter }: { id: AnimalId; name: PawName; fa
   const pawHeight = artwork || rabbit ? pawWidth * parts[pawPart][3] / parts[pawPart][2] : 13;
   const pawScale = pawWidth / parts[pawPart][2];
   const blendedRoot = !bird && !far;
+  // Let the torso supply the hip/shoulder fur instead of painting a second
+  // outlined thigh over it. Reveal the moving limb as it leaves the body.
+  const walker = id === 'dog' || id === 'cat';
+  const fadeStart = walker ? hind ? -2 : -3 : artwork ? -14 : -overlap;
+  const fadeEnd = walker ? hind ? 14 : 8 : artwork ? 5 : 12;
   return <g data-paw={name} transform={`translate(${rig.x} ${rig.y})`} filter={far ? filter : undefined}>
     {blendedRoot ? <defs>
-      <linearGradient id={`${prefix}-root-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={artwork ? -14 : -overlap} x2="0" y2={artwork ? 5 : 12}><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
+      <linearGradient id={`${prefix}-root-fade`} gradientUnits="userSpaceOnUse" x1="0" y1={fadeStart} x2="0" y2={fadeEnd}><stop stopColor="black" /><stop offset="1" stopColor="white" /></linearGradient>
       <mask id={`${prefix}-root-mask`} maskUnits="userSpaceOnUse" x="-30" y="-30" width="60" height="110"><rect x="-30" y="-30" width="60" height="110" fill={`url(#${prefix}-root-fade)`} /></mask>
     </defs> : null}
     <g data-animal-joint={`${name}Hip`} transform={`rotate(${rest[`${name}Hip`]})`}>

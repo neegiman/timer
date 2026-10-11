@@ -53,7 +53,7 @@ test('dog and cat paintings keep native proportions and bury limb and ear roots 
   }
 });
 
-test('dog and cat torsos have transparent rounded corners and a visibly tucked curved belly', async () => {
+test('dog and cat torsos have rounded corners and a shallow natural waist without hanging leg masses', async () => {
   for (const id of ['dog', 'cat'] as const) {
     const art = walkingTorsoArt[id], [left, top, width, height] = art.viewBox;
     const data = await sharp(`public${art.src}`).ensureAlpha().raw().toBuffer();
@@ -64,8 +64,10 @@ test('dog and cat torsos have transparent rounded corners and a visibly tucked c
       for (let y = height - 1; y >= 0; y--) if (alpha(x, y) >= 160) return y;
       return -1;
     };
-    const rump = lowerEdge(.2), belly = lowerEdge(.5), chest = lowerEdge(.88);
-    assert.ok(belly < Math.min(rump, chest) - height * .06, `${id} belly is still flat`);
+    const rump = lowerEdge(.18), waist = Math.min(lowerEdge(.3), lowerEdge(.4)), chest = lowerEdge(.82);
+    assert.ok(width / height > (id === 'dog' ? 2.35 : 2.55), `${id} torso is too deep`);
+    assert.ok(waist < Math.min(rump, chest) - height * .04, `${id} waist has no natural tuck`);
+    assert.ok(waist > height * .8, `${id} hip/chest lobes hang below the waist`);
   }
 });
 
