@@ -328,8 +328,7 @@ h1:focus { outline: none; }
 .progress-interaction:focus-visible { outline: 3px solid #88a06b; outline-offset: 3px; }
 .journey-progress[data-adjusting="true"] .progress-interaction { cursor: grabbing; }
 .progress-interaction[aria-disabled="true"] { cursor: default; touch-action: auto; }
-.progress-hint { margin: 0; height: 36px; color: var(--muted); font-size: 14px; line-height: 36px; text-align: center; }
-.progress-time-bubble { position: relative; z-index: 5; min-width: 136px; height: 36px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #dfd5b9; border-radius: 14px 16px 13px 17px; background: #fffaf0; color: var(--green); box-shadow: 0 4px 12px #6d72501a; font-size: 13px; line-height: 1; white-space: nowrap; pointer-events: none; }
+.progress-time-bubble { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 5; min-width: 136px; height: 36px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #dfd5b9; border-radius: 14px 16px 13px 17px; background: #fffaf0; color: var(--green); box-shadow: 0 4px 12px #6d72501a; font-size: 13px; line-height: 1; white-space: nowrap; pointer-events: none; }
 .progress-time-bubble strong { font-size: 20px; font-variant-numeric: tabular-nums; }
 .character-wrapper { width: min(clamp(124px, 32vw, 168px), var(--actor-limit, 168px)); }
 .character-anchor { transform: translate(-50%, calc(-1 * var(--foot-origin))); }

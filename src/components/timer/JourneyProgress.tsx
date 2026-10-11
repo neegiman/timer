@@ -84,9 +84,8 @@ export function JourneyProgress({ character, progress, remaining, durationMs, en
         aria-disabled={!enabled} aria-describedby={enabled ? hintId : undefined}
         onPointerDown={down} onPointerMove={move} onPointerUp={(event) => { if (drag.current?.pointer === event.pointerId) { drag.current.progress = point(event.clientX); finish(true); } }}
         onPointerCancel={(event) => { if (drag.current?.pointer === event.pointerId) finish(false); }} onLostPointerCapture={(event) => { if (drag.current?.pointer === event.pointerId) finish(false); }} onKeyDown={key} />
+      {enabled && isAdjusting ? <output className="progress-time-bubble" aria-hidden="true">남은 시간 <strong>{formatRemaining(remaining)}</strong></output> : null}
     </div>
-    <p id={hintId} className="progress-hint" aria-hidden={!enabled}>{enabled ? isAdjusting
-      ? <><output className="progress-time-bubble" aria-hidden="true">남은 시간 <strong>{formatRemaining(remaining)}</strong></output><span className="sr-only">놓으면 시간이 바뀌어요</span></>
-      : '↔ 끌어서 시간 조절' : '\u00a0'}</p>
+    <span id={hintId} className="sr-only" aria-hidden={!enabled}>{isAdjusting ? '놓으면 시간이 바뀌어요' : '방향키로 남은 시간을 조절할 수 있어요'}</span>
   </div>;
 }
