@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import atlases from '@/lib/animalAtlases.json';
+import walkingTorsoArt from '@/lib/walkingTorsoArt.json';
 import { animalPose, animalProfiles, type AnimalId, type PawName } from '@/lib/animalMotion';
 import { assetPath } from '@/lib/assetPath';
 import { rabbitAnatomy } from '@/lib/rabbitAnatomy';
@@ -24,10 +25,12 @@ export function PaintedAnimalThumbnail({ id, label }: { id: AnimalId; label: str
 function Part({ id, part, x, y, width, height, contain = false }: {
   id: AnimalId; part: PartName; x: number; y: number; width: number; height: number; contain?: boolean;
 }) {
-  const atlas = atlases[id], region = atlas.parts[part];
+  const atlas = atlases[id];
+  const torsoArt = part === 'torso' && (id === 'dog' || id === 'cat') ? walkingTorsoArt[id] : null;
+  const region = torsoArt?.viewBox ?? atlas.parts[part];
   return <svg x={x} y={y} width={width} height={height} viewBox={region.join(' ')}
     preserveAspectRatio={contain ? 'xMidYMid meet' : 'none'} overflow="hidden" data-painted-part={part}>
-    <image href={assetPath(`/characters/raster-v1/${id}.webp`)} width={atlas.width} height={atlas.height} />
+    <image href={assetPath(torsoArt?.src ?? `/characters/raster-v1/${id}.webp`)} width={torsoArt?.width ?? atlas.width} height={torsoArt?.height ?? atlas.height} />
   </svg>;
 }
 

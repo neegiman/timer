@@ -1,0 +1,24 @@
+{
+  "dog": {
+    "src": "/characters/raster-v1/dog-torso-v7.webp",
+    "width": 640,
+    "height": 337,
+    "viewBox": [
+      31,
+      29,
+      590,
+      274
+    ]
+  },
+  "cat": {
+    "src": "/characters/raster-v1/cat-torso-v7.webp",
+    "width": 640,
+    "height": 336,
+    "viewBox": [
+      23,
+      26,
+      601,
+      288
+    ]
+  }
+}

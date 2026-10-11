@@ -38,16 +38,21 @@ for (const [id, name, cycle] of [['dog', '강아지', 1440], ['cat', '고양이'
       }, walkingAnatomy[id]));
     }
     for (const frame of frames) for (const error of frame.errors) expect(error).toBeLessThan(.01);
-    const connectivity = await page.evaluate(async ({ frames, id }) => {
-      const blob = await (await fetch(`/timer/characters/raster-v1/${id}.webp`)).blob();
-      const asset = await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(blob); });
+    const connectivity = await page.evaluate(async ({ frames }) => {
+      const urls = new Set<string>();
+      for (const frame of frames) for (const image of new DOMParser().parseFromString(frame.html, 'image/svg+xml').querySelectorAll('image')) urls.add(image.getAttribute('href')!);
+      const assets = Object.fromEntries(await Promise.all([...urls].map(async (url) => {
+        const blob = await (await fetch(url)).blob();
+        const asset = await new Promise<string>((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.readAsDataURL(blob); });
+        return [url, asset];
+      })));
       const scale = 4, width = 160 * scale, height = 210 * scale;
       const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
       const context = canvas.getContext('2d')!, results = [];
       for (const frame of frames) {
         const svg = new DOMParser().parseFromString(frame.html.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '), 'image/svg+xml').documentElement;
         svg.setAttribute('width', '160'); svg.setAttribute('height', '210');
-        for (const image of svg.querySelectorAll('image')) image.setAttribute('href', asset);
+        for (const image of svg.querySelectorAll('image')) image.setAttribute('href', assets[image.getAttribute('href')!]);
         const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' }));
         try {
           const image = new Image(); image.src = url; await image.decode();
@@ -68,7 +73,7 @@ for (const [id, name, cycle] of [['dog', '강아지', 1440], ['cat', '고양이'
         } finally { URL.revokeObjectURL(url); }
       }
       return results;
-    }, { frames, id });
+    }, { frames });
     for (const [sample, paws] of connectivity.entries()) for (const paw of paws) expect(paw.attached, `${id}/${paw.name} detached at ${sample}`).toBe(true);
   });
 

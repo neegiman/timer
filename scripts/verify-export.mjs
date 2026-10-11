@@ -14,6 +14,7 @@ assert.ok(html.includes('/timer/_next/'), 'Next assets must include /timer/');
 assert.ok(html.includes('https://neegiman.github.io/timer/'), 'Canonical production URL mismatch');
 const preview = await readFile(path.join(root, 'animal-preview', 'index.html'), 'utf8');
 for (const id of ['rabbit', 'dog', 'cat', 'chick']) assert.ok(preview.includes(`/timer/characters/raster-v1/${id}.webp`), `Missing /timer-aware ${id} artwork`);
+for (const id of ['dog', 'cat']) assert.ok(preview.includes(`/timer/characters/raster-v1/${id}-torso-v7.webp`), `Missing /timer-aware ${id} torso`);
 assert.ok(!preview.includes('data-animal-scene="bear"'), 'Removed bear still appears in preview');
 assert.ok(preview.includes('https://neegiman.github.io/timer/animal-preview/'), 'Animal preview canonical mismatch');
 const files = await filesIn(root);

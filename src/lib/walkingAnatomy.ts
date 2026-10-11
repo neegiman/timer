@@ -1,4 +1,5 @@
 import atlases from './animalAtlases.json';
+import walkingTorsoArt from './walkingTorsoArt.json';
 
 type WalkerId = 'dog' | 'cat';
 type Point = { x: number; y: number };
@@ -8,7 +9,7 @@ export interface LimbArtwork {
   paw: { pivot: Point; sole: Point; width: number };
 }
 function fittedPart(id: WalkerId, part: 'torso' | 'head', x: number, y: number, width: number) {
-  const region = atlases[id].parts[part];
+  const region = part === 'torso' ? walkingTorsoArt[id].viewBox : atlases[id].parts[part];
   return { x, y, width, height: width * region[3] / region[2] };
 }
 function fittedEar(id: WalkerId, part: 'earNear' | 'earFar', anchorX: number, anchorY: number, sourceRoot: Point, height: number) {
@@ -41,7 +42,7 @@ export const walkingAnatomy = {
     },
   },
   cat: {
-    torso: fittedPart('cat', 'torso', 23, 132, 103),
+    torso: fittedPart('cat', 'torso', 23, 132, 107),
     head: fittedPart('cat', 'head', 101, 124, 44), headPivot: { x: 112, y: 149 },
     earNear: fittedEar('cat', 'earNear', 112, 138, { x: 94, y: 183 }, 23),
     earFar: fittedEar('cat', 'earFar', 122, 134, { x: 97, y: 186 }, 21),

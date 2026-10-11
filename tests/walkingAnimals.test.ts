@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
 import atlases from '../src/lib/animalAtlases.json';
+import walkingTorsoArt from '../src/lib/walkingTorsoArt.json';
 import { walkingAnatomy } from '../src/lib/walkingAnatomy';
 import { animalPose, animalProfiles, walkingFootPitch } from '../src/lib/animalMotion';
 import { characters, getCharacter } from '../src/lib/characters';
@@ -12,16 +13,22 @@ test('dog and cat paintings keep native proportions and bury limb and ear roots 
   for (const id of ['dog', 'cat'] as const) {
     const anatomy = walkingAnatomy[id], atlas = atlases[id];
     const { data, info } = await sharp(`public/characters/raster-v1/${id}.webp`).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const torsoArt = walkingTorsoArt[id];
+    const torsoPixels = await sharp(`public${torsoArt.src}`).ensureAlpha().raw().toBuffer();
     const alpha = (part: keyof typeof atlas.parts, x: number, y: number) => {
+      if (part === 'torso') {
+        const [left, top] = torsoArt.viewBox;
+        return torsoPixels[((top + Math.round(y)) * torsoArt.width + left + Math.round(x)) * 4 + 3];
+      }
       const [left, top] = atlas.parts[part];
       return data[((top + Math.round(y)) * info.width + left + Math.round(x)) * 4 + 3];
     };
     for (const part of ['torso', 'head', 'earNear', 'earFar'] as const) {
-      const bounds = anatomy[part], region = atlas.parts[part];
+      const bounds = anatomy[part], region = part === 'torso' ? torsoArt.viewBox : atlas.parts[part];
       assert.ok(Math.abs(bounds.width / bounds.height - region[2] / region[3]) < .001, `${id}/${part} stretched`);
     }
     for (const [paw, root] of Object.entries(anatomy.paws)) {
-      const torso = anatomy.torso, [, , w, h] = atlas.parts.torso;
+      const torso = anatomy.torso, [, , w, h] = torsoArt.viewBox;
       for (const dx of [-3, 0, 3]) for (const dy of [-3, 0, 3]) {
         assert.ok(alpha('torso', (root.x + dx - torso.x) / torso.width * w, (root.y + dy - torso.y) / torso.height * h) >= 240, `${id}/${paw} socket outside torso`);
       }
@@ -43,6 +50,22 @@ test('dog and cat paintings keep native proportions and bury limb and ear roots 
         assert.ok(alpha('head', (ear.anchorX + dx - head.x) / head.width * w, (ear.anchorY + dy - head.y) / head.height * h) >= 240, `${id}/${part} root outside head`);
       }
     }
+  }
+});
+
+test('dog and cat torsos have transparent rounded corners and a visibly tucked curved belly', async () => {
+  for (const id of ['dog', 'cat'] as const) {
+    const art = walkingTorsoArt[id], [left, top, width, height] = art.viewBox;
+    const data = await sharp(`public${art.src}`).ensureAlpha().raw().toBuffer();
+    const alpha = (x: number, y: number) => data[((top + y) * art.width + left + x) * 4 + 3];
+    for (const x of [2, width - 3]) for (const y of [2, height - 3]) assert.ok(alpha(x, y) < 24, `${id} corner is rectangular`);
+    const lowerEdge = (fraction: number) => {
+      const x = Math.round(width * fraction);
+      for (let y = height - 1; y >= 0; y--) if (alpha(x, y) >= 160) return y;
+      return -1;
+    };
+    const rump = lowerEdge(.2), belly = lowerEdge(.5), chest = lowerEdge(.88);
+    assert.ok(belly < Math.min(rump, chest) - height * .06, `${id} belly is still flat`);
   }
 });
 

@@ -13,7 +13,7 @@
     "test:e2e": "playwright test",
     "sounds": "node scripts/generate-sounds.mjs",
     "icons": "node scripts/prepare-story-icons.mjs",
-    "characters": "node scripts/prepare-character-atlases.mjs && node scripts/prepare-princess-atlas.mjs && tsx scripts/generate-pixel-prince.ts && tsx scripts/generate-pixel-vehicles.ts"
+    "characters": "node scripts/prepare-character-atlases.mjs && node scripts/prepare-walking-torsos.mjs && node scripts/prepare-princess-atlas.mjs && tsx scripts/generate-pixel-prince.ts && tsx scripts/generate-pixel-vehicles.ts"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
