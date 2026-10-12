@@ -1,5 +1,5 @@
 import type { AnimationInput, AnimationState, JourneyStage } from '../types/animation';
-import { finishCrossingDuration } from './finishTiming';
+import { finishCrossingDuration, finishTimingForCharacter } from './finishTiming';
 
 export const JOURNEY_MESSAGES: Record<JourneyStage, string> = {
   beginning: '즐겁게 걸어가 볼까? 🌈',
@@ -8,9 +8,10 @@ export const JOURNEY_MESSAGES: Record<JourneyStage, string> = {
   arrived: '', // The UI displays the selected activity action instead of a generic finish message.
 };
 export const CROSSING_DURATION_MS = finishCrossingDuration();
+const defaultCrossing = finishTimingForCharacter();
 export const FINISH_SEQUENCE = [
-  { phase: 'CROSS_FINISH', duration: CROSSING_DURATION_MS * .8, action: 'walk' },
-  { phase: 'BRAKE', duration: CROSSING_DURATION_MS * .2, action: 'walk' },
+  { phase: 'CROSS_FINISH', duration: defaultCrossing.cruiseMs, action: 'walk' },
+  { phase: 'BRAKE', duration: defaultCrossing.brakeMs, action: 'walk' },
   { phase: 'SETTLE', duration: 350, action: 'idle' },
   { phase: 'JUMP', duration: 600, action: 'jump' },
   { phase: 'LAND', duration: 400, action: 'land' },
@@ -18,8 +19,8 @@ export const FINISH_SEQUENCE = [
 ] as const;
 export const FINISH_DURATION_MS = FINISH_SEQUENCE.reduce((total, step) => total + step.duration, 0);
 const stepDuration = (step: typeof FINISH_SEQUENCE[number], characterId: string) =>
-  step.phase === 'CROSS_FINISH' ? finishCrossingDuration(characterId) * .8
-    : step.phase === 'BRAKE' ? finishCrossingDuration(characterId) * .2 : step.duration;
+  step.phase === 'CROSS_FINISH' ? finishTimingForCharacter(characterId).cruiseMs
+    : step.phase === 'BRAKE' ? finishTimingForCharacter(characterId).brakeMs : step.duration;
 export const finishDurationMs = (characterId = 'rabbit') => FINISH_DURATION_MS - CROSSING_DURATION_MS + finishCrossingDuration(characterId);
 export function finishPhaseStart(phase: typeof FINISH_SEQUENCE[number]['phase'], characterId = 'rabbit') {
   let elapsed = 0;

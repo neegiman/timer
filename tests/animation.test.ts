@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FINISH_DURATION_MS, FINISH_SEQUENCE, finishDurationMs, finishPhaseStart, getAnimationState, getFinishAnimationState, JOURNEY_MESSAGES } from '../src/lib/animation';
 import { motionProfiles } from '../src/lib/motionProfiles';
-import { finishCrossingDuration } from '../src/lib/finishTiming';
+import { FINISH_BRAKE_MS, finishCrossingDuration } from '../src/lib/finishTiming';
 import type { AnimationInput } from '../src/types/animation';
 
 function input(elapsed: number, total = 600_000): AnimationInput {
@@ -75,7 +75,10 @@ test('drag preview updates scenery and milestones without arrival or sounds unti
 test('finish phases follow each friend’s natural crossing and never jump or celebrate before stopping', () => {
   for (const id of Object.keys(motionProfiles)) {
     const crossing = finishCrossingDuration(id);
-    assert.equal(getFinishAnimationState(2000, id).characterAction, 'walk', 'Slow walkers must not rush to fit a two-second finish');
+    const brakeStart = finishPhaseStart('BRAKE', id);
+    assert.equal(getFinishAnimationState(brakeStart - .001, id).phase, 'CROSS_FINISH');
+    assert.equal(getFinishAnimationState(brakeStart, id).phase, 'BRAKE');
+    assert.ok(crossing - brakeStart <= FINISH_BRAKE_MS + 1e-7, 'Only the last short clearance should slow down');
     assert.equal(getFinishAnimationState(crossing - .001, id).phase, 'BRAKE');
     assert.equal(getFinishAnimationState(crossing, id).phase, 'SETTLE');
     assert.equal(getFinishAnimationState(finishPhaseStart('JUMP', id), id).phase, 'JUMP');

@@ -3,13 +3,14 @@ import { finishCrossingDuration } from '../../src/lib/finishTiming';
 import { finishDurationMs } from '../../src/lib/animation';
 import { gaitPixelsPerMs } from '../../src/lib/motionProfiles';
 
-for (const [id, name] of [['prince', '왕자'], ['car', '자동차']]) {
+for (const [id, name] of [['dog', '강아지'], ['cat', '고양이'], ['prince', '왕자'], ['car', '자동차']]) {
   test(`${id}: deadline crossing never speeds up or holds, then stops beyond the fixed finish`, async ({ page }) => {
     test.setTimeout(45_000);
     await page.clock.install(); await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('./'); await page.getByRole('button', { name: '친구', exact: true }).click();
     await page.getByRole('button', { name, exact: true }).click();
     await page.getByRole('button', { name: '출발!', exact: true }).click();
+    if (id === 'dog' || id === 'cat') await expect(page.locator('.traveler-body [data-animal-walk-sprite]')).toHaveAttribute('data-loaded', 'true');
     await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
     const session = await page.evaluate(() => JSON.parse(localStorage.getItem('promise-journey:v1:activeSession')!));
     // Deliberately avoid aligning the deadline with the 250ms React UI tick.
@@ -56,7 +57,13 @@ for (const [id, name] of [['prince', '왕자'], ['car', '자동차']]) {
     const early = crossing.filter((frame) => frame.time < session.targetTimestamp + 350);
     expect(early.length).toBeGreaterThan(10);
     expect((early.at(-1)!.x - early[0].x) / (early.at(-1)!.time - early[0].time), 'Zero must not insert a brief hold before crossing').toBeGreaterThan(speed * .97);
-    await page.clock.runFor(finishDurationMs(id));
+    const clearTime = actorWidth / 2 / speed;
+    const cruising = crossing.filter((frame) => frame.time < session.targetTimestamp + clearTime - 32);
+    for (let index = 1; index < cruising.length; index++) {
+      const before = cruising[index - 1], after = cruising[index];
+      expect((after.x - before.x) / (after.time - before.time), 'Do not slow before the whole character clears the line').toBeGreaterThan(speed * .995);
+    }
+    await page.clock.runFor(Math.max(0, session.targetTimestamp + finishDurationMs(id) + 500 - await page.evaluate(() => Date.now())));
     await expect(page.locator('[data-status="completed"]')).toBeVisible();
     const actor = page.locator('.character-wrapper');
     const geometry = await actor.evaluate((element) => ({ stop: Number((element as HTMLElement).dataset.finishStopX), x: new DOMMatrix(getComputedStyle(element).transform).m41 }));

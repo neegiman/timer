@@ -90,7 +90,24 @@ test('every friend crosses at its existing speed then only slows down, independe
     const end = arrivalMotion(600_000, 600_000, duration, geometry, speed);
     assert.ok(Math.abs(end.x - geometry.stopX) < 1e-8);
     assert.ok(end.x - actorWidth / 2 > geometry.lineX, 'Stop only after the entire artwork has crossed');
-    assert.ok(previousSpeed < .00001, 'The final step must settle to zero velocity');
+    const justBeforeStop = arrivalMotion(600_000, 600_000, duration - .1, geometry, speed);
+    assert.ok((end.x - justBeforeStop.x) / .1 < speed * .000001, 'The final step must settle to zero velocity');
+  }
+});
+
+test('the whole artwork clears the finish at normal cadence before a brief stop', () => {
+  for (const id of Object.keys(motionProfiles)) for (const [width, actorWidth] of [[288, 90], [358, 124.8], [840, 168]]) {
+    const geometry = finishGeometry(width, actorWidth), speed = gaitPixelsPerMs(id) * actorWidth / 160;
+    const initial = arrivalMotion(600_000, 600_000, 0, geometry, speed);
+    const clearTime = actorWidth / 2 / speed;
+    for (const time of [100, clearTime * .25, clearTime * .5, clearTime - 1]) {
+      const before = arrivalMotion(600_000, 600_000, time, geometry, speed);
+      const after = arrivalMotion(600_000, 600_000, time + .1, geometry, speed);
+      assert.ok(Math.abs((after.x - before.x) / .1 / speed - 1) < .00001, `${id}: slows before its entire body crosses`);
+      assert.ok(Math.abs((after.gait - before.gait) / .1 - 1) < .00001, `${id}: feet enter slow motion at the line`);
+    }
+    const runout = geometry.stopX - geometry.lineX;
+    assert.ok(initial.crossingDuration <= runout / speed + 325 + 1e-7, `${id}: the stop prolongs the whole crossing`);
   }
 });
 

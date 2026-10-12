@@ -1,5 +1,5 @@
 import { clamp, locomotionTime, MOTION_RAMP_MS } from './journey';
-import { FINISH_RUNOUT_FRACTION } from './finishTiming';
+import { FINISH_RUNOUT_FRACTION, finishCrossingTiming } from './finishTiming';
 
 const rampDistance = (time: number, duration: number) => {
   const t = clamp(time / duration);
@@ -33,12 +33,12 @@ export function arrivalMotion(elapsed: number, total: number, finishElapsed: num
   // eased to a stop as the character approaches the line.
   const baseGait = locomotionTime(clamp(elapsed, 0, total), total + MOTION_RAMP_MS);
   const runout = geometry.stopX - geometry.lineX;
-  const crossingDuration = 2 * runout / speed;
-  const u = clamp(finishElapsed / crossingDuration);
-  // Integrate speed * (1 - smoothstep(u)). Velocity starts at the existing
-  // walking speed and only decreases; acceleration is zero at both ends.
-  // A fixed two-second cubic previously sped up slow walkers to cover runout.
-  const crossing = speed * crossingDuration * (u - u ** 3 + u ** 4 / 2);
+  const { cruiseMs, brakeMs, durationMs: crossingDuration } = finishCrossingTiming(speed, runout);
+  const u = clamp((finishElapsed - cruiseMs) / brakeMs);
+  // Cruise at the existing speed until the entire artwork clears the line,
+  // then integrate a brief smooth stop. One clock drives both body and feet;
+  // a long full-runout easing made the last steps look like slow motion.
+  const crossing = speed * (clamp(finishElapsed, 0, cruiseMs) + brakeMs * (u - u ** 3 + u ** 4 / 2));
   const backgroundDistance = Math.max(0, baseGait * speed - approach);
   // A single landmark is fixed in world space at the timer's end position.
   // Subtract the unwrapped camera distance, never a repeating walk phase or
