@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { assetPath } from '@/lib/assetPath';
 import type { AnimationSound } from '@/types/animation';
+import type { TimerStatus } from '@/types/timer';
+import { BACKGROUND_MUSIC, BackgroundMusic } from '@/lib/backgroundMusic';
 
-type Sound = AnimationSound;
+type Sound = AnimationSound | typeof BACKGROUND_MUSIC.name;
+interface MusicRequest { enabled: boolean; sessionId: string | null; status: TimerStatus; deadline: number }
 type SafariWindow = Window & { webkitAudioContext?: typeof AudioContext };
 const SOUND_CLAIMS_KEY = 'promise-journey:v1:soundClaims';
 function savedClaims(): string[] {
@@ -14,7 +17,7 @@ function savedClaims(): string[] {
   } catch { return []; }
 }
 
-export function useAudio(enabled: boolean) {
+export function useAudio(enabled: boolean, musicRequest: MusicRequest) {
   const context = useRef<AudioContext | null>(null);
   const buffers = useRef(new Map<Sound, Promise<AudioBuffer>>());
   const sources = useRef(new Set<AudioBufferSourceNode>());
@@ -22,7 +25,10 @@ export function useAudio(enabled: boolean) {
   const pending = useRef<{ sound: Sound; key: string } | null>(null);
   const generation = useRef(0);
   const enabledRef = useRef(enabled);
+  const music = useRef<BackgroundMusic | null>(null);
+  const musicRequestRef = useRef(musicRequest);
   const [needsGesture, setNeedsGesture] = useState(false);
+  const [musicUnavailable, setMusicUnavailable] = useState(false);
 
   useEffect(() => { enabledRef.current = enabled; }, [enabled]);
 
@@ -33,10 +39,25 @@ export function useAudio(enabled: boolean) {
         .then((response) => { if (!response.ok) throw new Error('Audio unavailable'); return response.arrayBuffer(); })
         .then((bytes) => ctx.decodeAudioData(bytes));
       buffers.current.set(name, promise);
-      promise.catch(() => buffers.current.delete(name));
+      promise.catch(() => { if (buffers.current.get(name) === promise) buffers.current.delete(name); });
     }
     return promise;
   }, []);
+
+  const syncMusic = useCallback(() => {
+    const request = musicRequestRef.current, ctx = context.current;
+    const playing = enabledRef.current && request.enabled && request.status === 'running'
+      && Date.now() < request.deadline && document.visibilityState === 'visible';
+    if (playing && (!ctx || ctx.state !== 'running')) {
+      music.current?.pause(); setNeedsGesture(true); return;
+    }
+    music.current?.sync(request.sessionId, playing, request.status === 'arriving' ? BACKGROUND_MUSIC.fadeOut : .08);
+  }, []);
+  const { enabled: musicEnabled, sessionId: musicSessionId, status: musicStatus, deadline: musicDeadline } = musicRequest;
+  useEffect(() => {
+    musicRequestRef.current = { enabled: musicEnabled, sessionId: musicSessionId, status: musicStatus, deadline: musicDeadline };
+    syncMusic();
+  }, [musicEnabled, musicSessionId, musicStatus, musicDeadline, enabled, syncMusic]);
 
   const play = useCallback(async (name: Sound, key: string) => {
     const ctx = context.current;
@@ -76,8 +97,14 @@ export function useAudio(enabled: boolean) {
       const AudioContextClass = window.AudioContext ?? (window as SafariWindow).webkitAudioContext;
       if (!AudioContextClass) { setNeedsGesture(true); return; }
       if (!context.current || context.current.state === 'closed') {
+        music.current?.dispose();
         context.current = new AudioContextClass();
         buffers.current.clear();
+        const ctx = context.current;
+        music.current = new BackgroundMusic(ctx, () => load(BACKGROUND_MUSIC.name, ctx), locked => {
+          if (locked) setNeedsGesture(true); else setMusicUnavailable(true);
+        });
+        ctx.onstatechange = syncMusic;
       }
       const ctx = context.current;
       // Observe rejection before priming: creating/starting the silent source can
@@ -86,6 +113,8 @@ export function useAudio(enabled: boolean) {
         if (ctx.state !== 'running') { setNeedsGesture(true); return; }
         setNeedsGesture(false);
         if (pending.current) { const { sound, key } = pending.current; pending.current = null; void play(sound, key); }
+        setMusicUnavailable(false);
+        syncMusic();
       }).catch(() => setNeedsGesture(true));
       // Prime the output within the gesture, even while MP3 decoding is still pending.
       const silence = ctx.createBufferSource();
@@ -97,7 +126,7 @@ export function useAudio(enabled: boolean) {
       // Audio output is optional. Keep the timer action responsive and offer retry.
       setNeedsGesture(true);
     }
-  }, [load, play]);
+  }, [load, play, syncMusic]);
 
   const playOnce = useCallback((sound: Sound, key: string) => {
     if (played.current.has(key) || savedClaims().includes(key)) return;
@@ -109,6 +138,7 @@ export function useAudio(enabled: boolean) {
   const stop = useCallback(() => {
     generation.current++;
     pending.current = null;
+    music.current?.pause();
     for (const source of sources.current) { try { source.stop(); } catch { /* Already ended. */ } }
     sources.current.clear();
     setNeedsGesture(false);
@@ -117,15 +147,17 @@ export function useAudio(enabled: boolean) {
   useEffect(() => {
     const onVisible = () => {
       const ctx = context.current;
+      if (document.visibilityState !== 'visible') { music.current?.pause(); return; }
       if (document.visibilityState === 'visible' && ctx && ctx.state !== 'running' && enabledRef.current) {
         void ctx.resume().then(() => {
           if (pending.current) { const { sound, key } = pending.current; pending.current = null; void play(sound, key); }
+          syncMusic();
         }).catch(() => setNeedsGesture(true));
-      }
+      } else syncMusic();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [play]);
+  }, [play, syncMusic]);
 
   useEffect(() => {
     if (!enabled) {
@@ -133,6 +165,7 @@ export function useAudio(enabled: boolean) {
       pending.current = null;
       for (const source of sources.current) { try { source.stop(); } catch {} }
       sources.current.clear();
+      music.current?.pause();
     }
   }, [enabled]);
 
@@ -142,9 +175,11 @@ export function useAudio(enabled: boolean) {
     return () => {
       lifecycle.current++;
       for (const source of currentSources) { try { source.stop(); } catch {} }
+      music.current?.dispose();
+      if (context.current) context.current.onstatechange = null;
       void context.current?.close();
     };
   }, []);
 
-  return { unlock, playOnce, stop, needsGesture };
+  return { unlock, playOnce, stop, needsGesture, musicUnavailable };
 }

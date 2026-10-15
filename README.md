@@ -27,7 +27,7 @@ npm run preview -- --port 17832
 
 빌드는 `out/`를 생성합니다. `next.config.ts`는 `output: 'export'`, `basePath: '/timer'`, `trailingSlash: true`, `images.unoptimized: true`를 설정합니다. 빌드 후 Next.js 서버, API, 데이터베이스, 인증 서버가 필요하지 않습니다. `preview`는 로컬 검사에만 사용하는 파일 서버입니다.
 
-`scripts/verify-export.mjs`가 생성된 HTML/CSS/JS의 경로와 `_next` 파일, 이미지, 11개 MP3를 확인합니다. 자산은 모두 `src/lib/assetPath.ts`의 `assetPath()`를 통해 `/timer` 접두어를 사용합니다.
+`scripts/verify-export.mjs`가 생성된 HTML/CSS/JS의 경로와 `_next` 파일, 이미지, 배경음악을 포함한 12개 MP3를 확인합니다. 자산은 모두 `src/lib/assetPath.ts`의 `assetPath()`를 통해 `/timer` 접두어를 사용합니다.
 
 ```ts
 assetPath('/sounds/finish.mp3'); // /timer/sounds/finish.mp3
@@ -45,7 +45,7 @@ assetPath('/characters/rabbit.webp'); // /timer/characters/rabbit.webp
 npm run verify:live
 ```
 
-게시된 `/timer/`의 HTML, Next.js 자산, 이미지, 11개 MP3 및 새로고침 응답을 확인합니다. 게시 완료 여부는 GitHub Actions의 배포 성공과 실제 URL의 응답으로 확인합니다.
+게시된 `/timer/`의 HTML, Next.js 자산, 이미지, 12개 MP3 및 새로고침 응답을 확인합니다. 게시 완료 여부는 GitHub Actions의 배포 성공과 실제 URL의 응답으로 확인합니다.
 
 ## 사용 방법
 
@@ -146,9 +146,13 @@ npm run verify:live
 
 화면 켜짐 유지는 HTTPS와 지원 브라우저가 필요합니다. 저전력 모드·배터리·브라우저 정책에 따라 요청이 거절되거나 해제될 수 있으며 직접 누른 잠금 버튼이나 다른 앱에서의 화면 잠금을 막지 않습니다. 지원하지 않거나 거절돼도 타이머·소리·별 보상은 계속 사용할 수 있습니다. `screenWakeLock.ts`는 중복 요청과 뒤늦게 완료된 요청을 정리하고, 시스템 해제에 무한 재시도하지 않습니다. `useScreenWakeLock.ts`는 여행·페이지 수명 주기에 연결합니다.
 
-**출발!** 버튼의 명시적 입력에서 Web Audio 컨텍스트를 활성화하고 MP3를 디코딩합니다. 시작·절반·결승점 인지·도착에는 부드러운 차임을 한 번씩 사용하며 걷는 동안 소리를 반복하지 않습니다. `finish.mp3`와 별 버튼의 `success.mp3`는 서로 다른 효과음입니다. 세션별 재생 기록으로 새로고침 후 완료음을 다시 울리지 않습니다.
+**출발!** 버튼의 명시적 입력에서 Web Audio 컨텍스트를 활성화하고 MP3를 디코딩합니다. 시작·절반·결승점 인지·도착에는 부드러운 차임을 한 번씩 사용하며 걷는 동안 효과음을 반복하지 않습니다. `finish.mp3`와 별 버튼의 `success.mp3`는 서로 다른 효과음입니다. 세션별 재생 기록으로 새로고침 후 완료음을 다시 울리지 않습니다.
 
-`public/sounds/`의 11개 MP3는 직접 합성한 자산이며 `npm run sounds`로 다시 만들 수 있습니다. 현재 흐름에서는 시작·절반·결승점 인지·도착·별 보상 효과음을 사용합니다. 원격 폰트나 이미지에 의존하지 않습니다.
+잔잔한 배경음악은 60 BPM, 48초 길이의 피아노와 따뜻한 화음으로 직접 구성한 스테레오 곡입니다. `/timer/sounds/gentle-journey-v1.mp3`를 한 번 디코딩하고 같은 Web Audio 컨텍스트에서 낮은 음량으로 반복합니다. 시작은 1.2초 동안 부드럽게 켜지고, 도착할 때는 0.7초 동안 잦아들어 완료음과 겹치지 않습니다. 일시정지·음소거·다른 탭으로 이동하면 음악의 현재 위치를 기억하고 멈춥니다. 새 여행은 처음부터 시작하며, 종료·언마운트·뒤늦은 다운로드 완료가 음악을 다시 켜지 않도록 정리합니다. 돌아왔을 때 이미 종료 시각을 지났다면 음악을 다시 재생하지 않습니다.
+
+부모 메뉴의 **잔잔한 배경음악**에서 음악만 끌 수 있으며 `musicEnabled`에 선택을 저장합니다. **소리 ON / OFF**는 효과음과 음악을 모두 제어합니다. 음악 파일 로딩에 실패해도 타이머와 효과음은 계속 사용할 수 있습니다. `tests/backgroundMusic.test.ts`에서 곡의 음량·반복 경계와 비동기 재생 수명 주기를 검사하고, `tests/e2e/background-music.spec.ts`에서 실제 MP3 디코딩·반복·정지·재개·음소거·재시작·새로고침·백그라운드 만료·실패 후 재시도를 확인합니다. Web Audio 출력이 없는 Windows WebKit 빌드에서는 실제 재생 검사를 건너뛰며 설정·복원 UI와 컨트롤러 단위 테스트로 확인합니다.
+
+`public/sounds/`의 효과음 11개와 음악 1개는 외부 샘플 없이 직접 합성한 자산이며 `npm run sounds`로 다시 만들 수 있습니다. 음악만 만들려면 `npm run music`를 실행합니다. 현재 흐름에서는 시작·절반·결승점 인지·도착·별 보상 효과음을 사용합니다. 원격 폰트나 이미지에 의존하지 않습니다.
 
 실제 iPhone은 잠금·무음·브라우저 정책에 따라 백그라운드 소리를 막을 수 있습니다. 종료 시각은 유지하며 복귀 후 재생에 다시 탭이 필요하면 **소리 켜기**를 표시합니다. 실행 중 새로고침으로 오디오 컨텍스트가 사라지는 경우도 같은 안내를 제공합니다.
 

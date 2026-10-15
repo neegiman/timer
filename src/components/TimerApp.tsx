@@ -39,6 +39,7 @@ export function TimerApp() {
   const [minutes, setMinutes] = useLocalStorage('selectedDuration', 10, isDuration);
   const [promise, setPromise] = useLocalStorage<PromiseActivity>('lastPromise', defaultPromise, isPromise);
   const [soundEnabled, setSoundEnabled] = useLocalStorage('soundEnabled', true, isBoolean);
+  const [musicEnabled, setMusicEnabled] = useLocalStorage('musicEnabled', true, isBoolean);
   const [keepScreenAwake, setKeepScreenAwake] = useLocalStorage('keepScreenAwake', true, isBoolean);
   const [mode, setMode] = useLocalStorage('timerMode', 'after', isTimerMode);
   const [customDuration, setCustomDuration] = useState(false);
@@ -51,7 +52,10 @@ export function TimerApp() {
   const screenWakeLock = useScreenWakeLock(keepScreenAwake, keepAwakeActive);
   const appearance = useDayNight(timer.now);
   const animation = useAnimationController(timer);
-  const { unlock, playOnce, stop, needsGesture } = useAudio(soundEnabled);
+  const { unlock, playOnce, stop, needsGesture, musicUnavailable } = useAudio(soundEnabled, {
+    enabled: musicEnabled, sessionId: timer.session?.id ?? null, status: timer.status,
+    deadline: timer.session?.targetTimestamp ?? 0,
+  });
   const sessionId = timer.session?.id;
 
   useEffect(() => {
@@ -182,6 +186,10 @@ export function TimerApp() {
       {keepScreenAwake && keepAwakeActive && screenWakeLock.status === 'unavailable' ? <button type="button" className="text-button" onClick={() => { void screenWakeLock.retry(); }}>화면 켜짐 다시 시도</button> : null}
       <SceneSettings appearance={appearance} space={character.id === 'rocket'} />
       <div className="setting-row"><div><strong>소리 ON / OFF</strong><p>출발과 도착을 다정한 소리로 알려요.</p></div><button className={`toggle ${soundEnabled ? 'on' : ''}`} role="switch" aria-checked={soundEnabled} aria-label="소리 ON/OFF" onClick={toggleSound}><span /></button></div>
+      <div className="setting-row"><div><strong>잔잔한 배경음악</strong><p>{musicUnavailable && musicEnabled && soundEnabled ? '음악을 불러오지 못했어요. 껐다 다시 켜 주세요.' : '소리를 켜면 여행 중 작은 음량으로 흘러요.'}</p></div><button type="button" className={`toggle ${musicEnabled ? 'on' : ''}`} role="switch" aria-checked={musicEnabled} aria-label="배경음악" onClick={() => {
+        setMusicEnabled(!musicEnabled);
+        if (!musicEnabled && soundEnabled) unlock();
+      }}><span /></button></div>
       <button className="display-mode-button" onClick={() => setModal('rewardSettings')}><StoryIcon name="star" size={28} />별 목표 · 달력 · 백업</button>
       <button className="text-button" onClick={() => setModal('help')}><CircleHelp size={20} /> 사용 안내</button>
     </Modal> : null}
@@ -190,6 +198,7 @@ export function TimerApp() {
       <p className="modal-description">여행 중에는 화면 켜짐 유지를 자동으로 요청해요. 부모 메뉴에서 끌 수 있어요. 저전력 모드나 브라우저 설정에 따라 화면이 잠길 수 있으며, 직접 누른 잠금 버튼은 막지 않아요.</p>
       <p className="modal-description">화면이 잠기거나 다른 탭에 가도 시간은 흘러요. 돌아오면 위쪽 작은 친구가 알맞은 위치에 있고, 진행 중인 여행은 화면 켜짐 유지를 다시 요청해요.</p>
       <p className="modal-description">휴대폰에서는 출발!을 누를 때 소리를 준비해요. 화면 잠금 중에는 소리가 늦어질 수 있어요. 돌아온 뒤 소리 안내를 누르면 다시 켤 수 있어요.</p>
+      <p className="modal-description">잔잔한 배경음악은 여행 중에만 들려요. 일시정지하면 음악도 쉬고, 도착할 때는 서서히 잦아들어요. 부모 메뉴에서 음악만 끄거나 소리를 모두 끌 수 있어요.</p>
       <p className="settings-note">⭐ 별은 칭찬이에요. 여행 하나에 별 하나를 받고, 날짜별 달력에 자동으로 누적돼요. 상단 별을 누르면 달력을 볼 수 있어요. 목표는 1~1,000개로 정할 수 있고, 별은 줄어들지 않아요.</p>
     </Modal> : null}
     {modal === 'rewards' || modal === 'rewardSettings' ? <Modal title="우리의 별 이야기" onClose={() => setModal(null)}>

@@ -1,0 +1,14 @@
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { runInNewContext } from 'node:vm';
+import { MUSIC_RATE, renderBackgroundMusic } from './background-music-score.mjs';
+const require = createRequire(import.meta.url), scope = {};
+runInNewContext(await readFile(require.resolve('lamejs/lame.all.js'), 'utf8'), scope);
+const { left, right } = renderBackgroundMusic();
+const pcm = channel => Int16Array.from(channel, sample => Math.round(sample * 32767));
+const l = pcm(left), r = pcm(right), encoder = new scope.lamejs.Mp3Encoder(2, MUSIC_RATE, 128), chunks = [];
+for (let i = 0; i < l.length; i += 1152) chunks.push(Buffer.from(encoder.encodeBuffer(l.subarray(i, i + 1152), r.subarray(i, i + 1152))));
+chunks.push(Buffer.from(encoder.flush()));
+await mkdir('public/sounds', { recursive: true });
+await writeFile('public/sounds/gentle-journey-v1.mp3', Buffer.concat(chunks));
+console.log('Generated gentle-journey-v1.mp3 — original 48s stereo instrumental');

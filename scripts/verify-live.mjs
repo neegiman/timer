@@ -18,7 +18,7 @@ try {
   for (const id of ['rabbit', 'dog', 'cat', 'chick']) assert.ok(previewHTML.includes(`/timer/characters/raster-v1/${id}.webp`), `Incorrect ${id} art path`);
   assert.ok(!previewHTML.includes('data-animal-scene="bear"'), 'Removed bear still appears in preview');
   for (const match of previewHTML.matchAll(/(?:src|href)="(\/timer\/[^"?#]+\.(?:js|css))"/g)) assets.add(match[1]);
-  const sounds = ['start', 'almost', 'finish', 'success', 'midpoint', 'sparkle', 'tick', 'strong-tick', 'whoosh', 'pop', 'land'];
+  const sounds = ['start', 'almost', 'finish', 'success', 'midpoint', 'sparkle', 'tick', 'strong-tick', 'whoosh', 'pop', 'land', 'gentle-journey-v1'];
   const animals = ['rabbit', 'dog', 'cat', 'chick', 'princess', 'princess-upper-v2', 'prince-painted-v1', 'prince-long-pants-v2', 'prince-clothing-v3', 'prince-boot-v3'].map((id) => `/timer/characters/raster-v1/${id}.webp`);
   animals.push(...['dog', 'cat'].map((id) => `/timer/characters/walk-v14/${id}.webp`));
   const pixels = ['prince-upright-v3', 'car', 'train', 'rocket-horizontal-v3'].map((id) => `/timer/characters/pixel-v1/${id}.svg`);

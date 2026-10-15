@@ -52,7 +52,8 @@ const soundFiles = (await readdir(path.join(root, 'sounds'))).filter((name) => n
 const storyIcons = ['handshake', 'bath', 'sleep', 'meal', 'tidy', 'outside', 'video', 'clock', 'rabbit', 'custom', 'home', 'flag'].map((id) => `images/story-v1/${id}.webp`);
 storyIcons.push('images/story-v1/star.svg', 'images/progress-v1/trail.webp');
 const appIcons = ['favicon-handshake-v1', 'promise-handshake-v1', 'apple-touch-handshake-v1'].map((id) => `images/${id}.png`);
-assert.equal(soundFiles.length, 11, 'Missing animation sound assets');
+assert.equal(soundFiles.length, 12, 'Missing animation sound or background music assets');
+assert.ok(soundFiles.includes('gentle-journey-v1.mp3'), 'Missing background music');
 for (const animal of ['rabbit', 'dog', 'cat', 'chick', 'princess', 'princess-upper-v2', 'prince-painted-v1', 'prince-long-pants-v2', 'prince-clothing-v3', 'prince-boot-v3']) {
   const file = await stat(path.join(root, 'characters', 'raster-v1', `${animal}.webp`));
   assert.ok(file.size > 100_000, `Missing painted ${animal} atlas`);
